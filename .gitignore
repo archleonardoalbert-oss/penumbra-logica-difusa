@@ -1,0 +1,8 @@
+.superpowers/
+docs/superpowers/
+fuentes/fotogramas/
+fuentes/transcripciones/
+fuentes/transcripcion.log
+fuentes/herramientas/__pycache__/
+fuentes/referencias/inferfuzzy/
+node_modules/
