@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><title>prueba de escena</title>
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<script src="../../vendor/katex/katex.min.js"></script>
+<body style="margin:0;background:#000;color:#ddd"><div id="t"></div><div id="c" style="width:800px"></div><div id="m"></div>
+<script type="module">
+import { montarEscena } from '../../motor/escena.js';
+import demo from './escena-demo.js';
+window.escena = montarEscena(document.getElementById('c'), demo, { textos: document.getElementById('t'), controles: document.getElementById('m') });
+</script>
