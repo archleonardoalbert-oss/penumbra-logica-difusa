@@ -1,9 +1,9 @@
 // Renderizador 3D en WebGL2: un terreno opaco con profundidad real y, probado contra esa profundidad, todo lo demás.
 // Proyección única: el mismo cálculo en GLSL y en JS, para que líneas y superficie coincidan al píxel.
 import { clamp, mix } from './tiempo.js';
+import { AZUL, ROSA, GRIS, GRIS2 } from './colores.js';
 
 const MALLA = 170;
-const AZUL = [88, 196, 221], ROSA = [252, 98, 130], GRIS = [109, 113, 131], GRIS2 = [167, 165, 152];
 const DOM_UNIDAD = { x: [0, 1], y: [0, 1], z: [0, 1] };
 
 const vsTerreno = (W, H, cuerpo, unis) => `#version 300 es

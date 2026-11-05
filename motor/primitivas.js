@@ -6,6 +6,7 @@ export const punto = (p, op = {}) => ({ tipo: 'punto', p, ...op });
 export const poligono = (puntos, op = {}) => ({ tipo: 'poligono', puntos, ...op });
 export const rotulo = (p, tex, op = {}) => ({ tipo: 'rotulo', p, tex, ...op });
 export const marco = (dominio, op = {}) => ({ tipo: 'marco', dominio, ...op });
+export const mapaCalor = (f, op = {}) => ({ tipo: 'mapaCalor', f, ...op });
 export const terreno = (f, op = {}) => ({ tipo: 'terreno', f, desde: 0, ...op });
 
 /** f(u) → punto. `hasta` (fracción del recorrido) deja la curva a medio trazar, terminando exactamente en su punta. */
