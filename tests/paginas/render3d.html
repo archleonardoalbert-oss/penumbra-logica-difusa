@@ -1,0 +1,40 @@
+<!doctype html><meta charset="utf-8"><title>prueba 3D</title>
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<script src="../../vendor/katex/katex.min.js"></script>
+<body style="margin:0;background:#000"><div id="c" style="width:100%"></div>
+<script type="module">
+import { crearLienzo } from '../../motor/lienzo.js';
+import { crearRender3D } from '../../motor/render3d.js';
+import { linea, marco, punto, rotulo, terreno } from '../../motor/primitivas.js';
+
+const lienzo = crearLienzo(document.getElementById('c'), { W: 800, H: 600, gl: true });
+const r3 = crearRender3D(lienzo, { cx: 400, cy: 320, S: 300 });
+const prims = [
+  marco({ x: [0, 1], y: [0, 1], z: [0, 1] }),
+  terreno(() => 1, { glsl: 'return 1.0;' }),
+  linea([0.5, 1, 0.2], [0.5, 1, 1.3], { color: [252, 60, 60], ancho: 8 }),
+  punto([0.5, 1, 0.3], { color: [255, 255, 255], radio: 3 }),
+  rotulo([0.5, 1, 0.3], 'T', { clave: 'tapado' }),
+  rotulo([0.5, 0.5, 1.2], 'L', { clave: 'libre' }),
+];
+const cam = { yaw: -0.72, pitch: 0.6 };
+const pintar = () => { lienzo.aplicar(); r3.dibujar(prims, cam); };
+pintar();
+window.leer = (p) => {
+  pintar();
+  const [x, y] = r3.proyectar(p), k = lienzo.escala(), gl = lienzo.gl, b = new Uint8Array(4);
+  gl.readPixels(Math.round(x * k), lienzo.glCanvas.height - Math.round(y * k), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, b);
+  return [b[0], b[1], b[2]];
+};
+window.opacidades = () => {
+  pintar();
+  return ['tapado', 'libre'].map((c) => +lienzo.capaTex.querySelector(`[data-clave=${c}]`).style.opacity);
+};
+window.camaraTrasForzar = (c) => r3.camaraValida(c);
+window.animar = () => lienzo.animar(pintar);
+window.medidas = () => {
+  const m = (e) => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, left: r.left, top: r.top }; };
+  return { gl: m(lienzo.glCanvas), dos: m(lienzo.g2d.canvas), tex: m(lienzo.capaTex), dpr: devicePixelRatio,
+    glPx: lienzo.glCanvas.width, dosPx: lienzo.g2d.canvas.width };
+};
+</script>
