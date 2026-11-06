@@ -180,33 +180,59 @@ a.estacion:hover { transform: scale(1.5); border-color: var(--texto); }
 .mensaje .difuso { font-size: clamp(36px, 5vw, 56px); }
 .boton-mapa { display: inline-block; border: 1px solid var(--borde-2); padding: 8px 18px; border-radius: 8px; }
 
-/* ============ portada: el terreno lo ocupa todo ============ */
-.portada { position: fixed; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 40% 60%, #0a1020 0%, #000 70%); }
-.mapa-lienzo { position: absolute; left: 50%; top: 50%; width: max(100vw, calc(100vh * 1.71875)); transform: translate(-50%, -50%); cursor: grab; }
+/* ============ portada: el paisaje lo ocupa todo, y la interfaz flota sobre él sin cajas ============ */
+.portada { position: fixed; inset: 0; overflow: hidden; background: #000; }
+.mapa-lienzo { position: absolute; inset: 0; cursor: grab; touch-action: none; }
 .mapa-lienzo:active { cursor: grabbing; }
-.mapa-cabecera { position: absolute; left: 34px; top: 22px; pointer-events: none; }
-.mapa-cabecera .difuso { font-size: clamp(44px, 6vw, 80px); line-height: 1.05; }
-.mapa-cabecera .lema { font-size: 19px; color: var(--texto-2); margin: 4px 0 0; }
-.mapa-panel { position: absolute; right: 24px; top: 24px; bottom: 24px; width: 21rem; display: flex; flex-direction: column; background: #07080dd9; backdrop-filter: blur(14px); border: 1px solid var(--borde-2); border-radius: 14px; padding: 18px 20px; overflow-y: auto; scrollbar-width: thin; }
-.mapa-panel h2 { margin: 0 0 4px; font-weight: 400; font-size: 27px; line-height: 1.2; }
-.mapa-panel .lema { color: var(--texto-2); margin: 0 0 10px; font-size: 18px; }
-.mapa-panel p { font-size: 16.5px; margin: 0 0 10px; }
+.mapa-lienzo canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.mapa-rotulos { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.mapa-rotulo { position: absolute; left: 0; top: 0; pointer-events: auto; display: flex; flex-direction: column; align-items: center; padding: 4px 10px 34px; background: none; border: 0; border-radius: 0; color: #e9eef2; cursor: pointer; text-align: center; transition: opacity .35s var(--salida); will-change: transform; text-shadow: 0 1px 10px #000, 0 0 26px #000c; }
+.mapa-rotulo:hover:not(:disabled) { background: none; }
+.mapa-rotulo:focus-visible { outline: 1px solid var(--oro); outline-offset: 2px; border-radius: 4px; }
+.rotulo-titulo { font-size: clamp(15px, 1.25vw, 19px); letter-spacing: .01em; white-space: nowrap; transition: color .25s, transform .3s var(--salida); }
+.rotulo-lema { position: absolute; top: 100%; left: 50%; width: max-content; max-width: 17rem; transform: translate(-50%, -4px); font-size: 14.5px; line-height: 1.35; color: #c9d4dc; opacity: 0; transition: opacity .25s, transform .3s var(--salida); pointer-events: none; }
+.mapa-rotulo.activa .rotulo-titulo { color: var(--oro); transform: scale(1.14); }
+.mapa-rotulo.activa .rotulo-lema { opacity: 1; transform: translate(-50%, 6px); }
+.mapa-rotulo.apagada { filter: opacity(.5); }
+.mapa-cabecera { position: absolute; left: clamp(20px, 3vw, 44px); top: clamp(14px, 2.4vh, 28px); pointer-events: none; z-index: 2; text-shadow: 0 2px 30px #000; }
+.mapa-cabecera .difuso { font-size: clamp(50px, 6.6vw, 104px); line-height: 1; font-weight: 400; letter-spacing: -.012em; }
+.mapa-cabecera .lema { font-size: clamp(16px, 1.3vw, 20px); color: #cfd7dc; margin: 8px 0 0; }
+/* a la derecha, la noche se espesa: el texto no necesita una caja */
+.mapa-panel { position: absolute; right: 0; top: 0; bottom: 0; width: min(36rem, 46vw); z-index: 3; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(20px, 4vh, 44px) clamp(22px, 2.6vw, 44px) 20px clamp(90px, 11vw, 200px); background: linear-gradient(to left, #02040af2 0%, #02040ae6 48%, #02040a99 72%, #02040a33 90%, #02040a00 100%); }
+.mapa-panel h2 { margin: 0 0 6px; font-weight: 400; font-size: clamp(27px, 2.3vw, 36px); line-height: 1.16; letter-spacing: -.005em; }
+.mapa-panel .lema { color: var(--texto-2); margin: 0 0 14px; font-size: 18px; line-height: 1.4; }
+.mapa-panel p { font-size: 16.5px; margin: 0 0 12px; line-height: 1.5; }
+.mapa-panel .rotulo-etapa { margin-bottom: 4px; }
 .mapa-panel .grado-carril { width: 110px; }
-.mapa-panel .boton-seguir { align-self: flex-start; margin: 10px 0 16px; }
-.mapa-panel .boton-atras { align-self: flex-start; padding: 2px 0; font-size: 15px; margin-bottom: 8px; }
-.panel-cuerpo { animation: aparece .35s var(--salida) both; display: flex; flex-direction: column; flex: none; }
-.mapa-conceptos { list-style: none; margin: 12px 0 0; padding: 0; font-size: 16.5px; line-height: 1.35; }
-.mapa-conceptos li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 4px; border-top: 1px solid var(--borde); }
-.mapa-conceptos a { color: var(--texto); }
-.mapa-conceptos small { color: var(--tenue); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mapa-panel .boton-seguir { align-self: flex-start; margin: 14px 0 20px; }
+.mapa-panel .boton-atras { align-self: flex-start; padding: 2px 0; font-size: 15px; margin-bottom: 18px; background: none; border: 0; color: var(--tenue); }
+.mapa-panel .boton-atras:hover:not(:disabled) { color: var(--texto); background: none; }
+.panel-cuerpo { animation: aparece .4s var(--salida) both; display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #30354b transparent; }
+/* las paradas son un tramo de camino: un hilo con un punto por parada, cuyo brillo es tu grado */
+.mapa-conceptos { list-style: none; margin: 14px 0 0; padding: 0; font-size: 16.5px; line-height: 1.32; }
+.mapa-conceptos li { position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-left: 22px; border-radius: 6px; transition: background .15s; }
+.mapa-conceptos li::before { content: ''; position: absolute; left: 5.5px; top: 0; bottom: 0; width: 1px; background: #2c3346; }
+.mapa-conceptos li:first-child::before { top: 50%; } .mapa-conceptos li:last-child::before { bottom: 50%; }
+.mapa-conceptos li::after { content: ''; position: absolute; left: 2px; top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--oro) calc(var(--g, 0) * 100%), #4a5470); }
+.mapa-conceptos li:hover { background: #ffffff0d; }
+.mapa-conceptos a { flex: 1; color: var(--texto); padding: 8px 0; } .mapa-conceptos a:hover { text-decoration: none; }
+.mapa-conceptos a::before { content: ''; position: absolute; inset: 0; }
+.mapa-conceptos small { color: var(--tenue); white-space: nowrap; font-variant-numeric: tabular-nums; padding-right: 8px; }
 .mapa-conceptos .pendiente { color: var(--tenue); }
 .mapa-conceptos .proximo a, .mapa-conceptos .proximo small { color: var(--oro); }
-.mapa-indice { display: flex; flex-direction: column; gap: 1px; margin-top: auto; padding-top: 12px; }
-.mapa-indice button { text-align: left; font-size: 14.5px; padding: 2px 8px; color: var(--texto-2); background: none; border-color: transparent; }
-.mapa-indice button.activa { color: var(--oro); }
-.mapa-pie { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 10px; color: var(--texto-2); font-size: 14px; }
-.mapa-pie button { font-size: 14px; padding: 3px 10px; color: var(--tenue); background: none; }
-.peligro { border-color: var(--rojo) !important; color: var(--rojo) !important; }
+.mapa-conceptos .proximo::after { background: var(--oro); box-shadow: 0 0 10px var(--oro); }
+/* los capítulos, en fila, como un segundo camino que nunca se mueve */
+.mapa-indice { position: absolute; left: clamp(20px, 3vw, 44px); bottom: 18px; z-index: 2; display: flex; gap: 2px; flex-wrap: wrap; max-width: calc(100% - min(30rem, 42vw) - 40px); }
+.mapa-indice button { position: relative; display: flex; align-items: baseline; gap: 7px; padding: 6px 9px 9px; font-size: 14px; color: #c6d0d8; background: none; border: 0; border-radius: 6px; text-shadow: 0 1px 8px #000; }
+.mapa-indice button::after { content: ''; position: absolute; left: 9px; right: 9px; bottom: 4px; height: 2px; background: linear-gradient(to right, var(--oro) calc(var(--g, 0) * 100%), #ffffff24 0); }
+.mapa-indice button:hover:not(:disabled) { color: #fff; background: #0b1020d0; }
+.mapa-indice button.activa { color: var(--oro); background: #0b1020e6; }
+.indice-num { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 13px; }
+.tu-pendulo { margin-top: 8px; padding-top: 14px; border-top: 1px solid #ffffff17; }
+.mapa-pie { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 10px; color: var(--texto-2); font-size: 14px; flex: none; }
+.mapa-pie button { font-size: 13.5px; padding: 3px 0; color: var(--tenue); background: none; border: 0; }
+.mapa-pie button.peligro { color: var(--rojo); }
+.mapa-pie button:hover:not(:disabled) { color: var(--texto); background: none; }
 .mapa-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; padding: 170px 34px 34px; overflow-y: auto; height: calc(100% - 50px); }
 .mapa-lista h2 { margin: 0; font-weight: 400; font-size: 24px; }
 .fundiendo .mapa-panel, .fundiendo .mapa-cabecera { opacity: 0; transition: opacity .35s; }
@@ -262,12 +288,12 @@ a.estacion:hover { transform: scale(1.5); border-color: var(--texto); }
   .hilo { display: none; }
   .pie-etapa { position: sticky; bottom: 0; background: #000; padding: 10px 16px; }
   .portada { position: static; overflow: visible; }
-  .mapa-lienzo { position: relative; left: 0; top: 0; transform: none; width: 100%; }
+  .mapa-lienzo { position: relative; inset: auto; width: 100%; height: 62vh; }
+  .mapa-indice { position: static; max-width: none; margin: 12px 16px; }
   .mapa-cabecera { position: static; padding: 18px 16px; }
-  .mapa-panel { position: static; width: auto; margin: 12px 16px; }
+  .mapa-panel { position: static; width: auto; margin: 0; padding: 12px 16px; background: none; }
 }
 
-.tu-pendulo { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); }
 .enlace-pendulo { color: var(--oro, #f4d345); text-decoration: none; }
 .enlace-pendulo:hover { text-decoration: underline; }
 .escenario section:focus, .escena-lienzo canvas:focus { outline: none; }

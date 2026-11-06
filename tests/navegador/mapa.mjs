@@ -3,12 +3,24 @@ import { t, afirmar } from '../banco.mjs';
 const abrir = async (ir, pg) => { await ir('index.html'); await pg.waitForFunction(() => window.mapa); };
 const moverA = async (pg, id) => { const [x, y] = await pg.evaluate((i) => mapa.aPantalla(i), id); await pg.mouse.move(x, y); return [x, y]; };
 
-t('mapa: pasar el ratón por una región muestra título, lema y grado', async ({ pg, ir }) => {
+t('mapa: elegido un capítulo, pasar el ratón por otro no cambia sus temas', async ({ pg, ir }) => {
   await abrir(ir, pg);
+  const [x, y] = await moverA(pg, 1);
+  await pg.mouse.click(x, y);
+  await pg.waitForFunction(() => document.querySelector('.mapa-panel h2')?.textContent.includes('El borde'));
+  await pg.waitForTimeout(1200);
+  for (const id of [3, 5, 2, 6]) { await moverA(pg, id); await pg.waitForTimeout(60); }
+  afirmar((await pg.textContent('.mapa-panel h2')).includes('El borde'), 'el capítulo cambió con solo pasar el ratón');
+  afirmar(await pg.locator('.mapa-panel li').count() === 10, 'cambiaron los temas');
+});
+
+t('mapa: sin nada elegido, pasar el ratón tampoco cambia el panel, y resalta en el propio mapa', async ({ pg, ir }) => {
+  await abrir(ir, pg);
+  const antes = await pg.textContent('.mapa-panel');
   await moverA(pg, 3);
-  await pg.waitForFunction(() => document.querySelector('.mapa-panel h2')?.textContent.includes('El álgebra'));
-  const txt = await pg.textContent('.mapa-panel');
-  afirmar(txt.includes('Y, o, no') && txt.includes('0,00'), txt);
+  await pg.waitForTimeout(100);
+  afirmar((await pg.textContent('.mapa-panel')) === antes, 'el panel cambió');
+  afirmar((await pg.locator('.mapa-rotulo.activa').textContent()).includes('El álgebra'), 'no se resalta en el mapa');
 });
 
 t('mapa: clic abre sus conceptos, con enlace y grado', async ({ pg, ir }) => {
@@ -30,13 +42,12 @@ t('mapa: la región 6 enlaza todas sus paradas, sin ninguna pendiente', async ({
 t('mapa: el progreso se refleja, y empezar de cero pide confirmación y lo borra', async ({ pg, ir }) => {
   await pg.addInitScript(() => { if (!sessionStorage.x) { sessionStorage.x = 1; localStorage.setItem('penumbra-progreso-v1', JSON.stringify({ '1-1-quien-es-alto': { borrosidad: 1, 'grado-174': 1 } })); } });
   await abrir(ir, pg);
-  await moverA(pg, 1);
+  await pg.mouse.click(...(await moverA(pg, 1)));
   await pg.waitForFunction(() => document.querySelector('.mapa-panel')?.textContent.includes('0,10'));
   await pg.click('text=Empezar de cero');
   afirmar((await pg.evaluate(() => localStorage.getItem('penumbra-progreso-v1'))) !== null, 'borró sin confirmar');
   await pg.click('text=Sí, borrar todo');
   afirmar((await pg.evaluate(() => localStorage.getItem('penumbra-progreso-v1'))) === null, 'no borró');
-  await moverA(pg, 1);
   await pg.waitForFunction(() => document.querySelector('.mapa-panel')?.textContent.includes('0,00'));
 });
 
