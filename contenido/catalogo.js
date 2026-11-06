@@ -1,5 +1,5 @@
 // El mapa del curso: 8 regiones con sus conceptos. `temas` enlaza con los títulos de los vídeos que dieron el alcance.
-const listo = (id, titulo, retos, temas = []) => ({ id, titulo, estado: 'listo', carga: () => import(`./parte1/${id}.js`), retos: retos.map((r) => ({ id: r })), temas });
+const listo = (id, titulo, retos, temas = []) => ({ id, titulo, estado: 'listo', carga: () => import(`./parte${id.split('-')[0]}/${id}.js`), retos: retos.map((r) => ({ id: r })), temas });
 const pend = (id, titulo, temas = []) => ({ id, titulo, estado: 'pendiente', retos: [], temas });
 
 export const CATALOGO = [
@@ -16,9 +16,10 @@ export const CATALOGO = [
     listo('1-10-convexidad', 'Convexidad', ['contraejemplo', 'interseccion', 'demostrar-cortes-convexos']),
   ] },
   { id: 2, titulo: 'La forma', lema: 'Cada idea vaga tiene su curva.', posicion: [0.5, 0.15], conceptos: [
-    pend('2-1-parametrizadas', 'Funciones de membresía parametrizadas', ['1.4 Funciones de membresía (1)']),
-    pend('2-2-tipicas', 'Triangular, trapecial, gaussiana, campana y sigmoidal', ['1.4 Funciones de membresía típicas (2)']),
-    pend('2-3-construirlas', 'Cómo se construye una función de membresía'),
+    listo('2-1-parametrizadas', 'Una curva con pocos botones', ['ajusta-triangulo', 'punto-triangulo', 'cuantos-numeros'], ['1.4 Funciones de membresía (1)']),
+    listo('2-2-tipicas', 'Las cinco formas de siempre', ['elige-forma', 'calcula-gaussiana', 'sin-puntas'], ['1.4 Funciones de membresía típicas (2)']),
+    listo('2-3-construirlas', 'De dónde salen los grados', ['jurado-suficiente', 'contar-votos', 'directo-o-indirecto']),
+    listo('2-4-pendulo', 'Tu péndulo: darle palabras al ángulo', ['ajusta-angulo', 'grado-angulo']),
   ] },
   { id: 3, titulo: 'El álgebra', lema: 'Y, o, no: cuando dejan de ser únicos.', posicion: [0.84, 0.22], conceptos: [
     pend('3-1-zadeh', 'Las operaciones de Zadeh', ['1.2 Operaciones entre conjuntos difusos']),

@@ -52,8 +52,8 @@ export function crearRenderPlano(lienzo, { x: [x0, x1], y: [y0, y1], caja, id = 
       if (q.tipo === 'mapaCalor') pintarMapa(q);
       else if (q.tipo === 'marco') {
         const a = q.alfa ?? 1, et = q.etiquetas ?? {}, tx = q.ticks?.x ?? [x0, (x0 + x1) / 2, x1], ty = q.ticks?.y ?? [y0, y1];
-        trazo([[x0, y0], [x1, y0]], GRIS2, 1.4, a); trazo([[x0, y0], [x0, y1]], GRIS2, 1.4, a);
-        trazo([[x0, y1], [x1, y1]], GRIS, 1, 0.3 * a, [3, 6]);
+        trazo([[x0, y0], [x1, y0]], GRIS2, 1.4, a);
+        if (!q.soloBase) { trazo([[x0, y0], [x0, y1]], GRIS2, 1.4, a); trazo([[x0, y1], [x1, y1]], GRIS, 1, 0.3 * a, [3, 6]); }
         tx.forEach((v) => { trazo([[v, y0], [v, y0]], GRIS2, 1, a); rotulos.push({ clave: `${id}tx${v}`, x: aX(v), y: aY(y0) + 15, tex: coma(v), tam: 15, color: GRIS2, alfa: a }); });
         ty.forEach((v) => rotulos.push({ clave: `${id}ty${v}`, x: aX(x0) - 11, y: aY(v), tex: coma(v), tam: 15, color: GRIS2, ancla: 'r', alfa: a }));
         if (et.x) {

@@ -3,6 +3,7 @@
 import { CATALOGO, buscarConcepto } from '../contenido/catalogo.js';
 import { GLOSARIO } from '../contenido/glosario.js';
 import { crearProgreso } from '../nucleo/progreso.js';
+import { crearTaller } from '../nucleo/taller.js';
 import { enlazarTerminos } from '../nucleo/recorrido.js';
 import { notaCalculo, notaDemostracion, notaEleccion, notaManipular } from '../nucleo/retos.js';
 import { montarEscena } from './escena.js';
@@ -145,7 +146,7 @@ function zonaPistas(pistas) {
   return { el: h('div', {}, lista, pistas.length ? boton : null), usadas: () => usadas };
 }
 
-function tarjetaReto(reto, { registrar, notaInicial, escena, escenaDisponible }) {
+function tarjetaReto(reto, { registrar, notaInicial, escena, escenaDisponible, taller }) {
   const marca = h('span', { className: 'reto-nota' });
   let mejor = notaInicial;
   const fijarNota = () => { marca.textContent = mejor > 0 ? `mejor nota ${coma(mejor)}` : ''; };
@@ -190,6 +191,7 @@ function tarjetaReto(reto, { registrar, notaInicial, escena, escenaDisponible })
       const b = h('button', { type: 'button', textContent: 'Comprobar en la escena' });
       b.addEventListener('click', () => {
         const pr = reto.precision(escena.estado().e), nota = notaManipular(pr, pistas.usadas());
+        if (pr >= 1 && reto.guardar) taller.guardar(reto.guardar(escena.estado().e));
         responder(nota, pr >= 1 ? `Conseguido. ${reto.explicacion ?? ''}` : (reto.pendiente?.(escena.estado().e) ?? `Vas por ${coma(pr)}. Sigue moviendo.`));
       });
       acciones.append(b);
@@ -253,7 +255,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   const c = (await ficha.carga()).default;
   document.title = `${c.titulo} · Penumbra`;
 
-  const progreso = crearProgreso(almacen === undefined ? tryLocal() : almacen);
+  const guardado = almacen === undefined ? tryLocal() : almacen, progreso = crearProgreso(guardado), taller = crearTaller(guardado);
   const grado = barraGrado(progreso.gradoConcepto(c.id, c.retos));
   const titulo = tituloDifuso(c.titulo, 'h1');
   titulo.classList.add('titulo-parada');
@@ -300,7 +302,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
       grado.el.classList.add('sube'); setTimeout(() => grado.el.classList.remove('sube'), 900);
       pintarPestanas();
     },
-    notaInicial: progreso.notaReto(c.id, reto.id), escena, escenaDisponible,
+    notaInicial: progreso.notaReto(c.id, reto.id), escena, escenaDisponible, taller,
   }));
   let iReto = 0;
   function pintarPestanas() {
