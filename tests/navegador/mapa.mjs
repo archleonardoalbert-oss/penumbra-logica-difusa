@@ -112,7 +112,7 @@ t('mapa: el viaje lleva a la parada de destino, y se puede saltar', async ({ pg,
   await ir('index.html?viaje=2-1-parametrizadas');
   await pg.waitForFunction(() => window.mapa);
   afirmar((await pg.evaluate(() => mapa.modo())) === 'viaje', 'no viaja');
-  afirmar((await pg.textContent('.viaje-tarjeta')).includes('La forma'), 'sin tarjeta');
+  afirmar((await pg.textContent('.viaje-tarjeta')).includes('Capítulo 2'), 'sin tarjeta');
   await pg.keyboard.press('Escape');
   await pg.waitForURL(/c=2-1-parametrizadas/);
 });
@@ -127,4 +127,17 @@ t('mapa: la última parada de un capítulo viaja; Enter también avanza desde «
   await pg.waitForFunction(() => window.pagina);
   await pg.keyboard.press('ArrowRight');
   await pg.waitForURL(/c=1-2-monton/);
+});
+
+t('mapa: sin GPU, en reposo no dibuja nada', async ({ pg, ir }) => {
+  await pg.addInitScript(() => sessionStorage.setItem('penumbra-mapa-nacio', '1'));
+  await ir('index.html');
+  await pg.waitForFunction(() => window.mapa);
+  await pg.waitForTimeout(9000); // con CPU, cada cuadro de la entrada tarda: hay que dejarla acabar
+  const n = await pg.evaluate(() => new Promise((res) => {
+    const gl = document.querySelector('.mapa-lienzo canvas').getContext('webgl2'); let k = 0;
+    for (const f of ['drawArrays', 'drawElements', 'drawArraysInstanced']) { const o = gl[f].bind(gl); gl[f] = (...a) => { k++; return o(...a); }; }
+    setTimeout(() => res(k), 700);
+  }));
+  afirmar(n === 0, `${n} dibujos en reposo`);
 });

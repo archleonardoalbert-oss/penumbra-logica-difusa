@@ -13,19 +13,11 @@ vec3 cielo(vec3 v,vec3 sol){
  c+=vec3(.86,.90,1.)*pow(s,400.)*.3;
  return c;}`;
 
-// La altura, en un solo sitio: en el mapa ya hecho se lee de la textura; mientras nace, se calcula con su fórmula, término a término.
+// La altura se lee siempre de una textura: la del mapa hecho o, mientras nace, la que se recalcula una vez por cuadro.
 const ALTURA = `
-uniform sampler2D uCerca,uLejos;uniform float uSube,uNace,uBase,uRoca2,uRoca5,uFondo;uniform vec4 uReg[8];
+uniform sampler2D uCerca,uLejos;
 vec4 campo(vec2 p){vec2 u=(p+.1)/1.2;if(u.x>.004&&u.y>.004&&u.x<.996&&u.y<.996)return texture(uCerca,u);return texture(uLejos,(p+1.)/3.);}
-float altura(vec2 p){
- vec4 t=campo(p);
- if(uNace<.5)return t.r;
- float m=0.,ce=0.;
- for(int i=0;i<8;i++){vec2 d=p-uReg[i].xy;float d2=dot(d,d);m+=uReg[i].z*exp(-d2/${(2 * SIGMA * SIGMA).toFixed(6)});ce=max(ce,exp(-d2/${(2 * ANCHO_CIMA * ANCHO_CIMA).toFixed(7)}));}
- float c=mix(t.b*uRoca2,t.a,uRoca5),r=length(p-.5),l=clamp((r-.7)/.5,0.,1.);l=l*l*(3.-2.*l);
- return clamp(${BASE.toFixed(3)}*uBase+m+l*(.08+.5*t.a)*uFondo+(1.-ce)*c*(.04+.5*min(1.,m*2.)),0.,1.);
-}
-float alt(vec2 p){return altura(p)*uSube*${ESCZ.toFixed(2)};}`;
+float alt(vec2 p){return campo(p).r*${ESCZ.toFixed(2)};}`;
 
 const VS_TERRENO = `#version 300 es
 precision highp float;precision highp sampler2D;
@@ -36,7 +28,7 @@ void main(){vec2 p=uMalla.xy+q*uMalla.zw;vP=vec3(p,alt(p));gl_Position=uVP*vec4(
 
 const FS_TERRENO = `#version 300 es
 precision highp float;precision highp sampler2D;
-in vec3 vP;uniform sampler2D uRuido;uniform vec3 uCam,uSol;uniform float uT,uPasos,uMat,uCaja,uBarrido,uEsLejos;uniform vec4 uFoco;
+in vec3 vP;uniform sampler2D uRuido,uLuzC,uLuzL;uniform vec3 uCam,uSol;uniform float uT,uMat,uCaja,uBarrido,uEsLejos;uniform vec4 uFoco;
 out vec4 o;
 ${ALTURA}
 ${CIELO}
@@ -49,7 +41,7 @@ void main(){
  // mientras nace, solo existe el cuadrado de la función
  float caja=uCaja*1.7;if(p.x<-caja||p.y<-caja||p.x>1.+caja||p.y>1.+caja)discard;
  if(uMat<.01&&p.y>uBarrido)discard;
- float hn=z/${ESCZ.toFixed(2)}/max(uSube,.02);
+ float hn=z/${ESCZ.toFixed(2)};
  vec3 v=normalize(uCam-vP);float dist=length(uCam-vP);
  float e=mix(.0016,.0062,smoothstep(.9,2.6,dist));vec3 n=normalize(vec3(alt(p-vec2(e,0.))-alt(p+vec2(e,0.)),alt(p-vec2(0.,e))-alt(p+vec2(0.,e)),2.*e));
  // detalle fino: tres escalas de roca, que se apagan con la distancia para no centellear
@@ -59,10 +51,10 @@ void main(){
  float grieta=smoothstep(.0,.09,abs(g2.b))*.55+smoothstep(.0,.05,abs(g3.g))*.45;
  float dom=campo(p).g;
  vec3 c;
- float luz=1.;
- if(uPasos>.5){vec3 r=vP+vec3(n.xy*.003,.0022);float t=.006;for(int i=0;i<int(uPasos);i++){vec3 s=r+uSol*t;float d=s.z-alt(s.xy);luz=min(luz,7.5*d/t);if(luz<.001)break;t+=clamp(d*.7,.0045,.05);if(t>1.1)break;}luz=clamp(luz,0.,1.);luz=luz*luz*(3.-2.*luz);}
+ // la sombra y la oclusión ya están calculadas en una textura: no dependen de la cámara
+ vec2 lu=(p+.1)/1.2;vec2 lm=(lu.x>.004&&lu.y>.004&&lu.x<.996&&lu.y<.996)?texture(uLuzC,lu).rg:texture(uLuzL,(p+1.)/3.).rg;
+ float luz=lm.r,oc=lm.g;
  float dif=max(dot(nd,uSol),0.),pendiente=1.-n.z;
- float oc=0.;for(int i=0;i<6;i++){float a=float(i)*1.047+.6;oc+=max(alt(p+vec2(cos(a),sin(a))*.022)-z,0.)+.6*max(alt(p+vec2(cos(a),sin(a))*.06)-z,0.);}oc=exp(-oc*4.2);
  vec3 roca=mix(vec3(.018,.044,.092),vec3(.085,.25,.30),smoothstep(.08,.72,hn));
  roca=mix(roca,vec3(.016,.030,.062),smoothstep(.12,.55,pendiente)*.6);
  roca*=(.74+.62*g1.b+.5*g2.b*deta)*(.62+.5*grieta);
@@ -93,7 +85,7 @@ void main(){
   f=mix(f,vec3(.8),rej*.1+rejM*.26);f=mix(f,vec3(.02,.03,.06),iso(hn,.05)*smoothstep(.07,.1,hn)*.6);
   float borde=max(max(-p.x,p.x-1.),max(-p.y,p.y-1.));
   if(uMat<.01&&borde>.0)discard;
-  c=mix(f*(1.-uBarrido*0.+0.),c,uMat);
+  c=mix(f,c,uMat);
  }
  o=vec4(c,1.);}`;
 
@@ -111,6 +103,29 @@ void main(){
  for(int i=0;i<8;i++){vec2 d=p-uReg[i].xy;float d2=dot(d,d);m+=uReg[i].z*exp(-d2/${(2 * SIGMA * SIGMA).toFixed(6)});ce=max(ce,exp(-d2/${(2 * ANCHO_CIMA * ANCHO_CIMA).toFixed(7)}));dom=max(dom,uReg[i].w*exp(-d2/${(2 * (SIGMA * 1.7) ** 2).toFixed(6)}));}
  float r=length(p-.5),l=clamp((r-.7)/.5,0.,1.);l=l*l*(3.-2.*l);
  o=vec4(clamp(${BASE.toFixed(3)}+m+l*(.08+.5*s)+(1.-ce)*s*(.04+.5*min(1.,m*2.)),0.,1.),min(1.,dom),dos,s);}`;
+
+// Mientras nace: los mismos términos, con cada campana a su altura de ese instante; la roca ya está calculada.
+const FS_NACER = `#version 300 es
+precision highp float;precision highp sampler2D;
+in vec2 u;uniform sampler2D uFuente;uniform vec4 uReg[8];uniform vec4 uDom;uniform float uBase,uRoca2,uRoca5,uFondo;out vec4 o;
+void main(){
+ vec4 t=texture(uFuente,u);vec2 p=uDom.xy+u*uDom.w;
+ float m=0.,ce=0.;
+ for(int i=0;i<8;i++){vec2 d=p-uReg[i].xy;float d2=dot(d,d);m+=uReg[i].z*exp(-d2/${(2 * SIGMA * SIGMA).toFixed(6)});ce=max(ce,exp(-d2/${(2 * ANCHO_CIMA * ANCHO_CIMA).toFixed(7)}));}
+ float c=mix(t.b*uRoca2,t.a,uRoca5),r=length(p-.5),l=clamp((r-.7)/.5,0.,1.);l=l*l*(3.-2.*l);
+ o=vec4(clamp(${BASE.toFixed(3)}*uBase+m+l*(.08+.5*t.a)*uFondo+(1.-ce)*c*(.04+.5*min(1.,m*2.)),0.,1.),t.g,t.b,t.a);}`;
+
+// La penumbra, una sola vez y guardada: para cada punto del suelo, cuánta luz le llega y cuánto lo tapan sus vecinos.
+const FS_LUZ = `#version 300 es
+precision highp float;precision highp sampler2D;
+in vec2 u;uniform vec3 uSol;uniform vec4 uDom;uniform float uPasos;out vec4 o;
+${ALTURA}
+void main(){
+ vec2 p=uDom.xy+u*uDom.w;float z=alt(p),e=.0022;
+ vec3 n=normalize(vec3(alt(p-vec2(e,0.))-alt(p+vec2(e,0.)),alt(p-vec2(0.,e))-alt(p+vec2(0.,e)),2.*e));
+ float luz=1.;{vec3 r=vec3(p,z)+vec3(n.xy*.003,.0022);float t=.006;for(int i=0;i<int(uPasos);i++){vec3 s=r+uSol*t;float d=s.z-alt(s.xy);luz=min(luz,7.5*d/t);if(luz<.001)break;t+=clamp(d*.7,.0045,.05);if(t>1.1)break;}luz=clamp(luz,0.,1.);luz=luz*luz*(3.-2.*luz);}
+ float oc=0.;for(int i=0;i<6;i++){float a=float(i)*1.047+.6;vec2 di=vec2(cos(a),sin(a));oc+=max(alt(p+di*.022)-z,0.)+.6*max(alt(p+di*.06)-z,0.);}
+ o=vec4(luz,exp(-oc*4.2),0.,1.);}`;
 
 const VS_PANTALLA = `#version 300 es
 out vec2 u;void main(){vec2 p=vec2(gl_VertexID==1?3.:-1.,gl_VertexID==2?3.:-1.);u=p*.5+.5;gl_Position=vec4(p,.9999,1.);}`;
@@ -264,7 +279,7 @@ function texturaRuido(gl) {
   return t;
 }
 
-export function crearPaisaje(canvas) {
+export function crearPaisaje(canvas, { software = false } = {}) {
   const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, powerPreference: 'high-performance' });
   const hdr = !!gl.getExtension('EXT_color_buffer_float') || !!gl.getExtension('EXT_color_buffer_half_float');
   const pT = programa(gl, VS_TERRENO, FS_TERRENO), pC = programa(gl, VS_PANTALLA, FS_CIELO), pR = programa(gl, VS_CAMINO, FS_CAMINO), pF = programa(gl, VS_FARO, FS_FARO), pB = programa(gl, VS_PANTALLA, FS_BRILLO), pS = programa(gl, VS_PANTALLA, FS_FINAL);
@@ -309,6 +324,58 @@ export function crearPaisaje(canvas) {
     nCamino = n * 2;
   }
   const pH = hdr ? programa(gl, VS_PANTALLA, FS_HORNEAR) : null, fbH = gl.createFramebuffer();
+  const pN = hdr ? programa(gl, VS_PANTALLA, FS_NACER) : null, pL = programa(gl, VS_PANTALLA, FS_LUZ);
+  const N_NACE = 1024, N_NACE_L = 384, N_LUZ = software ? 768 : 1536, N_LUZ_L = 512, PASOS = software ? 14 : 28;
+  let texNaceC = null, texNaceL = null, huellaNace = '', usarNace = false;
+  const nuevaLuz = (N) => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG8, N, N, 0, gl.RG, gl.UNSIGNED_BYTE, null); for (const [k, w] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, w); return t; };
+  let luzC = nuevaLuz(N_LUZ), luzCaux = nuevaLuz(N_LUZ), luzL = nuevaLuz(N_LUZ_L), luzLaux = nuevaLuz(N_LUZ_L);
+  let trozo = -1;
+  const BANDAS = 24;
+  /** La penumbra de un trozo del mapa, sobre la textura de reserva. Sin trozo, todo de golpe. */
+  function pasadaLuz(tex, N, a, b, sol, fila0 = 0, filas = N) {
+    gl.useProgram(pL.p); gl.bindVertexArray(vacioVAO); gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbH); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.viewport(0, 0, N, N); gl.enable(gl.SCISSOR_TEST); gl.scissor(0, fila0, N, filas);
+    gl.uniform3fv(pL.u.uSol, sol); gl.uniform4f(pL.u.uDom, a, a, 0, b - a); gl.uniform1f(pL.u.uPasos, PASOS);
+    t2(pL.u.uCerca, 6, texCerca); t2(pL.u.uLejos, 7, texLejos);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.disable(gl.SCISSOR_TEST); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  function hornearLuz(sol) {
+    pasadaLuz(luzC, N_LUZ, DOMINIO_CERCA[0], DOMINIO_CERCA[1], sol);
+    pasadaLuz(luzL, N_LUZ_L, DOMINIO[0], DOMINIO[1], sol);
+    trozo = -1;
+  }
+  /** La luz se mueve muy despacio: se rehace por bandas, repartida entre muchos cuadros, y se cambia de golpe al acabar. Devuelve true al cambiar. */
+  function avanzarLuz(sol) {
+    if (trozo < 0) trozo = 0;
+    const f0 = Math.floor((trozo * N_LUZ) / BANDAS), f1 = Math.floor(((trozo + 1) * N_LUZ) / BANDAS);
+    pasadaLuz(luzCaux, N_LUZ, DOMINIO_CERCA[0], DOMINIO_CERCA[1], sol, f0, f1 - f0);
+    if (++trozo < BANDAS) return false;
+    pasadaLuz(luzLaux, N_LUZ_L, DOMINIO[0], DOMINIO[1], sol);
+    [luzC, luzCaux] = [luzCaux, luzC]; [luzL, luzLaux] = [luzLaux, luzL];
+    trozo = -1;
+    return true;
+  }
+  /** Mientras nace: la altura de este instante, una vez por cuadro y solo si ha cambiado. Todo lo demás la lee de aquí. */
+  function hornearNace(gu, regs) {
+    if (!pN) return;
+    const k = `${gu.base}|${gu.roca2}|${gu.roca5}|${gu.caja}|${gu.s.join()}`;
+    usarNace = true;
+    if (k === huellaNace) return;
+    huellaNace = k;
+    if (!texNaceC) { texNaceC = gl.createTexture(); prepararTex(texNaceC, N_NACE, null); texNaceL = gl.createTexture(); prepararTex(texNaceL, N_NACE_L, null); }
+    gl.useProgram(pN.p); gl.bindVertexArray(vacioVAO); gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
+    gl.uniform4fv(pN.u['uReg[0]'], regs); gl.uniform1f(pN.u.uBase, gu.base); gl.uniform1f(pN.u.uRoca2, gu.roca2); gl.uniform1f(pN.u.uRoca5, gu.roca5); gl.uniform1f(pN.u.uFondo, gu.caja);
+    const pases = [[texNaceC, N_NACE, DOMINIO_CERCA, texCerca]];
+    if (gu.caja > 0) pases.push([texNaceL, N_NACE_L, DOMINIO, texLejos]);
+    for (const [t, N, [a, b], fuente] of pases) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbH); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      gl.viewport(0, 0, N, N); gl.uniform4f(pN.u.uDom, a, a, 0, b - a); t2(pN.u.uFuente, 5, fuente); gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  const terminarNace = () => { usarNace = false; for (const t of [texNaceC, texNaceL]) if (t) gl.deleteTexture(t); texNaceC = texNaceL = null; huellaNace = ''; };
   const N_CERCA = 1280, N_LEJOS = 512;
   const prepararTex = (t, N, datos) => {
     gl.bindTexture(gl.TEXTURE_2D, t);
@@ -347,45 +414,46 @@ export function crearPaisaje(canvas) {
     if (conProfundidad) { rb = gl.createRenderbuffer(); gl.bindRenderbuffer(gl.RENDERBUFFER, rb); gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, w, h); gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb); }
     return { t, fb, rb, w, h, borrar() { gl.deleteTexture(t); gl.deleteFramebuffer(fb); if (rb) gl.deleteRenderbuffer(rb); } };
   };
-  let esc = null, b1 = null, b2 = null;
+  let esc = null, base = null, b1 = null, b2 = null, baseValida = false;
   /** El lienzo, a los píxeles de la pantalla; la escena, con más: lo que sobra se convierte en nitidez al bajar. */
   function ajustar(cw, ch, w, h) {
     if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
     if (esc && esc.w === w && esc.h === h) return;
-    for (const x of [esc, b1, b2]) x?.borrar();
-    esc = crearDestino(w, h, true); b1 = crearDestino(w >> 2 || 1, h >> 2 || 1, false); b2 = crearDestino(w >> 2 || 1, h >> 2 || 1, false);
+    for (const x of [esc, base, b1, b2]) x?.borrar();
+    baseValida = false;
+    esc = crearDestino(w, h, true); base = crearDestino(w, h, true); b1 = crearDestino(w >> 2 || 1, h >> 2 || 1, false); b2 = crearDestino(w >> 2 || 1, h >> 2 || 1, false);
   }
-  const usarAltura = (P, e) => {
-    t2(P.u.uCerca, 6, texCerca); t2(P.u.uLejos, 7, texLejos);
-    gl.uniform1f(P.u.uSube, e.sube); gl.uniform1f(P.u.uNace, e.nace ? 1 : 0);
-    gl.uniform1f(P.u.uBase, e.nace?.base ?? 1); gl.uniform1f(P.u.uRoca2, e.nace?.roca2 ?? 1); gl.uniform1f(P.u.uRoca5, e.nace?.roca5 ?? 1); gl.uniform1f(P.u.uFondo, e.nace?.caja ?? 1);
-    if (e.regs) gl.uniform4fv(P.u['uReg[0]'], e.regs);
-  };
+  const usarAltura = (P) => { t2(P.u.uCerca, 6, usarNace ? texNaceC : texCerca); t2(P.u.uLejos, 7, usarNace && texNaceL ? texNaceL : texLejos); };
   const t2 = (u, unidad, tex) => { gl.activeTexture(gl.TEXTURE0 + unidad); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(u, unidad); };
 
   /** e: { vp, ojo, sol, sube, t, expo, foco:[x,y,_,fuerza], hecho, aparece, faros:Float32Array(n×6), pasos } */
   function dibujar(e) {
     const { vp, ojo, sol } = e;
+    // el fondo (cielo y terreno) se guarda aparte: si nada lo ha movido, se reutiliza, y solo se redibuja lo que brilla encima
+    if (e.rehacer !== false || !baseValida) {
+      baseValida = true;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, base.fb); gl.viewport(0, 0, base.w, base.h);
+      gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+      gl.depthMask(true); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.disable(gl.DEPTH_TEST); gl.useProgram(pC.p); gl.bindVertexArray(vacioVAO);
+      gl.uniformMatrix4fv(pC.u.uIVP, false, inversa(vp)); gl.uniform3fv(pC.u.uCam, ojo); gl.uniform3fv(pC.u.uSol, sol); gl.uniform1f(pC.u.uT, e.t); gl.uniform1f(pC.u.uCielo, e.nace?.cielo ?? 1); t2(pC.u.uRuido, 1, ruido);
+      if ((e.nace?.cielo ?? 1) > 0) gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.useProgram(pT.p);
+      gl.uniformMatrix4fv(pT.u.uVP, false, vp); gl.uniform3fv(pT.u.uCam, ojo); gl.uniform3fv(pT.u.uSol, sol); gl.uniform1f(pT.u.uT, e.t); gl.uniform4fv(pT.u.uFoco, e.foco);
+      gl.uniform1f(pT.u.uMat, e.nace?.mat ?? 1); gl.uniform1f(pT.u.uCaja, e.nace?.caja ?? 1); gl.uniform1f(pT.u.uBarrido, e.nace ? -0.02 + 1.04 * e.nace.plano : 9);
+      t2(pT.u.uRuido, 1, ruido); t2(pT.u.uLuzC, 2, luzC); t2(pT.u.uLuzL, 3, luzL); usarAltura(pT);
+      gl.bindVertexArray(mallaCerca.vao); gl.uniform4f(pT.u.uMalla, -0.1, -0.1, 1.2, 1.2); gl.uniform1f(pT.u.uEsLejos, 0); gl.drawElements(gl.TRIANGLES, mallaCerca.cuantos, gl.UNSIGNED_INT, 0);
+      if ((e.nace?.caja ?? 1) > 0) { gl.bindVertexArray(mallaLejos.vao); gl.uniform4f(pT.u.uMalla, -1, -1, 3, 3); gl.uniform1f(pT.u.uEsLejos, 1); gl.drawElements(gl.TRIANGLES, mallaLejos.cuantos, gl.UNSIGNED_INT, 0); }
+    }
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, base.fb); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, esc.fb);
+    gl.blitFramebuffer(0, 0, base.w, base.h, 0, 0, esc.w, esc.h, gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
     gl.bindFramebuffer(gl.FRAMEBUFFER, esc.fb); gl.viewport(0, 0, esc.w, esc.h);
-    gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
-    gl.depthMask(true); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    // cielo
-    gl.disable(gl.DEPTH_TEST); gl.useProgram(pC.p); gl.bindVertexArray(vacioVAO);
-    gl.uniformMatrix4fv(pC.u.uIVP, false, inversa(vp)); gl.uniform3fv(pC.u.uCam, ojo); gl.uniform3fv(pC.u.uSol, sol); gl.uniform1f(pC.u.uT, e.t); gl.uniform1f(pC.u.uCielo, e.nace?.cielo ?? 1); t2(pC.u.uRuido, 1, ruido);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    // terreno
-    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.useProgram(pT.p);
-    gl.uniformMatrix4fv(pT.u.uVP, false, vp); gl.uniform3fv(pT.u.uCam, ojo); gl.uniform3fv(pT.u.uSol, sol); gl.uniform1f(pT.u.uT, e.t); gl.uniform4fv(pT.u.uFoco, e.foco);
-    const mat = e.nace?.mat ?? 1;
-    gl.uniform1f(pT.u.uPasos, mat > 0.01 ? e.pasos : 0); gl.uniform1f(pT.u.uMat, mat); gl.uniform1f(pT.u.uCaja, e.nace?.caja ?? 1); gl.uniform1f(pT.u.uBarrido, e.nace ? -0.02 + 1.04 * e.nace.plano : 9);
-    t2(pT.u.uRuido, 1, ruido); usarAltura(pT, e);
-    gl.bindVertexArray(mallaCerca.vao); gl.uniform4f(pT.u.uMalla, -0.1, -0.1, 1.2, 1.2); gl.uniform1f(pT.u.uEsLejos, 0); gl.drawElements(gl.TRIANGLES, mallaCerca.cuantos, gl.UNSIGNED_INT, 0);
-    if ((e.nace?.caja ?? 1) > 0) { gl.bindVertexArray(mallaLejos.vao); gl.uniform4f(pT.u.uMalla, -1, -1, 3, 3); gl.uniform1f(pT.u.uEsLejos, 1); gl.drawElements(gl.TRIANGLES, mallaLejos.cuantos, gl.UNSIGNED_INT, 0); }
+    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);
     // camino: encendido sobre el suelo y, muy tenue, a través de las montañas
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.depthMask(false);
     if (nCamino) {
       gl.useProgram(pR.p); gl.bindVertexArray(vaoR);
-      gl.uniformMatrix4fv(pR.u.uVP, false, vp); gl.uniform1f(pR.u.uZ, 0.0085); gl.uniform1f(pR.u.uT, e.t); gl.uniform1f(pR.u.uHecho, e.hecho); gl.uniform1f(pR.u.uAparece, e.aparece); gl.uniform2fv(pR.u.uCometa, e.cometa ?? [0, 0]); usarAltura(pR, e);
+      gl.uniformMatrix4fv(pR.u.uVP, false, vp); gl.uniform1f(pR.u.uZ, 0.0085); gl.uniform1f(pR.u.uT, e.t); gl.uniform1f(pR.u.uHecho, e.hecho); gl.uniform1f(pR.u.uAparece, e.aparece); gl.uniform2fv(pR.u.uCometa, e.cometa ?? [0, 0]); usarAltura(pR);
       gl.uniform1f(pR.u.uFuerza, 1); gl.drawArrays(gl.TRIANGLE_STRIP, 0, nCamino);
       gl.disable(gl.DEPTH_TEST); gl.uniform1f(pR.u.uFuerza, 0.1); gl.drawArrays(gl.TRIANGLE_STRIP, 0, nCamino); gl.enable(gl.DEPTH_TEST);
     }
@@ -409,5 +477,5 @@ export function crearPaisaje(canvas) {
     gl.useProgram(pS.p); t2(pS.u.uTex, 0, esc.t); t2(pS.u.uBri, 1, b2.t); gl.uniform1f(pS.u.uExpo, e.expo); gl.uniform1f(pS.u.uT, e.t); gl.uniform2f(pS.u.uPx, 1 / canvas.width, 1 / canvas.height);
     gl.disable(gl.DEPTH_TEST); gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
-  return { gl, ajustar, dibujar, fijarCampo, fijarCamino, leerCampo };
+  return { gl, ajustar, dibujar, fijarCampo, fijarCamino, leerCampo, hornearLuz, avanzarLuz, hornearNace, terminarNace };
 }

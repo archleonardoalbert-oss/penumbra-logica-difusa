@@ -141,6 +141,7 @@ t('final: el grado explica su fórmula', async ({ pg, ir }) => {
 });
 t('final: desde el mapa se llega a tu péndulo, con tus piezas', async ({ pg, ir }) => {
   await pg.addInitScript(() => localStorage.setItem('penumbra-taller-v1', JSON.stringify({ anchoAngulo: 22, normaY: 'mínimo', fuerzaMaxima: 12 })));
+  await pg.emulateMedia({ reducedMotion: 'reduce' });
   await ir('index.html');
   await pg.waitForSelector('.tu-pendulo');
   const txt = await pg.textContent('.tu-pendulo');

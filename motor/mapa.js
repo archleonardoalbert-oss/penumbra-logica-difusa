@@ -87,16 +87,19 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   // tres modos: el viaje entre capítulos, el mapa que nace de su fórmula, y el mapa normal
   const idViaje = parametrosUrl.get('viaje'), viaje = idViaje ? buscarConcepto(idViaje, catalogo) : null;
   if (viaje && reducido) { location.replace(`concepto.html?c=${idViaje}`); return null; }
-  const pais = crearPaisaje(canvas);
+  // si el navegador dibuja por CPU, no hay GPU que aproveche: menos resolución y nada de movimiento en reposo
+  const software = (() => { const c = document.createElement('canvas').getContext('webgl2'), d = c?.getExtension('WEBGL_debug_renderer_info'); return d ? /swiftshader|llvmpipe|software/i.test(c.getParameter(d.UNMASKED_RENDERER_WEBGL)) : false; })();
+  const pais = crearPaisaje(canvas, { software });
   let modo = viaje ? 'viaje' : (!reducido && (parametrosUrl.has('nacer') || !haNacido())) ? 'nace' : 'normal';
   let t = reducido ? 9 : 0, enfocada = null, fijada = null, mapaSucio = true;
   const INICIO = { yaw: -0.22, pitch: 0.39 };
   let camara = { ...INICIO }, zoom = 1;
   const camaraValida = (c) => ({ yaw: Math.max(-0.95, Math.min(0.55, c.yaw)), pitch: Math.max(0.2, Math.min(1.05, c.pitch)) });
 
-  const grados = () => catalogo.map((r) => progreso.gradoRegion(r.id, catalogo));
-  const sube = () => 1;
-  const cimaDe = (r, g, s = sube()) => [r.posicion[0], r.posicion[1], alturaMapa(r.posicion[0], r.posicion[1], g, catalogo, s) * ESCZ];
+  // lo que solo cambia con el progreso se calcula una vez, no en cada cuadro
+  let gradosC = null, cimasC = null, sigC;
+  const grados = () => (gradosC ??= catalogo.map((r) => progreso.gradoRegion(r.id, catalogo)));
+  const cimaDe = (r, g) => { cimasC ??= new Map(); if (!cimasC.has(r.id)) cimasC.set(r.id, [r.posicion[0], r.posicion[1], alturaMapa(r.posicion[0], r.posicion[1], g, catalogo, 1) * ESCZ]); return cimasC.get(r.id); };
 
   /** El camino: pasa por todas las cimas, en orden, y por donde va el curso se enciende. */
   const puntosCamino = () => {
@@ -115,8 +118,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   pais.fijarCamino(todosPuntos, 0.0058);
   let huellaCampo = '';
   const regsDe = (g, cada = () => 1) => new Float32Array(catalogo.flatMap((r, i) => [r.posicion[0], r.posicion[1], AMP(g[i]) * cada(i), g[i]]));
-  const fijarCampo = () => { const g = grados(), k = g.join(); if (k !== huellaCampo) { huellaCampo = k; pais.fijarCampo(regsDe(g), catalogo, g); } };
-  fijarCampo();
+  const fijarCampo = () => { const g = grados(), k = g.join(); if (k !== huellaCampo) { huellaCampo = k; pais.fijarCampo(regsDe(g), catalogo, g); pais.hornearLuz(sol()); } };
 
   // --- rótulos: texto de verdad, nítido, y que se puede usar con teclado
   const rotulos = catalogo.map((r) => {
@@ -132,13 +134,13 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   const objetivoVista = () => (fijada ? vistaDe(fijada) : vistaGeneral());
   let vista = objetivoVista(), vuelo = null, vpActual = null, ojoActual = null, huellaRotulos = '';
 
-  const aspecto = () => (canvas.clientWidth || 1) / (canvas.clientHeight || 1);
-  function calcularCamara() {
-    const v = vuelo ? vuelo(t) : vista, c = camaraValida(camara);
-    const { vp, ojo } = camaraMapa({ ...c, ...v, aspecto: aspecto() });
-    vpActual = vp; ojoActual = ojo;
-  }
-  const centros = () => { const g = grados(), W = canvas.clientWidth, H = canvas.clientHeight; return catalogo.map((r) => { const [x, y] = proyectar(vpActual, cimaDe(r, g)); return [x * W, y * H]; }); };
+  let centrosC = null, vpDeCentros = null, wDeCentros = 0;
+  const centros = () => {
+    const W = canvas.clientWidth, H = canvas.clientHeight;
+    if (centrosC && vpDeCentros === vpActual && wDeCentros === W) return centrosC;
+    const g = grados(); vpDeCentros = vpActual; wDeCentros = W;
+    return (centrosC = catalogo.map((r) => { const [x, y] = proyectar(vpActual, cimaDe(r, g)); return [x * W, y * H]; }));
+  };
 
   function colocarRotulos() {
     const cs = centros(), aparece = modo === 'nace' ? guionNacer(t).rotulos : modo === 'viaje' ? 0 : ev(t, 0.35, 1.1), activos = catalogo.map((r) => enfocada === r.id || fijada === r.id), clave = cs.flat().map((v) => v.toFixed(1)).join() + activos.join() + aparece.toFixed(2);
@@ -152,7 +154,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     });
   }
 
-  const sig = () => siguienteConcepto(catalogo, progreso);
+  const sig = () => { if (sigC === undefined) sigC = siguienteConcepto(catalogo, progreso); return sigC; };
   function datosFaros() {
     const g = grados(), s = sig(), d = new Float32Array(catalogo.length * 6), aparece = modo === 'nace' ? guionNacer(t).camino : 1, llegaA = modo === 'viaje' ? guionViaje(t).llega : 0;
     catalogo.forEach((r, i) => d.set([...cimaDe(r, g), g[i], (modo === 'viaje' ? (r.id === viaje.region.id ? llegaA * 1.6 : 0) : ((enfocada === r.id || fijada === r.id) ? 1 : 0) * aparece), (modo === 'viaje' ? 0 : s?.region.id === r.id ? 1 : 0) * aparece], i * 6));
@@ -162,7 +164,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   const hecho = () => { const s = sig(), i = s ? catalogo.findIndex((r) => r.id === s.region.id) : catalogo.length - 1; return i / (catalogo.length - 1); };
 
   // nitidez: la escena se dibuja con muchos más píxeles que la pantalla, hasta donde la máquina aguante
-  let pasos = 26, escala = Math.max(1, Math.min(2, Math.sqrt(5.2e6 / Math.max(1, innerWidth * innerHeight * (devicePixelRatio || 1) ** 2))));
+  let escala = software ? 1 : Math.max(1, Math.min(2, Math.sqrt(5.2e6 / Math.max(1, innerWidth * innerHeight * (devicePixelRatio || 1) ** 2))));
   const CAM_PLANO = { yaw: -0.72, pitch: 0.78, dist: 2.25, objetivo: [0.5, 0.5, 0.06], corrimiento: 0, alzado: 0 };
   const mezclaCam = (a, b, k) => ({ yaw: mix(a.yaw, b.yaw, k), pitch: mix(a.pitch, b.pitch, k), dist: mix(a.dist, b.dist, k), objetivo: a.objetivo.map((v, i) => mix(v, b.objetivo[i], k)), corrimiento: mix(a.corrimiento, b.corrimiento, k), alzado: mix(a.alzado, b.alzado, k) });
   function camaraActual() {
@@ -174,16 +176,22 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     return { ...camaraValida(camara), ...(vuelo ? vuelo(t) : vista) };
   }
   /** La luz de la luna: se mueve tan despacio que la penumbra respira. */
-  const sol = () => { const az = 1.1 + (reducido ? 0 : 0.05 * Math.sin(t / 26)), el = 0.26, c = Math.cos(el); return [Math.cos(az) * c, Math.sin(az) * c, Math.sin(el)]; };
-  function pintar() {
+  function sol() { const az = 1.1 + (reducido ? 0 : 0.05 * Math.sin(t / 26)), el = 0.26, c = Math.cos(el); return [Math.cos(az) * c, Math.sin(az) * c, Math.sin(el)]; }
+  fijarCampo();
+  let solActual = sol(), huellaCamara = '';
+  function pintar(rehacer = true) {
     const W = canvas.clientWidth || 1, H = canvas.clientHeight || 1, dpr = devicePixelRatio || 1;
     pais.ajustar(Math.round(W * dpr), Math.round(H * dpr), Math.max(2, Math.round(W * dpr * escala)), Math.max(2, Math.round(H * dpr * escala)));
-    const { vp, ojo } = camaraMapa({ ...camaraActual(), aspecto: W / H });
-    vpActual = vp; ojoActual = ojo;
-    const foco = enfocada ?? fijada, rf = catalogo.find((r) => r.id === foco), g = grados(), comun = { vp, ojo, sol: sol(), sube: 1, t, pasos, faros: datosFaros() };
+    if (rehacer) {
+      const { vp, ojo } = camaraMapa({ ...camaraActual(), aspecto: W / H });
+      vpActual = vp; ojoActual = ojo;
+    }
+    const vp = vpActual, ojo = ojoActual;
+    const foco = enfocada ?? fijada, rf = catalogo.find((r) => r.id === foco), g = grados(), comun = { vp, ojo, sol: solActual, t, rehacer, faros: datosFaros() };
     if (modo === 'nace') {
       const gu = guionNacer(t);
-      pais.dibujar({ ...comun, expo: 1, foco: [0, 0, 0, 0], hecho: hecho(), aparece: gu.camino, nace: gu, regs: regsDe(g, (i) => gu.s[i]) });
+      pais.hornearNace(gu, regsDe(g, (i) => gu.s[i]));
+      pais.dibujar({ ...comun, expo: 1, foco: [0, 0, 0, 0], hecho: hecho(), aparece: gu.camino, nace: gu });
       pintarNacimiento(gu);
       if (t >= DURA_NACER) terminarNacimiento();
     } else if (modo === 'viaje') {
@@ -252,6 +260,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   function terminarNacimiento() {
     marcarNacido();
     modo = 'normal';
+    pais.terminarNace();
     t = Math.max(t, 2);
     capaNacer.remove();
     pagina.classList.remove('naciendo');
@@ -369,10 +378,13 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   addEventListener('keydown', (ev2) => { if (ev2.key === 'Escape' && fijada) abrir(null); });
   addEventListener('resize', () => { mapaSucio = true; });
 
-  alCambiar = () => { fijarCampo(); pintarPanel(); mapaSucio = true; };
+  alCambiar = () => { gradosC = null; cimasC = null; sigC = undefined; fijarCampo(); pintarPanel(); mapaSucio = true; };
 
   // --- el bucle: a 30 cuadros la luz se mueve; si la máquina no da para más, baja la resolución antes que la fluidez
-  let ult = performance.now(), ultCuadro = 0, activo = true, lentos = 0, congelado = false;
+  const DORMIR = 25000;
+  let ult = performance.now(), ultCuadro = 0, ultFondo = 0, ultLuz = 0, ultGesto = performance.now(), activo = true, lentos = 0, congelado = false;
+  for (const ev2 of ['pointermove', 'pointerdown', 'keydown', 'wheel']) addEventListener(ev2, () => { ultGesto = performance.now(); }, { passive: true });
+  document.addEventListener('visibilitychange', () => { ultGesto = performance.now(); });
   const io = new IntersectionObserver((e2) => { activo = e2[0].isIntersecting; });
   io.observe(pagina);
   const cuadro = (ms) => {
@@ -386,17 +398,28 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     vista.dist += (a.dist - vista.dist) * k; vista.corrimiento += (a.corrimiento - vista.corrimiento) * k; vista.alzado += (a.alzado - vista.alzado) * k;
     vista.objetivo = vista.objetivo.map((v, i) => { const d = a.objetivo[i] - v; if (Math.abs(d) > 2e-4) mueve = true; return v + d * k; });
     if (Math.abs(a.dist - vista.dist) > 1e-3) mueve = true;
-    const animando = t < 1.2 || vuelo || mueve || modo !== 'normal';
-    if (reducido && !animando && !mapaSucio) return;
-    if (!animando && !mapaSucio && ms - ultCuadro < 32) return;
-    if (ultCuadro && !reducido) {
-      const gasto = ms - ultCuadro;
-      if (gasto > 48) lentos++; else lentos = Math.max(0, lentos - 1);
-      if (lentos > 10) { lentos = 0; if (escala > 1) escala = Math.max(1, escala * 0.84); else if (pasos > 12) pasos -= 4; else escala = Math.max(0.65, escala * 0.86); }
+    const animando = t < 1.2 || vuelo || mueve || modo !== 'normal' || mapaSucio;
+    if (animando) {
+      if (ultCuadro && !reducido) {
+        if (ms - ultCuadro > 42) lentos++; else lentos = Math.max(0, lentos - 1);
+        if (lentos > 14) { lentos = 0; escala = escala > 1 ? Math.max(1, escala * 0.86) : Math.max(0.7, escala * 0.9); }
+      }
+      ultCuadro = ms; ultFondo = ms;
+      mapaSucio = false;
+      pintar(true);
+      return;
     }
+    // en reposo: solo lo que brilla encima, 30 veces por segundo, y el fondo muy de vez en cuando
+    if (reducido || software) return;
+    if (ms - ultGesto > DORMIR) return; // nadie mira: no se dibuja nada hasta el próximo gesto
+    if (ms - ultCuadro < 32) return;
     ultCuadro = ms;
-    mapaSucio = false;
-    pintar();
+    if (ms - ultLuz > 4000) {
+      if (pais.avanzarLuz(sol())) { ultLuz = ms; solActual = sol(); ultFondo = 0; }
+    }
+    const fondo = ms - ultFondo > 140;
+    if (fondo) ultFondo = ms;
+    pintar(fondo);
   };
   pintarPanel();
   if (modo === 'nace') {
