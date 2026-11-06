@@ -13,6 +13,7 @@ const esc = (x, n) => Math.floor(g(x) * n) / n;
 export default {
   id: '1-9-representacion',
   titulo: 'El teorema de representación',
+  puente: 'Los cortes cuentan toda la historia. Con ellos vas a definir, sin dibujos, qué significa tener una sola cima.',
   pregunta: 'Los cortes son conjuntos nítidos. ¿Bastan para reconstruir el conjunto difuso entero, sin perder nada? Apila unos sobre otros y mira.',
   escena: {
     id: 'representacion', formato: 'plano', W: 1100, H: 540,

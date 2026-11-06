@@ -12,6 +12,7 @@ const DOM = [0, 10];
 export default {
   id: '1-7-inclusion',
   titulo: 'Inclusión y cardinalidad',
+  puente: 'Has comparado conjuntos enteros. Ahora, la idea más potente de esta región: cortar un conjunto difuso para convertirlo en clásicos.',
   pregunta: 'Sin borde, ¿qué significa que un conjunto esté dentro de otro? ¿Y cuántos elementos tiene algo que se tiene «un poco»?',
   escena: {
     id: 'inclusion', formato: 'plano', W: 1100, H: 540,

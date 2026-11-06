@@ -9,7 +9,7 @@ const mates = (s) => [...String(s).matchAll(/\$\$?([^$]+)\$\$?/g)].map((m) => m[
 
 function textosDe(c) {
   const t = [c.pregunta, c.manipulacion, ...c.escena.pasos.map((p) => p.texto)];
-  for (const b of c.rigor) { t.push(b.tex); for (const p of b.pasos ?? []) t.push(p.texto, p.porque); }
+  for (const b of c.entender ?? c.rigor) { t.push(b.tex, b.texto, b.lee, b.plan, b.intro, b.todo, b.cierre); for (const p of b.pasos ?? []) t.push(p.texto, p.porque); for (const p of b.piezas ?? []) t.push(p.tex, p.dice); }
   for (const x of c.tecnicas) t.push(x.texto);
   for (const r of c.retos) {
     t.push(r.enunciado, r.explicacion, ...(r.pistas ?? []), ...(r.opciones ?? []));
@@ -24,7 +24,7 @@ for (const ficha of listos) {
     assert.equal(c.id, ficha.id);
     assert.equal(c.titulo, ficha.titulo);
     assert.deepEqual(c.retos.map((r) => r.id), ficha.retos.map((r) => r.id));
-    assert.ok(c.pregunta && c.manipulacion && c.rigor.length >= 2, 'faltan secciones');
+    assert.ok(c.pregunta && c.manipulacion && (c.entender ?? c.rigor).length >= 2, 'faltan secciones');
     assert.ok(c.tecnicas.length >= 1, 'sin técnicas');
     assert.ok(c.referencias.length >= 1, 'sin referencias');
     assert.ok(c.retos.some((r) => ['manipular', 'calcular'].includes(r.tipo)), 'hace falta un reto de manipular o calcular');
@@ -68,6 +68,23 @@ for (const ficha of listos) {
     }
   });
 }
+
+test('lo reescrito no suelta jerga sin explicar, ni empieza por lo formal', async () => {
+  const JERGA = /supremo|ínfimo|norma\b|cuasi|vectorial|inducción|indicadora|parte entera|cutworthy/i;
+  for (const ficha of listos) {
+    const c = (await ficha.carga()).default;
+    if (!c.entender) continue;
+    assert.equal(c.entender[0].tipo, 'idea', `${c.id}: debe empezar por una idea en palabras`);
+    const iFormal = c.entender.findIndex((b) => b.tipo === 'formal');
+    assert.ok(c.entender.slice(0, iFormal).some((b) => b.tipo === 'ejemplo'), `${c.id}: antes de lo formal, un ejemplo`);
+    assert.ok(c.entender.slice(0, iFormal).some((b) => b.tipo === 'simbolos'), `${c.id}: antes de lo formal, leer los símbolos`);
+    for (const b of c.entender) for (const t of [b.texto, b.lee, b.plan, b.intro, b.tex].filter(Boolean)) {
+      if (b.titulo?.startsWith('Para curiosos')) continue;
+      const limpio = t.replace(/\[\[[^\]]+\]\]/g, '');
+      assert.ok(!JERGA.test(limpio), `${c.id}: jerga sin explicar en «${t.slice(0, 70)}»`);
+    }
+  }
+});
 
 test('la región 1 está lista entera', () => {
   assert.ok(CATALOGO[0].conceptos.every((c) => c.estado === 'listo'));

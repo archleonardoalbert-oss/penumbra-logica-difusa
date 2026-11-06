@@ -10,6 +10,7 @@ const mb = (p, k) => 1 / (1 + (((p[0] - NUBE.x) ** 2 + (p[1] - NUBE.y) ** 2) / (
 export default {
   id: '1-3-conjunto-difuso',
   titulo: 'Qué es un conjunto difuso',
+  puente: 'Ya sabes qué es. ¿Sirve para algo fuera de la pizarra? Vamos a ver dónde se usa de verdad.',
   pregunta: 'Si un conjunto puede tener bordes borrosos, ¿qué es exactamente un conjunto? Y lo que escribimos: ¿cómo se escribe «un poco dentro»?',
   escena: {
     id: 'conjunto-difuso', formato: 'niebla', W: 1100, H: 600,

@@ -18,6 +18,7 @@ const fuera = 0.08;
 export default {
   id: '1-6-anatomia',
   titulo: 'Soporte, núcleo y altura',
+  puente: 'Con las piezas de un conjunto ya podemos compararlos: ¿cuándo uno está dentro de otro? ¿Y cuánto mide?',
   pregunta: 'Si un conjunto no tiene borde, ¿dónde empieza y dónde acaba? ¿Quién está seguro dentro? ¿Y si nadie pertenece del todo?',
   escena: {
     id: 'anatomia', formato: 'plano', W: 1100, H: 560,
@@ -71,15 +72,25 @@ export default {
     },
   },
   manipulacion: '<ul><li>Arrastra por el eje los puntos <em>a, b, c, d</em> para moldear el trapecio: las piezas se recalculan solas.</li><li>Baja la «altura» por debajo de 1: el conjunto deja de ser normal.</li></ul>',
-  rigor: [
-    { tipo: 'DEF', titulo: 'Soporte y núcleo', tex: R`$\operatorname{sop}(A) = \{x \in X : \mu_A(x) > 0\}$ y $\operatorname{nuc}(A) = \{x \in X : \mu_A(x) = 1\}$. Son conjuntos <em>clásicos</em>: de un difuso extraemos información nítida.` },
-    { tipo: 'DEF', titulo: 'Altura y normalidad', tex: R`$h(A) = \sup_{x \in X} \mu_A(x)$. El conjunto $A$ es <em>normal</em> si existe $x$ con $\mu_A(x) = 1$, y <em>subnormal</em> en otro caso.` },
-    { tipo: 'PROP', titulo: 'El núcleo está en el soporte', tex: R`Siempre $\operatorname{nuc}(A) \subseteq \operatorname{sop}(A)$.`, pasos: [
-      { texto: R`Sea $x \in \operatorname{nuc}(A)$. Entonces $\mu_A(x) = 1$.`, porque: 'Definición de núcleo.' },
-      { texto: R`Como $1 > 0$, se tiene $\mu_A(x) > 0$, es decir, $x \in \operatorname{sop}(A)$.`, porque: 'Definición de soporte.' },
+  entender: [
+    { tipo: 'idea', texto: 'Un conjunto difuso no tiene un borde, pero sí se le pueden preguntar tres cosas muy concretas. Las tres son preguntas de andar por casa.' },
+    { tipo: 'ejemplo', texto: 'Imagina «buena temperatura para un baño», medida en cinco temperaturas:', tabla: [['Temperatura', '20', '30', '37', '42', '50'], ['Grado', '0', '0,4', '1', '0,4', '0']] },
+    { tipo: 'idea', texto: 'Primera pregunta: <b>¿quién pertenece aunque sea un poco?</b> Aquí: 30, 37 y 42. Eso se llama <b style="color:#58c4dd;font-weight:400">soporte</b>. Es el territorio del conjunto: fuera de él, grado 0.' },
+    { tipo: 'idea', texto: 'Segunda pregunta: <b>¿quién pertenece del todo?</b> Aquí: solo 37. Eso se llama <b style="color:#f4d345;font-weight:400">núcleo</b>. Es el corazón del conjunto.' },
+    { tipo: 'idea', texto: 'Tercera pregunta: <b>¿cuánto se llega a pertenecer, como mucho?</b> Aquí: 1. Eso se llama <b style="color:#fc6282;font-weight:400">altura</b>. Si es 1, el conjunto se llama <em>normal</em>; si nadie llega a 1, es [[subnormal]].' },
+    { tipo: 'simbolos', intro: 'Ahora, la misma primera pregunta como se escribe en los libros. Primero las piezas.', piezas: [
+      { tex: R`\{\ \dots\ \}`, dice: 'Las llaves hacen un [[conjunto]]: «el grupo de…».' },
+      { tex: R`x \in X`, dice: '$x$ es una cosa cualquiera de nuestro [[universo]] $X$.' },
+      { tex: R`:`, dice: 'Los dos puntos se leen «tales que».' },
+      { tex: R`\mu_A(x) > 0`, dice: 'Su grado en $A$ es mayor que 0.' },
+    ], todo: R`\operatorname{sop}(A) = \{x \in X : \mu_A(x) > 0\}`, lee: '«El soporte de $A$ es el grupo de los $x$ tales que su grado es mayor que 0». Es la primera pregunta, sin cambiar nada.' },
+    { tipo: 'formal', titulo: 'Las tres piezas', tex: R`$\operatorname{sop}(A) = \{x \in X : \mu_A(x) > 0\}$<br>$\operatorname{nuc}(A) = \{x \in X : \mu_A(x) = 1\}$<br>$h(A) = \sup_{x \in X} \mu_A(x)$`, lee: 'La última usa una palabra nueva: el [[supremo]]. Piensa en él como «el mayor grado»; abajo verás por qué no se dice simplemente máximo.' },
+    { tipo: 'nota', titulo: 'Fíjate', texto: 'Soporte y núcleo son conjuntos [[clásicos|clasico]]: cada cosa está o no está. De algo difuso acabamos de sacar información nítida. Volveremos a esta idea.' },
+    { tipo: 'demo', titulo: 'Quien está en el núcleo, está en el soporte', plan: 'Parece obvio, y lo es: quien pertenece del todo, pertenece un poco. Es un buen primer ejemplo de [[demostración]], porque se ve cómo se usa cada definición.', tex: R`$\operatorname{nuc}(A) \subseteq \operatorname{sop}(A)$. El símbolo $\subseteq$ se lee «está dentro de».`, pasos: [
+      { texto: R`Toma cualquier $x$ del núcleo. Por lo que significa «núcleo», $\mu_A(x) = 1$.`, porque: 'Solo se ha aplicado la definición de núcleo.' },
+      { texto: R`Como $1 > 0$, se cumple $\mu_A(x) > 0$. Eso es justo lo que pide el soporte, así que $x$ está en el soporte.`, porque: 'Definición de soporte. Como $x$ era cualquiera, vale para todo el núcleo.' },
     ] },
-    { tipo: 'NOTA', titulo: 'Normal no es lo mismo que altura 1', tex: R`Si $A$ es normal, $h(A) = 1$. Lo contrario falla: con $X = (0, 1)$ y $\mu_A(x) = x$, el supremo es $1$ pero ningún punto lo alcanza. Por eso la definición de normal exige un punto, y por eso aquí se escribe $\sup$ y no $\max$. En un universo finito, sí son equivalentes.` },
-    { tipo: 'DEF', titulo: 'Puntos de cruce', tex: R`Son los $x$ con $\mu_A(x) = 0{,}5$. Un conjunto clásico no tiene ninguno.` },
+    { tipo: 'nota', titulo: 'Para curiosos: por qué «supremo» y no «máximo»', texto: 'Imagina los números entre 0 y 1, sin incluir el 1, con grado igual a sí mismos: 0,9; 0,99; 0,999… Los grados se acercan a 1 todo lo que quieras, y nadie lo alcanza. No hay un mayor grado, pero sí un techo: el 1. Por eso la altura es 1, aunque el conjunto no sea normal. Con un número finito de cosas, esto no pasa.' },
   ],
   tecnicas: [
     { titulo: 'Supremo frente a máximo', texto: 'Antes de escribir «el máximo», pregúntate si se alcanza. Un contraejemplo en un intervalo abierto suele resolver la duda.' },

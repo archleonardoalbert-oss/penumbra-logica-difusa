@@ -1,14 +1,48 @@
 import { t, afirmar } from '../banco.mjs';
 
-const abrirDemo = async (ir, pg) => { await ir('tests/paginas/concepto.html'); await pg.waitForFunction(() => window.listo); };
+const abrirDemo = async (ir, pg, etapa = 'demuestra') => { await ir(`tests/paginas/concepto.html#${etapa}`); await pg.waitForFunction(() => window.listo); };
 const grado = (pg) => pg.evaluate(() => +document.querySelector('.grado').dataset.valor);
 
-t('concepto: los 5 pasos aparecen en su orden', async ({ pg, ir }) => {
-  await abrirDemo(ir, pg);
-  const orden = await pg.evaluate(() => ['pregunta', 'animacion', 'manipulacion', 'rigor', 'retos'].map((i) => document.getElementById(i).getBoundingClientRect().top + scrollY));
-  for (let i = 0; i + 1 < orden.length; i++) afirmar(orden[i] < orden[i + 1], `orden ${orden}`);
-  afirmar(await pg.locator('#rigor .katex').count() > 0, 'el rigor no renderiza KaTeX');
-  afirmar(await pg.locator('.paso-texto .katex').count() > 0, 'los pasos no renderizan KaTeX');
+t('concepto: se recorre por etapas, una cada vez, y el botón dice qué sigue', async ({ pg, ir }) => {
+  await abrirDemo(ir, pg, 'pregunta');
+  afirmar(await pg.locator('#pregunta').isVisible() && !(await pg.locator('#animacion').isVisible()), 'debe verse solo la pregunta');
+  afirmar((await pg.textContent('.pie-etapa .boton-seguir')).includes('Vamos a verlo'), 'botón de la pregunta');
+  await pg.click('.pie-etapa .boton-seguir');
+  afirmar(await pg.locator('#animacion').isVisible() && !(await pg.locator('#pregunta').isVisible()), 'no pasó a Míralo');
+  afirmar((await pg.textContent('.pie-etapa .boton-seguir')).includes('Siguiente paso'), 'dentro de la animación, avanza pasos');
+  await pg.click('.pie-etapa .boton-seguir');
+  afirmar((await pg.textContent('.pie-etapa .boton-seguir')).includes('tócalo'), 'al acabar los pasos, invita a tocar');
+  await pg.click('.pie-etapa .boton-seguir');
+  afirmar(await pg.locator('#manipulacion').isVisible() && await pg.locator('#manipulacion canvas').count() > 0, 'la escena debe seguir en Tócalo');
+});
+
+t('concepto: Entiéndelo aparece poco a poco, nunca de golpe', async ({ pg, ir }) => {
+  await abrirDemo(ir, pg, 'entiende');
+  const antes = await pg.locator('.lectura-guiada > *').count();
+  afirmar(antes === 1, `de entrada solo una cosa, hay ${antes}`);
+  await pg.click('.pie-etapa .boton-seguir');
+  afirmar(await pg.locator('.lectura-guiada > *').count() === 2, 'cada Seguir añade una');
+  afirmar(await pg.locator('.lectura-guiada .katex').count() > 0, 'sin KaTeX');
+});
+
+t('concepto: la última etapa dice cuál es la siguiente parada y por qué', async ({ pg, ir }) => {
+  await ir('concepto.html?c=1-1-quien-es-alto#llegada');
+  await pg.waitForSelector('#llegada .boton-seguir');
+  const txt = await pg.textContent('#llegada');
+  afirmar(txt.includes('montón'), 'sin puente');
+  afirmar(await pg.locator('#llegada a[href="concepto.html?c=1-2-monton"]').count() === 1, 'sin enlace');
+});
+
+t('concepto: una palabra técnica se explica al pulsarla, y Esc la cierra', async ({ pg, ir }) => {
+  await ir('concepto.html?c=1-1-quien-es-alto#entiende');
+  await pg.waitForSelector('.lectura-guiada');
+  await pg.evaluate(async () => { const m = await import('/motor/concepto.js'); void m; });
+  for (let i = 0; i < 6; i++) await pg.click('.pie-etapa .boton-seguir');
+  await pg.click('.termino >> nth=0');
+  await pg.waitForSelector('.glosario-tarjeta', { state: 'visible' });
+  afirmar((await pg.textContent('.glosario-tarjeta')).includes('Por ejemplo'), 'sin ejemplo');
+  await pg.keyboard.press('Escape');
+  await pg.waitForSelector('.glosario-tarjeta', { state: 'hidden' });
 });
 
 t('concepto: resolver retos sube el grado, y la nota se conserva al recargar', async ({ pg, ir }) => {
@@ -48,10 +82,11 @@ t('concepto: demostración autoevaluada, tras ver la solución', async ({ pg, ir
 
 t('concepto: la demostración de valientes se esconde y se abre al saltar la cinemática', async ({ pg, ir }) => {
   await abrirDemo(ir, pg);
-  afirmar(!(await pg.locator('.razonamiento >> text=Paso').first().isVisible()), 'visible de entrada');
+  await pg.evaluate(() => { pagina.irA(3); pagina.leerTodo(); });
+  afirmar(!(await pg.locator('.lectura-guiada .razonamiento').first().isVisible()), 'visible de entrada');
   await pg.click('.boton-valiente');
   await pg.keyboard.press('Escape');
-  await pg.waitForSelector('.bloque .razonamiento', { state: 'visible' });
+  await pg.waitForSelector('.lectura-guiada .razonamiento', { state: 'visible' });
 });
 
 t('concepto: id inexistente da un mensaje con vuelta al mapa', async ({ pg, ir }) => {
@@ -78,7 +113,8 @@ t('concepto: sin WebGL2 hay aviso y se lee el resto', async ({ pg, ir }) => {
   });
   await abrirDemo(ir, pg);
   await pg.waitForSelector('.aviso-sin-gl');
-  afirmar(await pg.locator('#rigor .bloque').count() === 2, 'sin rigor');
+  await pg.evaluate(() => { pagina.irA(3); pagina.leerTodo(); pagina.irA(4); });
+  afirmar(await pg.locator('#rigor .formal').count() >= 1, 'sin rigor');
   await pg.fill('#reto-c input', '0.75');
   await pg.click('#reto-c >> text=Comprobar');
   afirmar(await grado(pg) === 0.25, 'el reto de cálculo debe funcionar');

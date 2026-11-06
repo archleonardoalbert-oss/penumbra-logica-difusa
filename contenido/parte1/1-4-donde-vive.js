@@ -10,6 +10,7 @@ const velocidad = (T, baja, alta) => { const a = templado(T), b = caliente(T); r
 export default {
   id: '1-4-donde-vive',
   titulo: 'Dónde vive la lógica difusa',
+  puente: 'Quizá ya te lo has preguntado: un número de 0 a 1… ¿no es una probabilidad? No lo es, y la diferencia importa.',
   pregunta: 'Un termostato solo sabe encender y apagar. Tú le dirías «si hace calor, más fuerte». ¿Se le puede enseñar a una máquina a entender eso?',
   escena: {
     id: 'ventilador', formato: 'plano', W: 1100, H: 540,

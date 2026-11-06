@@ -59,3 +59,17 @@ t('mapa: sin WebGL2 hay una lista normal', async ({ pg, ir }) => {
   afirmar(await pg.locator('.mapa-lista a[href="concepto.html?c=1-8-cortes-alfa"]').count() === 1, 'sin enlaces');
   afirmar(await pg.locator('.mapa-lista h2').count() === 8, 'faltan regiones');
 });
+
+t('mapa: de entrada dice cuál es tu siguiente parada, y lleva a ella', async ({ pg, ir }) => {
+  await abrir(ir, pg);
+  const txt = await pg.textContent('.mapa-panel');
+  afirmar(txt.includes('Tu siguiente parada') && txt.includes('¿Quién es alto?'), txt);
+  await pg.click('.mapa-panel .boton-seguir');
+  await pg.waitForURL(/c=1-1-quien-es-alto/);
+});
+
+t('mapa: dominado un concepto, la parada pasa a la siguiente', async ({ pg, ir }) => {
+  await pg.addInitScript(() => localStorage.setItem('penumbra-progreso-v1', JSON.stringify({ '1-1-quien-es-alto': { borrosidad: 1, 'grado-174': 1 } })));
+  await abrir(ir, pg);
+  afirmar((await pg.textContent('.mapa-panel')).includes('La paradoja del montón'), 'no avanzó');
+});

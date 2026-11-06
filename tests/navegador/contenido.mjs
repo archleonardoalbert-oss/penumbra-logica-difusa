@@ -6,7 +6,7 @@ for (const f of todosLosConceptos().filter((c) => c.estado === 'listo')) {
     const c = (await f.carga()).default;
     for (let i = 0; i < c.escena.pasos.length; i++) {
       await ir(`concepto.html?c=${f.id}&paso=${i}&p=1`);
-      await pg.waitForSelector('#retos .reto');
+      await pg.waitForSelector('#animacion canvas');
       await pg.waitForTimeout(120);
     }
     const malos = await pg.locator('.katex-error').count();

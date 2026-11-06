@@ -53,7 +53,8 @@ function compilar(gl, vs, fs) {
 
 const coma = (v) => String(v).replace('.', '{,}');
 
-export function crearRender3D(lienzo, { cx, cy, S, dominio = DOM_UNIDAD }) {
+export function crearRender3D(lienzo, { cx: cx0, cy: cy0, S: S0, dominio = DOM_UNIDAD }) {
+  let cx = cx0, cy = cy0, S = S0;
   const { gl, W, H } = lienzo;
   const programas = new Map(), loteProg = compilar(gl, VS_LOTE, FS_LOTE);
   const dx = dominio.x, dy = dominio.y, dz = dominio.z;
@@ -127,6 +128,7 @@ export function crearRender3D(lienzo, { cx, cy, S, dominio = DOM_UNIDAD }) {
 
   function dibujar(prims, cam = camara) {
     camara = camaraValida(cam);
+    cx = cam.cx ?? cx0; cy = cam.cy ?? cy0; S = cam.S ?? S0;
     terrenos = prims.filter((q) => q.tipo === 'terreno');
     gl.viewport(0, 0, lienzo.glCanvas.width, lienzo.glCanvas.height);
     gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true);

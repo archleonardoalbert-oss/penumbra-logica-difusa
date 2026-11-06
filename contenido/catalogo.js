@@ -3,7 +3,7 @@ const listo = (id, titulo, retos, temas = []) => ({ id, titulo, estado: 'listo',
 const pend = (id, titulo, temas = []) => ({ id, titulo, estado: 'pendiente', retos: [], temas });
 
 export const CATALOGO = [
-  { id: 1, titulo: 'El borde', lema: 'Donde lo nítido empieza a deshacerse.', posicion: [0.2, 0.22], conceptos: [
+  { id: 1, titulo: 'El borde', lema: 'Donde lo nítido empieza a deshacerse.', posicion: [0.16, 0.2], conceptos: [
     listo('1-1-quien-es-alto', '¿Quién es alto?', ['borrosidad', 'grado-174'], ['1.0 Conjuntos difusos (contenido)']),
     listo('1-2-monton', 'La paradoja del montón', ['verdad-tras-n', 'causa-paradoja']),
     listo('1-3-conjunto-difuso', 'Qué es un conjunto difuso', ['cerca-de-5', 'discreto-a-tabla'], ['1.1 Conjuntos certeros vs difusos']),
@@ -15,12 +15,12 @@ export const CATALOGO = [
     listo('1-9-representacion', 'El teorema de representación', ['niveles-necesarios', 'demostrar-representacion']),
     listo('1-10-convexidad', 'Convexidad', ['contraejemplo', 'interseccion', 'demostrar-cortes-convexos']),
   ] },
-  { id: 2, titulo: 'La forma', lema: 'Cada idea vaga tiene su curva.', posicion: [0.52, 0.16], conceptos: [
+  { id: 2, titulo: 'La forma', lema: 'Cada idea vaga tiene su curva.', posicion: [0.5, 0.15], conceptos: [
     pend('2-1-parametrizadas', 'Funciones de membresía parametrizadas', ['1.4 Funciones de membresía (1)']),
     pend('2-2-tipicas', 'Triangular, trapecial, gaussiana, campana y sigmoidal', ['1.4 Funciones de membresía típicas (2)']),
     pend('2-3-construirlas', 'Cómo se construye una función de membresía'),
   ] },
-  { id: 3, titulo: 'El álgebra', lema: 'Y, o, no: cuando dejan de ser únicos.', posicion: [0.82, 0.24], conceptos: [
+  { id: 3, titulo: 'El álgebra', lema: 'Y, o, no: cuando dejan de ser únicos.', posicion: [0.84, 0.22], conceptos: [
     pend('3-1-zadeh', 'Las operaciones de Zadeh', ['1.2 Operaciones entre conjuntos difusos']),
     pend('3-2-leyes', 'Las leyes que se conservan', ['1.3 Propiedades de las operaciones difusas (1)']),
     pend('3-3-leyes-que-caen', 'Las leyes que caen', ['1.3 Propiedades de las operaciones difusas (2)']),
@@ -30,7 +30,7 @@ export const CATALOGO = [
     pend('3-7-generadores', 'Generadores arquimedianos'),
     pend('3-8-parametrizados', 'Operadores parametrizados'),
   ] },
-  { id: 4, titulo: 'Relaciones y extensión', lema: 'Cuando el grado une dos mundos.', posicion: [0.14, 0.52], conceptos: [
+  { id: 4, titulo: 'Relaciones y extensión', lema: 'Cuando el grado une dos mundos.', posicion: [0.84, 0.54], conceptos: [
     pend('4-1-relaciones', 'Relaciones difusas', ['2.0 Otras operaciones difusas (contenido)', '2.1.1 Relaciones difusas']),
     pend('4-2-producto', 'Producto cartesiano', ['2.1.2 Producto cartesiano difuso']),
     pend('4-3-proyeccion', 'Proyección y extensión cilíndrica'),
@@ -40,7 +40,7 @@ export const CATALOGO = [
     pend('4-7-extension-nd', 'Extensión en varias variables', ['2.3.2 Principio de extensión multidimensional']),
     pend('4-8-numeros', 'Números difusos y su aritmética'),
   ] },
-  { id: 5, titulo: 'Razonar', lema: 'Sacar conclusiones de lo que es casi cierto.', posicion: [0.48, 0.5], conceptos: [
+  { id: 5, titulo: 'Razonar', lema: 'Sacar conclusiones de lo que es casi cierto.', posicion: [0.5, 0.5], conceptos: [
     pend('5-1-clasica-difusa', 'Lógica clásica frente a difusa', ['3.0 Razonamiento difuso (contenido)', '3.1 Lógica clásica vs difusa']),
     pend('5-2-implicaciones', 'Implicaciones R, S y QL'),
     pend('5-3-linguistica', 'Variables lingüísticas y modificadores', ['3.2.1 Variable lingüística']),
@@ -49,11 +49,11 @@ export const CATALOGO = [
     pend('5-6-composicional', 'La regla composicional'),
     pend('5-7-ecuaciones', 'Ecuaciones relacionales'),
   ] },
-  { id: 6, titulo: 'Sistemas', lema: 'De las reglas a una máquina que decide.', posicion: [0.84, 0.56], conceptos: [
+  { id: 6, titulo: 'Sistemas', lema: 'De las reglas a una máquina que decide.', posicion: [0.16, 0.54], conceptos: [
     pend('6-1-mamdani', 'Mamdani'), pend('6-2-defuzzificacion', 'Defuzzificación'), pend('6-3-sugeno', 'Sugeno'),
     pend('6-4-tsukamoto', 'Tsukamoto'), pend('6-5-aproximacion', 'Aproximación universal'), pend('6-6-pendulo', 'El péndulo se sostiene'),
   ] },
-  { id: 7, titulo: 'Aprender', lema: 'Reglas que se ajustan solas.', posicion: [0.3, 0.84], conceptos: [
+  { id: 7, titulo: 'Aprender', lema: 'Reglas que se ajustan solas.', posicion: [0.3, 0.85], conceptos: [
     pend('7-1-c-medias', 'C-medias difusas'), pend('7-2-anfis', 'ANFIS'), pend('7-3-tipo-2', 'Conjuntos de tipo 2'), pend('7-4-celulas', 'Células de Concepto'),
   ] },
   { id: 8, titulo: 'Solo para valientes', lema: 'La lógica misma, sin red.', posicion: [0.72, 0.86], conceptos: [

@@ -12,6 +12,7 @@ const radio = (a) => Math.sqrt(-DOSIGMA2 * Math.log(a));
 export default {
   id: '1-8-cortes-alfa',
   titulo: 'α-cortes',
+  puente: 'Cortar es fácil. Lo sorprendente es que los cortes bastan para reconstruir todo el conjunto.',
   pregunta: '¿Se puede ver un conjunto difuso como muchos conjuntos clásicos? Córtalo a una altura y mira la silueta que queda.',
   escena: {
     id: 'cortes-alfa', formato: '3d', W: 1100, H: 690,

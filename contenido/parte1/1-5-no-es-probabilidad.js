@@ -17,6 +17,7 @@ function botella(cx, v, color, a) {
 export default {
   id: '1-5-no-es-probabilidad',
   titulo: 'Pertenencia no es probabilidad',
+  puente: 'Ya sabes qué es y qué no es. Ahora, aprende a nombrar sus partes: dónde empieza, dónde está seguro y hasta dónde llega.',
   pregunta: 'Un número entre 0 y 1… eso ya existe: se llama probabilidad. ¿Para qué otro? Tienes sed y dos botellas: ¿de cuál bebes?',
   escena: {
     id: 'botellas', formato: 'plano', W: 1100, H: 540,

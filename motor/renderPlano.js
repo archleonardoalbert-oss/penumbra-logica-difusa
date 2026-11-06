@@ -57,7 +57,7 @@ export function crearRenderPlano(lienzo, { x: [x0, x1], y: [y0, y1], caja, id = 
         tx.forEach((v) => { trazo([[v, y0], [v, y0]], GRIS2, 1, a); rotulos.push({ clave: `${id}tx${v}`, x: aX(v), y: aY(y0) + 15, tex: coma(v), tam: 15, color: GRIS2, alfa: a }); });
         ty.forEach((v) => rotulos.push({ clave: `${id}ty${v}`, x: aX(x0) - 11, y: aY(v), tex: coma(v), tam: 15, color: GRIS2, ancla: 'r', alfa: a }));
         if (et.x) {
-          const libreAbajo = !tx.some((v) => Math.abs(aX(v) - aX((x0 + x1) / 2)) < 40);
+          const libreAbajo = !tx.some((v) => Math.abs(aX(v) - aX((x0 + x1) / 2)) < 100);
           rotulos.push(libreAbajo ? { clave: `${id}ex`, x: aX((x0 + x1) / 2), y: aY(y0) + 16, tex: et.x, tam: 19, color: GRIS2, alfa: a } : { clave: `${id}ex`, x: aX(x1), y: aY(y0) - 16, tex: et.x, tam: 19, ancla: 'r', color: GRIS2, alfa: a });
         }
         if (et.y) rotulos.push({ clave: `${id}ey`, x: aX(x0) - 40, y: aY((y0 + y1) / 2), tex: et.y, tam: 26, color: q.colorY ?? TEXTO, alfa: a });

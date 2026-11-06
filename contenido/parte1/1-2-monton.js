@@ -17,6 +17,7 @@ for (let fila = 0, i = 0; i < 100; fila++) {
 export default {
   id: '1-2-monton',
   titulo: 'La paradoja del montón',
+  puente: 'Ya sabes por qué hacen falta los grados. Toca decir con exactitud qué es un conjunto que los usa.',
   pregunta: 'Quitar un grano a un montón no deja de hacerlo un montón. Repite eso cien veces y un solo grano será «un montón». ¿Dónde está el error?',
   escena: {
     id: 'monton', formato: 'plano', W: 1100, H: 580,

@@ -15,6 +15,7 @@ const separacion = (paso, q, e) => (paso >= 2 ? mix(0, e.sep, ev(q(2), 0, 0.7)) 
 export default {
   id: '1-10-convexidad',
   titulo: 'Convexidad',
+  puente: 'Has terminado «El borde». Ya sabes qué es un conjunto difuso. La siguiente región trata de elegir su forma.',
   pregunta: '«Cerca de 5» tiene una sola cima. «Cerca de 3 o cerca de 7» tiene dos. ¿Cómo se dice eso con rigor, sin hablar de dibujos?',
   escena: {
     id: 'convexidad', formato: '3d', W: 1100, H: 690,

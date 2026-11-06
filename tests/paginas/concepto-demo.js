@@ -1,6 +1,6 @@
 import { curva, marco } from '../../motor/primitivas.js';
 export default {
-  id: 'demo', titulo: 'Concepto de prueba', pregunta: '¿Se ve todo en su orden?',
+  id: 'demo', titulo: 'Concepto de prueba', puente: 'Lo siguiente viene por esto.', pregunta: '¿Se ve todo en su orden?',
   escena: { id: 'demo', formato: '3d', W: 800, H: 500, render3d: { cx: 400, cy: 280, S: 240 },
     entradas: [{ id: 'b', tipo: 'deslizador', etiqueta: 'b', min: 0, max: 1, valor: 0.5 }],
     pasos: [{ dur: 300, texto: 'Primer paso con $\\mu$.' }, { dur: 300, texto: 'Segundo.' }],
