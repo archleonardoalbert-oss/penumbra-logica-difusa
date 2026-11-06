@@ -234,6 +234,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   const textos = h('div', { className: 'pasos-lista' }), controles = h('div', { className: 'escena-controles' }), zonaEscena = h('div', { className: 'escena-lienzo' });
   const bloqueEscena = h('div', { className: 'bloque-escena' }, zonaEscena, textos, controles);
 
+  bloqueEscena.style.setProperty('--ratio', String(c.escena.W / c.escena.H));
   const raiel = h('ol', { className: 'etapas' });
   const secciones = {};
   const huecoMira = h('div', {}), huecoToca = h('div', { className: 'toca-escena' }), huecoRetos = h('div', { className: 'retos-escena' });

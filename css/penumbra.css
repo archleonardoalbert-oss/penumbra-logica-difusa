@@ -241,3 +241,5 @@ a.estacion:hover { border-color: var(--texto); }
 [data-etapa=mira] .bloque-escena { max-width: min(1040px, calc((100vh - 300px) * 1.9)); }
 [data-etapa=mira] .pasos-lista { order: -1; margin: 0 0 12px; min-height: 4.2em; }
 [data-etapa=toca] .bloque-escena { max-width: min(100%, calc((100vh - 230px) * 1.8)); }
+[data-etapa=mira] .bloque-escena { max-width: min(1040px, calc((100vh - 370px) * var(--ratio, 1.9))); }
+[data-etapa=toca] .bloque-escena { max-width: min(100%, calc((100vh - 300px) * var(--ratio, 1.8))); }
