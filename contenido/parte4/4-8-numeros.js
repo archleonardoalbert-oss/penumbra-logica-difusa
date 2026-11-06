@@ -30,7 +30,7 @@ export default {
     ],
     primitivas({ q, paso, e }) {
       const c = paso >= 3 && q(3) >= 1 ? e.c : 5, A = n1, B = n2(c), S = sumaTri(A, B), al = ev(q(0), 0, 0.4);
-      const alfa = paso === 3 && q(3) < 1 ? ev(q(3), 0, 0.9) : paso >= 1 ? e.alfa * ev(q(1), 0, 0.6) + (1 - ev(q(1), 0, 0.6)) * 0.02 : 0.02;
+      const alfa = paso === 3 ? mix(ev(q(3), 0, 0.7), e.alfa, ev(q(3), 0.75, 1)) : paso >= 1 ? e.alfa * ev(q(1), 0, 0.6) + (1 - ev(q(1), 0, 0.6)) * 0.02 : 0.02;
       const N = [marco({ x: DOM, y: [0, 1] }, { alfa: al, ticks: { x: [0, 2, 4, 6, 8, 10, 12, 14], y: [0, 1] }, etiquetas: { x: 'x', y: R`\mu` } })];
       const fa = triangular(...A), fb = triangular(...B), fs = triangular(...S), t = Math.max(ev(q(0), 0, 1), 1e-3);
       N.push(curva((u) => [u, fa(u)], DOM, { hasta: t, n: 400, color: AZUL, ancho: 3, brillo: true }), curva((u) => [u, fb(u)], DOM, { hasta: t, n: 400, color: ROSA, ancho: 3, brillo: true }));

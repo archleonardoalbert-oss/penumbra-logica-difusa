@@ -30,7 +30,7 @@ export default {
       { dur: 2600, texto: 'Con más gente, los escalones se encogen, y la escalera se va pareciendo a una curva suave. Por eso se ajusta luego una forma con parámetros: en azul, una sigmoidal.' },
     ],
     primitivas({ q, paso, e }) {
-      const n = paso >= 3 ? Math.round(mix(e.n, Math.max(e.n, 60), ev(q(3), 0, 0.8) * (q(3) >= 1 ? 0 : 1))) : Math.round(e.n);
+      const n = paso >= 3 ? Math.round(mix(e.n, Math.max(e.n, 60), ev(q(3), 0, 0.6) * (1 - ev(q(3), 0.75, 1)))) : Math.round(e.n);
       const t = umbrales(n), al = ev(q(0), 0, 0.4);
       const N = [marco({ x: DOM, y: [0, 1] }, { alfa: al, ticks: { x: [150, 160, 170, 180, 190, 200], y: [0, 1] }, etiquetas: { x: R`\text{altura (cm)}`, y: R`\mu` }, colorY: ORO })];
       const x = paso === 0 ? 150 : paso === 1 ? mix(150, 200, ev(q(1), 0, 1)) : e.x[0], v = fraccion(x, t);

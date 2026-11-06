@@ -31,7 +31,7 @@ export default {
       { dur: 3600, texto: 'Barre todas las sumas. La altura máxima dibuja, a la derecha, la curva de la suma.' },
     ],
     primitivas({ q, paso, e }) {
-      const ba = ev(q(0), 0, 0.3), de = ev(q(0), 0.4, 1), z = paso === 3 && q(3) < 1 ? mix(0.25, 1.3, ev(q(3), 0, 1)) : paso === 3 ? e.z : e.z;
+      const ba = ev(q(0), 0, 0.3), de = ev(q(0), 0.4, 1), z = paso === 3 ? mix(mix(0.25, 1.3, ev(q(3), 0, 0.75)), e.z, ev(q(3), 0.75, 1)) : e.z;
       const P = [marco({ x: [0, 1], y: [0, 1], z: [0, 1] }, { alfa: ba, etiquetas: { x: 'x', y: 'y', z: R`\text{grado}` } })];
       if (de > 0) P.push(terreno(Rel, { glsl: GLSL, desde: 1 - de }));
       P.push(curva((u) => [u, 1, A(u)], [0, 1], { n: 150, hasta: Math.max(ev(q(0), 0, 0.4), 1e-3), color: AZUL, ancho: 3, brillo: true }), curva((u) => [0, u, B(u)], [0, 1], { n: 150, hasta: Math.max(ev(q(0), 0, 0.4), 1e-3), color: ROSA, ancho: 3, brillo: true }));
@@ -51,7 +51,7 @@ export default {
           M.push(punto([b.x, b.y], { color: ORO, radio: 6, alfa: mp }));
           C.push(linea([z, 0], [z, b.grado], { color: BLANCO, ancho: 1.4, alfa: 0.6 * mp, discontinua: true }), punto([z, b.grado], { color: ORO, radio: 7, alfa: mp }));
         }
-        const dib = paso < 3 ? 0 : q(3) < 1 ? ev(q(3), 0, 1) : 1;
+        const dib = paso < 3 ? 0 : ev(q(3), 0, 0.75);
         if (dib > 0) C.push(curva((u) => [u, mejor(u).grado], [0.25, 1.3], { hasta: dib, n: 120, color: ORO, ancho: 3.2, brillo: true }));
       }
       return { principal: P, paneles: [{ ejes: { x: [0, 1], y: [0, 1], caja: { x: 810, y: 90, w: 216, h: 216 } }, prims: M }, { ejes: { x: [0, 1.3], y: [0, 1], caja: { x: 786, y: 400, w: 280, h: 190 } }, prims: C }] };

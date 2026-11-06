@@ -14,7 +14,7 @@ export default {
   escena: {
     id: 'normas-s', formato: '3d', W: 1100, H: 690, render3d: RENDER3D,
     entradas: [
-      { id: 'norma', tipo: 'deslizador', etiqueta: 'la pareja (0 mín/máx, 1 producto, 2 Łukasiewicz)', min: 0, max: 2, paso: 1, valor: 0 },
+      { id: 'norma', tipo: 'deslizador', etiqueta: 'la pareja (0 mín/máx, 1 producto, 2 Łukasiewicz)', min: 0, max: 2, paso: 1, valor: 1 },
       { id: 'lado', tipo: 'deslizador', etiqueta: 'del «y» (0) al «o» (1)', min: 0, max: 1, paso: 0.01, valor: 1 },
       { id: 'p', tipo: 'arrastre', panel: 0, valor: [0.62, 0.4], region: { x: [0, 1], y: [0, 1] } },
     ],

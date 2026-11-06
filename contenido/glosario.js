@@ -45,4 +45,10 @@ export const GLOSARIO = {
   'relación de equivalencia': { titulo: 'Relación de equivalencia', texto: 'Una relación clásica que es reflexiva, simétrica y transitiva. Reparte las cosas en grupos separados: cada cosa está en un solo grupo.', ejemplo: '«Nació el mismo año que» reparte a la gente por años.' },
   imagen: { titulo: 'Imagen', texto: 'Lo que devuelve una función cuando le das algo.', ejemplo: 'Con $f(x) = x^2$, la imagen de 3 es 9.' },
   'número difuso': { titulo: 'Número difuso', texto: 'Un conjunto difuso que representa «alrededor de cierto número»: convexo, normal, con una sola cima, y de soporte acotado.', ejemplo: '«Unos 5» puede ser el triángulo con pies en 4 y 6 y cima en 5.' },
+  'implicación': { titulo: 'Implicación', texto: 'La frase «si A, entonces B». Solo es falsa cuando A es cierta y B es falsa.', ejemplo: '«Si llueve, me mojo» no se rompe si no llueve: solo se rompe si llueve y no me mojo.' },
+  'variable lingüística': { titulo: 'Variable lingüística', texto: 'Una magnitud cuyos valores son palabras, y cada palabra es un conjunto difuso.', ejemplo: 'La edad, con los valores «joven», «adulto» y «mayor».' },
+  modificador: { titulo: 'Modificador', texto: 'Una palabra que cambia a otra: «muy», «algo», «bastante». Se traduce en una operación sobre su curva.', ejemplo: '«Muy alto» eleva al cuadrado el grado de «alto».' },
+  'modus ponens': { titulo: 'Modus ponens', texto: 'La regla de razonamiento más antigua: si sabes «si A, entonces B», y sabes A, concluyes B. Viene del latín.', ejemplo: 'Si llueve, el suelo se moja. Llueve. Por tanto, el suelo se moja.' },
+  'ecuación relacional': { titulo: 'Ecuación relacional', texto: 'Un problema en el que se conoce una composición de relaciones, y falta una de sus piezas.', ejemplo: 'Conoces los síntomas de un paciente y qué causa cada uno; buscas la enfermedad.' },
+  'ínfimo': { titulo: 'Ínfimo', texto: 'El mayor número que no supera a ninguno de los valores de un conjunto. Es como el mínimo, pero existe aunque ningún valor llegue a alcanzarlo. Lo contrario del supremo.', ejemplo: 'Los valores 1; 0,5; 0,25; 0,125… nunca llegan a 0, pero su ínfimo es 0.' },
 };

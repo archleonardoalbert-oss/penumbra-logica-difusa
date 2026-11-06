@@ -22,7 +22,7 @@ export default {
       { dur: 2400, texto: 'Con $p$ grande, ya casi es el mínimo. Así, el severo y el generoso son los dos extremos de una misma familia.' },
     ],
     primitivas({ q, paso, e }) {
-      const reposo = paso === 2 && q(2) >= 1, p = reposo ? e.pot : paso === 0 ? 1 : paso === 1 ? mix(1, 12, ev(q(1), 0, 1)) : 12, f = yager(p);
+      const reposo = paso === 2 && q(2) >= 1, p = paso === 0 ? 1 : paso === 1 ? mix(1, 12, ev(q(1), 0, 1)) : mix(12, e.pot, ev(q(2), 0.6, 1)), f = yager(p);
       const usa = reposo ? e.q : [0.62, 0.4];
       return paisaje({ f, glsl: GLSL, uniformes: { uP: p }, v: usa[1], xp: usa[0], rev: 1 - ev(q(0), 0.1, 1), ba: ev(q(0), 0, 0.3), pA: ev(q(0), 0, 0.5), pB: ev(q(0), 0, 0.5), fr: ev(q(0), 0.5, 1), so: ev(q(0), 0.6, 1), claveMapa: `y${p.toFixed(2)}` });
     },

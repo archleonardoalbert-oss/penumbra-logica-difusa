@@ -29,7 +29,7 @@ export default {
     id: 'tipicas', formato: 'plano', W: 1100, H: 540,
     ejes: { x: DOM, y: [0, 1], caja: { x: 110, y: 90, w: 860, h: 370 } },
     entradas: [
-      { id: 'forma', tipo: 'deslizador', etiqueta: 'forma (0 a 4)', min: 0, max: 4, paso: 1, valor: 0 },
+      { id: 'forma', tipo: 'deslizador', etiqueta: 'forma (0 a 4)', min: 0, max: 4, paso: 1, valor: 4 },
       { id: 'c', tipo: 'deslizador', etiqueta: 'centro', min: 1, max: 9, paso: 0.1, valor: 5 },
       { id: 's', tipo: 'deslizador', etiqueta: 'anchura', min: 1, max: 4, paso: 0.1, valor: 3 },
     ],
