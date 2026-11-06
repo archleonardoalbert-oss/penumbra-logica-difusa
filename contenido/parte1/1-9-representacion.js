@@ -94,8 +94,8 @@ export default {
     { tipo: 'nota', titulo: 'Por qué importa', texto: 'Se puede trabajar nivel a nivel, con herramientas clásicas, y recomponer el resultado al final. Así funcionarán la aritmética de números difusos y el principio de extensión, en la región 4.' },
   ],
   tecnicas: [
-    { titulo: 'Parte el dominio del supremo', texto: 'Para calcular un supremo con una condición, separa los índices en los que la condición se cumple de los que no, y resuelve cada grupo.' },
-    { titulo: 'Prueba de doble cota escondida', texto: 'Demostrar que un supremo vale $m$ es probar dos cosas: ningún valor lo supera, y hay valores que lo alcanzan o se le acercan.' },
+    { titulo: 'Parte en dos los casos', texto: 'Para calcular un [[supremo]] con una condición, separa los índices en los que la condición se cumple de los que no, y resuelve cada grupo.' },
+    { titulo: 'Prueba de doble cota escondida', texto: 'Demostrar que un [[supremo]] vale $m$ es probar dos cosas: ningún valor lo supera, y hay valores que lo alcanzan o se le acercan.' },
   ],
   retos: [
     { id: 'niveles-necesarios', tipo: 'calcular', enunciado: R`Quieres que la silueta tenga un error estrictamente menor que $0{,}05$ en todo punto, sea cual sea el conjunto. ¿Cuál es el menor $n$ que lo garantiza con la cota $\mu_A - r_n < \frac{1}{n}$?`, respuesta: 20, tol: 0.4,
