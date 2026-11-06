@@ -40,7 +40,7 @@ export const ETIQUETADOS = [{ p: [-0.15, 0.1], y: 1 }, { p: [0.2, 0.3], y: 1 }, 
 /** La regla: «si está lejos del centro, no es de la clase». lejos(p) es un grado. */
 export const lejos = ([x, y]) => sigma((Math.hypot(x, y - 0.1) - 0.72) * 9);
 export const predecir = (w, p) => { const f = rasgos(p); return sigma(f.reduce((s, v, i) => s + v * w[i], 0)); };
-export function entrenarConRegla({ conRegla = true, epocas = 300, eta = 0.5, cada = 3 } = {}) {
+export function entrenarConRegla({ conRegla = true, epocas = 300, eta = 0.5, cada = 3, etiquetados = ETIQUETADOS, pesoRegla = 1.2, reglaMala = false } = {}) {
   let w = [0, 0.1, -0.1, 0, 0, 0];
   const estado = (e) => {
     const sat = paraTodoP(puntosJuguete.map(({ p }) => IMPL.reichenbach(lejos(p), 1 - predecir(w, p))), 2);
@@ -49,11 +49,11 @@ export function entrenarConRegla({ conRegla = true, epocas = 300, eta = 0.5, cad
   const h = [estado(0)];
   for (let e = 1; e <= epocas; e++) {
     const g = Array(6).fill(0);
-    for (const { p, y } of ETIQUETADOS) { const f = rasgos(p), q = predecir(w, p); f.forEach((v, i) => { g[i] += ((q - y) * v) / ETIQUETADOS.length; }); }
+    for (const { p, y } of etiquetados) { const f = rasgos(p), q = predecir(w, p); f.forEach((v, i) => { g[i] += ((q - y) * v) / etiquetados.length; }); }
     if (conRegla) for (const { p } of puntosJuguete) {
       // pérdida de la regla: 1 - I(a, 1 - q), con I = 1 - a + a(1 - q) = 1 - aq; su derivada respecto a q es a
-      const a = lejos(p), f = rasgos(p), q = predecir(w, p);
-      f.forEach((v, i) => { g[i] += (1.2 * a * q * (1 - q) * v) / puntosJuguete.length; });
+      const a = reglaMala ? 1 - lejos(p) : lejos(p), f = rasgos(p), q = predecir(w, p);
+      f.forEach((v, i) => { g[i] += (pesoRegla * a * q * (1 - q) * v) / puntosJuguete.length; });
     }
     w = w.map((v, i) => v - eta * g[i]);
     if (e % cada === 0 || e === epocas) h.push(estado(e));
@@ -188,4 +188,33 @@ export function entrenarCCD({ lambda = 0.012, epocas = 400, eta = 0.9, cada = 5,
     if (e % cada === 0 || e === epocas) h.push(estado(e));
   }
   return h;
+}
+
+/** Exactitud final según cuántas etiquetas hay: las primeras n de una lista fija, equilibrada. */
+export const LISTA_ETIQUETAS = (() => { const pos = puntosJuguete.filter((x) => x.y === 1), neg = puntosJuguete.filter((x) => x.y === 0), L = []; for (let i = 0; i < 24; i++) { L.push(pos[i % pos.length]); L.push(neg[i % neg.length]); } return L; })();
+export const exactitudCon = (n, opciones) => entrenarConRegla({ etiquetados: LISTA_ETIQUETAS.slice(0, n), epocas: 240, cada: 240, ...opciones }).at(-1).exactitud;
+
+/** Error de un clasificador sobre conceptos según cuántos se corrigen a mano, de los más dudosos a los menos. */
+export function curvaIntervencion(ruido = 0.3, K = 6) {
+  const r = azarDe(31), casos = CASOS_CCD.map((c) => ({ ...c, pred: c.mu.map((v) => Math.min(1, Math.max(0, v + (r() - 0.5) * 2 * ruido))) }));
+  const dec = (m) => (m[0] * m[1] > 0.35 || m[2] * m[3] > 0.35 ? 0 : 1), orden = [0, 2, 1, 3, 4, 5];
+  return Array.from({ length: K + 1 }, (_, n) => { const fijos = new Set(orden.slice(0, n)); return casos.filter((c) => dec(c.pred.map((v, k) => (fijos.has(k) ? c.mu[k] : v))) === c.y).length / casos.length; });
+}
+
+/** La fuga: la tarea depende de lo lejos que está x de la frontera, algo que el concepto «x > 0» no debería contar. */
+export const DATOS_FUGA = (() => { const r = azarDe(41), D = []; for (let i = 0; i < 400; i++) { const x = (r() - 0.5) * 4; D.push({ x, y: Math.abs(x) > 1 ? 1 : 0 }); } return D; })();
+export function exactitudFuga(pendiente, duro) {
+  const c = (x) => { const v = sigma(pendiente * x); return duro ? (v > 0.5 ? 1 : 0) : v; };
+  // el mejor umbral posible sobre lo que deja pasar el concepto: lo peor que puede pasar, no lo que aprende un modelo concreto
+  const puntua = (f) => DATOS_FUGA.filter((d) => f(c(d.x)) === d.y).length / DATOS_FUGA.length;
+  let mejor = 0;
+  for (let a = 0; a <= 1.0001; a += 0.01) for (let b = a; b <= 1.0001; b += 0.01) { mejor = Math.max(mejor, puntua((v) => (v >= a && v <= b ? 0 : 1))); if (duro) break; }
+  return Math.max(mejor, DATOS_FUGA.filter((d) => d.y === 1).length / DATOS_FUGA.length);
+}
+
+/** Fidelidad: en cuántos casos la regla binarizada decide igual que el modelo continuo. */
+export function fidelidad(est, umbral = 0.5) {
+  const salida = (m, pol, mu) => { const w = m.map((f, ri) => f.reduce((a, mk, k) => a * literal(mu[k], pol[ri][k], mk), 1)), t = w.reduce((a, b) => a + b, 0) + 1e-9, z = [0, 1].map((j) => w.reduce((acc, v, ri) => acc + (v / t) * est.th[ri][j], 0)); return z[1] > z[0] ? 1 : 0; };
+  const bm = est.m.map((f) => f.map((v) => (v > umbral ? 1 : 0))), bp = est.pol.map((f) => f.map((v) => (v > 0.5 ? 1 : 0)));
+  return CASOS_CCD.filter((c) => salida(est.m, est.pol, c.mu) === salida(bm, bp, c.mu)).length / CASOS_CCD.length;
 }

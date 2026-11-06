@@ -72,4 +72,5 @@ export const GLOSARIO = {
   sigmoide: { titulo: 'Sigmoide', texto: 'La curva σ(u) = 1 / (1 + e^(−u)): lleva cualquier número a un valor entre 0 y 1, en forma de S.', ejemplo: 'σ(0) = 0,5, σ(2) ≈ 0,88 y σ(−2) ≈ 0,12.' },
   softmax: { titulo: 'Softmax', texto: 'Convierte una lista de puntuaciones en un reparto que suma 1: la exponencial de cada una, entre el total.', ejemplo: 'Las puntuaciones 2 y 0 dan 0,88 y 0,12.' },
   logit: { titulo: 'Logit', texto: 'El número que entra en una sigmoide o en una softmax, antes de aplastarlo. Puede ser cualquier número real.', ejemplo: 'Un logit de 0 corresponde a un grado de 0,5.' },
+  'función de pérdida': { titulo: 'Función de pérdida', texto: 'Un número que mide cuánto se equivoca un modelo. Aprender es moverlo para que baje.', ejemplo: 'El cuadrado de la diferencia entre lo que dice y lo que debería decir.' },
 };

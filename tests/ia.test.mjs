@@ -117,3 +117,20 @@ test('la capa CCD se entrena y selecciona conceptos', () => {
   assert.ok(fin.activos < ini.activos, `${ini.activos} → ${fin.activos}`);
   assert.ok(fin.exactitud > 0.7, `exactitud ${fin.exactitud}`);
 });
+
+test('con más etiquetas, mejor; una regla equivocada perjudica', () => {
+  assert.ok(ia.exactitudCon(32, { conRegla: false }) > ia.exactitudCon(2, { conRegla: false }));
+  assert.ok(ia.exactitudCon(4, { conRegla: true }) > ia.exactitudCon(4, { conRegla: false }));
+  assert.ok(ia.exactitudCon(8, { conRegla: true, reglaMala: true, pesoRegla: 4 }) < ia.exactitudCon(8, { conRegla: true }));
+});
+test('intervenir conceptos no empeora y llega al acierto total', () => {
+  const c = ia.curvaIntervencion();
+  assert.equal(c.length, 7); assert.equal(c.at(-1), 1); assert.ok(c[0] < 1);
+});
+test('la fuga: un concepto blando deja pasar lo que uno duro no', () => {
+  assert.ok(ia.exactitudFuga(2, false) > 0.95); assert.ok(ia.exactitudFuga(2, true) < 0.6);
+});
+test('fidelidad: entre 0 y 1, y alta tras entrenar con presión', () => {
+  const f = ia.fidelidad(ia.entrenarCCD({ lambda: 0.03 }).at(-1));
+  assert.ok(f > 0.6 && f <= 1, `${f}`);
+});
