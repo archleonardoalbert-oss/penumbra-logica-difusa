@@ -41,5 +41,5 @@ test('buscarConcepto', () => {
 
 test('el curso está entero: ninguna parada pendiente', async () => {
   const { todosLosConceptos: todos } = await import('../contenido/catalogo.js');
-  assert.deepEqual(todos().filter((c) => c.estado !== 'listo' && !/^(9|1[0-3])-/.test(c.id)).map((c) => c.id), []);
+  assert.deepEqual(todos().filter((c) => c.estado !== 'listo').map((c) => c.id), []);
 });

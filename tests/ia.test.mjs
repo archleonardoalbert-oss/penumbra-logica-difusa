@@ -134,3 +134,10 @@ test('fidelidad: entre 0 y 1, y alta tras entrenar con presión', () => {
   const f = ia.fidelidad(ia.entrenarCCD({ lambda: 0.03 }).at(-1));
   assert.ok(f > 0.6 && f <= 1, `${f}`);
 });
+
+test('la tabla guardada del camino CCD coincide con el entrenamiento real', async () => {
+  const { CAMINO } = await import('../contenido/parte12/caminoCCD.js');
+  const f = ia.entrenarCCD({ lambda: CAMINO[5].lambda, cada: 400 }).at(-1);
+  assert.ok(Math.abs(f.exactitud - CAMINO[5].exactitud) < 0.002); assert.equal(f.activos, CAMINO[5].activos);
+  f.m.forEach((r, i) => r.forEach((v, k) => assert.ok(Math.abs(v - CAMINO[5].m[i][k]) < 0.002)));
+});

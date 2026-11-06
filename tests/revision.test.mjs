@@ -82,3 +82,8 @@ test('sin jerga sin explicar en ningún texto: lista ampliada, retos y escena in
     for (const t of textos.filter(Boolean)) assert.ok(!JERGA.test(t.replace(/\[\[[^\]]+\]\]/g, '').replace(/\$[^$]*\$/g, '')), `${c.id}: «${t.slice(0, 80)}»`);
   }
 });
+
+test('ninguna barra invertida perdida: en una cadena normal, \\frac se convierte en un carácter de control', async () => {
+  const mira = (v, id) => { if (typeof v === 'string') assert.ok(!/[\x08\x09\x0b\x0c\x0d]/.test(v), `${id}: «${v.slice(0, 70)}»`); else if (Array.isArray(v)) v.forEach((x) => mira(x, id)); else if (v && typeof v === 'object') Object.values(v).forEach((x) => mira(x, id)); };
+  for (const f of listos) { const c = (await f.carga()).default; mira({ ...c, escena: { pasos: c.escena.pasos } }, c.id); }
+});
