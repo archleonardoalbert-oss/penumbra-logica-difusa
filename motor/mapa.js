@@ -4,6 +4,8 @@ import { crearProgreso } from '../nucleo/progreso.js';
 import { siguienteConcepto } from '../nucleo/recorrido.js';
 import { alturaMapa, campoMapa, regionEn } from './alturaMapa.js';
 import { crearTaller } from '../nucleo/taller.js';
+import { crearLugar, describirLugar } from '../nucleo/lugar.js';
+import { buscarConcepto } from '../contenido/catalogo.js';
 import { barraGrado, h, tituloDifuso, tryLocal } from './concepto.js';
 import { soportaGL2 } from './lienzo.js';
 import { camaraMapa, crearPaisaje, proyectar } from './mapaGL.js';
@@ -49,7 +51,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     const inicio = h('button', { type: 'button', textContent: 'Empezar de cero' });
     inicio.addEventListener('click', () => {
       const si = h('button', { type: 'button', className: 'peligro', textContent: 'Sí, borrar todo' }), no = h('button', { type: 'button', textContent: 'Cancelar' });
-      si.addEventListener('click', () => { progreso.reiniciar(); zona.replaceChildren(inicio); alCambiar(); });
+      si.addEventListener('click', () => { progreso.reiniciar(); crearLugar(almacen).olvidar(); zona.replaceChildren(inicio); alCambiar(); });
       no.addEventListener('click', () => zona.replaceChildren(inicio));
       zona.replaceChildren(h('span', { textContent: 'Se borrarán todas tus notas. ¿Seguro?' }), si, no);
     });
@@ -162,8 +164,8 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
 
   /** Al continuar, la cámara cae sobre la montaña y la página se funde: no es un enlace más, es seguir andando. */
   let t0Vuelo = 0;
-  function volarA(destinoC) {
-    const destino = `concepto.html?c=${destinoC.id}`;
+  function volarA(destinoC, seguir = false) {
+    const destino = `concepto.html?c=${destinoC.id}${seguir ? '&seguir=1' : ''}`;
     if (reducido) { location.href = destino; return; }
     const de = { ...vista }, a = vistaDe(destinoC.region.id);
     t0Vuelo = t;
@@ -184,10 +186,14 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     const r = catalogo.find((x) => x.id === fijada), s = sig();
     [...indice.children].forEach((b) => { const id = +b.dataset.region; b.classList.toggle('activa', id === fijada); b.style.setProperty('--g', String(progreso.gradoRegion(id, catalogo))); });
     if (!r) {
-      if (!s) { rellenar(h('h2', { textContent: 'Has recorrido todo el curso' }), h('p', { textContent: 'Tus montañas brillan. Vuelve a cualquier parada cuando quieras.' }), tuPendulo(almacen)); return; }
+      if (!s && !crearLugar(almacen).ultimo()) { rellenar(h('h2', { textContent: 'Has recorrido todo el curso' }), h('p', { textContent: 'Tus montañas brillan. Vuelve a cualquier parada cuando quieras.' }), tuPendulo(almacen)); return; }
+      // lo primero es donde te quedaste; si aún no has empezado nada, tu siguiente parada
+      const l = crearLugar(almacen).ultimo(), aqui = l && buscarConcepto(l.c, catalogo);
+      const destino = aqui ? { ...aqui.concepto, region: aqui.region } : s;
       const ir = h('button', { type: 'button', className: 'boton-seguir', textContent: 'Continuar el camino' });
-      ir.addEventListener('click', () => volarA(s));
-      rellenar(h('p', { className: 'rotulo-etapa', textContent: 'Tu siguiente parada' }), h('h2', { textContent: s.titulo }), h('p', { className: 'tenue', textContent: `Capítulo ${s.region.id}: ${s.region.titulo}` }), ir,
+      ir.addEventListener('click', () => volarA(destino, !!aqui));
+      const donde = h('p', { className: 'tenue', textContent: aqui ? describirLugar(l, { pasos: l.pasosTotal, latidos: l.latidosTotal, retos: aqui.concepto.retos.length }) : `Capítulo ${s.region.id}: ${s.region.titulo}` });
+      rellenar(h('p', { className: 'rotulo-etapa', textContent: aqui ? 'Sigue donde lo dejaste' : 'Tu siguiente parada' }), h('h2', { textContent: destino.titulo }), aqui ? h('p', { className: 'tenue', textContent: `Capítulo ${aqui.region.id}: ${aqui.region.titulo}` }) : '', donde, ir,
         h('p', { className: 'tenue', textContent: 'Cada montaña es un capítulo. Crece y se vuelve dorada con lo que demuestras en los retos; mirar no la sube.' }), tuPendulo(almacen));
       return;
     }

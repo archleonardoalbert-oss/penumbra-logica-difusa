@@ -61,7 +61,8 @@ export function crearEntradas(def) {
     avisos[d.id] = null;
     actualizar(d.id, d.valor);
   }
-  return { e, avisos, actualizar, definicion: porId };
+  const valores = () => Object.fromEntries((def.entradas ?? []).map((d) => [d.id, d.tipo === 'expresion' ? previos[d.id] : e[d.id]]));
+  return { e, avisos, actualizar, definicion: porId, valores };
 }
 
 // ---------------------------------------------------------------- montaje
@@ -307,6 +308,14 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
     /** El estado final de la escena, sin animar: lo que necesita quien la va a manipular. */
     reposo() { if (paso !== n - 1 || p !== 1) { paso = n - 1; p = 1; sucio = true; refrescarUI(); } },
     estado: () => ({ paso, p, e: entradas.e }),
+    /** Lo que hay que guardar para volver aquí: el paso y cómo están los mandos. */
+    valores: () => ({ paso, entradas: entradas.valores() }),
+    /** Vuelve a un sitio guardado, sin animar: los mandos como estaban, y el paso ya terminado. */
+    colocar({ paso: pasoG = 0, entradas: vs = {} }) {
+      for (const [id, v] of Object.entries(vs)) if (entradas.definicion[id]) entradas.actualizar(id, v);
+      paso = Math.max(0, Math.min(n - 1, pasoG)); p = 1; sucio = true; refrescarUI();
+    },
+    notificar: () => notificar(),
     instantanea: () => JSON.parse(JSON.stringify(normalizar(actual()).grupos)),
     aPantalla(m, d = arrastres[0]) {
       const l = aLogico(d ?? {}, m), r = raiz.getBoundingClientRect();

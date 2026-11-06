@@ -9,6 +9,7 @@ import { notaCalculo, notaDemostracion, notaEleccion, notaManipular } from '../n
 import { montarEscena } from './escena.js';
 import { escalaGrado, rgb } from './colores.js';
 import { reproducirEntrada } from './valiente.js';
+import { crearLugar } from '../nucleo/lugar.js';
 
 export const h = (tag, props = {}, ...hijos) => {
   const el = document.createElement(tag);
@@ -258,7 +259,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   const c = (await ficha.carga()).default;
   document.title = `${c.titulo} · Penumbra`;
 
-  const guardado = almacen === undefined ? tryLocal() : almacen, progreso = crearProgreso(guardado), taller = crearTaller(guardado);
+  const guardado = almacen === undefined ? tryLocal() : almacen, progreso = crearProgreso(guardado), taller = crearTaller(guardado), lugar = crearLugar(guardado);
   const grado = barraGrado(progreso.gradoConcepto(c.id, c.retos));
   const titulo = tituloDifuso(c.titulo, 'h1');
   titulo.classList.add('titulo-parada');
@@ -293,7 +294,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   const app = h('div', { className: 'app' }, h('header', { className: 'barra-alta' }, rutaRegion(region, ficha, progreso), grado.el, titulo, raiel), escenario, pie);
   raiz.replaceChildren(app);
 
-  const escena = montarEscena(zonaEscena, c.escena, { textos, controles, teclado: false, alCambiar: () => refrescarPie() });
+  const escena = montarEscena(zonaEscena, c.escena, { textos, controles, teclado: false, alCambiar: () => { refrescarPie(); guardarLugar(); } });
   const escenaDisponible = c.escena.formato === 'plano' || !!escena.lienzo.gl;
   const botonesEscena = controles.querySelector('.escena-botones');
 
@@ -322,7 +323,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
     const conEscena = c.retos[i].tipo === 'manipular' && escenaDisponible;
     secciones.demuestra.classList.toggle('con-escena', conEscena);
     if (conEscena && etapaId() === 'demuestra') { escena.reposo(); huecoRetos.replaceChildren(encaje, controles); if (!huecoRetos.isConnected) secciones.demuestra.append(huecoRetos); } else huecoRetos.remove();
-    pintarPestanas(); pintarTex(listaRetos); refrescarPie();
+    pintarPestanas(); pintarTex(listaRetos); refrescarPie(); guardarLugar();
   }
 
   // --- lectura por latidos
@@ -356,10 +357,26 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
       b.disabled = grupos[k].primero > Math.max(i, tope);
     });
     tope = Math.max(tope, i);
+    guardarLugar();
     itemsHilo[g].li.scrollIntoView?.({ block: 'nearest' });
     refrescarPie();
   }
-  let tope = 0;
+  let tope = 0, listo = false;
+  const borradores = {};
+  let esperaGuardar = 0;
+  /** A cada gesto: lo guarda enseguida, sin escribir a cada píxel de un arrastre. */
+  function guardarLugar() {
+    if (!listo) return;
+    clearTimeout(esperaGuardar);
+    esperaGuardar = setTimeout(escribirLugar, 60);
+  }
+  function escribirLugar() {
+    clearTimeout(esperaGuardar);
+    if (listo) lugar.guardar(c.id, { etapa, latido: iLatido, tope, reto: iReto, scroll: latidoMarco.scrollTop, borradores, latidosTotal: latidos.length, pasosTotal: c.escena.pasos.length, ...escena.valores() });
+  }
+  addEventListener('pagehide', escribirLugar);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) escribirLugar(); });
+  latidoMarco.addEventListener('scroll', guardarLugar, { passive: true });
 
   // --- etapas
   let etapa = 0;
@@ -400,8 +417,9 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
     if (e.id === 'demuestra') mostrarReto(iReto);
     if (e.id === 'entiende' && iLatido < 0) mostrarLatido(0);
     if (e.id === 'llegada') notaLlegada.textContent = `Tu grado aquí: ${coma(progreso.gradoConcepto(c.id, c.retos))}. ${progreso.gradoConcepto(c.id, c.retos) < 0.7 ? 'Puedes seguir, y volver a los retos cuando quieras: nada se bloquea.' : 'Lo tienes.'}`;
-    history.replaceState(null, '', `${location.pathname}${location.search}#${e.id}`);
+    history.replaceState(null, '', `${location.pathname}?c=${c.id}#${e.id}`);
     refrescarPie();
+    guardarLugar();
   }
   function irA(i) {
     const j = Math.max(0, Math.min(ETAPAS.length - 1, i));
@@ -434,9 +452,22 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
     if (ev.key === 'ArrowLeft') { ev.preventDefault(); retroceder(); }
   });
 
+  // --- tu lugar: «Continuar» y recargar te devuelven exactamente aquí; abrir la parada desde la lista, al principio
+  const parametros = new URLSearchParams(location.search), recargada = performance.getEntriesByType?.('navigation')[0]?.type === 'reload';
+  const vuelve = (parametros.has('seguir') || recargada) && !parametros.has('paso') ? lugar.de(c.id) : null;
+  listaRetos.addEventListener('input', (ev) => { const r = ev.target.closest?.('[data-reto-id]')?.dataset.retoId; if (r) { borradores[r] = ev.target.value; guardarLugar(); } });
+  tarjetas.forEach((t, i) => { t.dataset.retoId = c.retos[i].id; const campo = t.querySelector('input[type=text]'); if (campo && vuelve?.borradores?.[c.retos[i].id]) { campo.value = vuelve.borradores[c.retos[i].id]; borradores[c.retos[i].id] = campo.value; } });
   const pedido = location.hash.slice(1), iPedido = ETAPAS.findIndex((e) => e.id === pedido);
-  etapa = iPedido >= 0 ? iPedido : new URLSearchParams(location.search).has('paso') ? 1 : 0;
+  etapa = vuelve ? vuelve.etapa ?? 0 : iPedido >= 0 ? iPedido : parametros.has('paso') ? 1 : 0;
+  if (vuelve) {
+    iReto = Math.min(c.retos.length - 1, vuelve.reto ?? 0);
+    tope = Math.min(latidos.length - 1, vuelve.tope ?? 0);
+    escena.colocar({ paso: vuelve.paso, entradas: vuelve.entradas });
+    if ((vuelve.latido ?? -1) >= 0) mostrarLatido(Math.min(latidos.length - 1, vuelve.latido), false);
+  }
+  listo = true;
   aplicarEtapa();
+  if (vuelve?.scroll) latidoMarco.scrollTop = vuelve.scroll;
   pintarTex(app);
   return { escena, progreso, irA, leerTodo: () => { mostrarLatido(latidos.length - 1, false); } };
 }

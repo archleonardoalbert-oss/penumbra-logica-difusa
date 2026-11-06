@@ -198,7 +198,7 @@ a.estacion:hover { transform: scale(1.5); border-color: var(--texto); }
 .mapa-cabecera .difuso { font-size: clamp(50px, 6.6vw, 104px); line-height: 1; font-weight: 400; letter-spacing: -.012em; }
 .mapa-cabecera .lema { font-size: clamp(16px, 1.3vw, 20px); color: #cfd7dc; margin: 8px 0 0; }
 /* a la derecha, la noche se espesa: el texto no necesita una caja */
-.mapa-panel { position: absolute; right: 0; top: 0; bottom: 0; width: min(36rem, 46vw); z-index: 3; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(20px, 4vh, 44px) clamp(22px, 2.6vw, 44px) 20px clamp(90px, 11vw, 200px); background: linear-gradient(to left, #02040af2 0%, #02040ae6 48%, #02040a99 72%, #02040a33 90%, #02040a00 100%); }
+.mapa-panel { position: absolute; right: 0; top: 0; bottom: 0; width: min(36rem, 46vw); z-index: 3; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(20px, 4vh, 44px) clamp(22px, 2.6vw, 44px) 20px clamp(90px, 11vw, 200px); background: linear-gradient(to left, #02040af2 0%, #02040ae6 48%, #02040a99 72%, #02040a33 90%, #02040a00 100%); }
 .mapa-panel h2 { margin: 0 0 6px; font-weight: 400; font-size: clamp(27px, 2.3vw, 36px); line-height: 1.16; letter-spacing: -.005em; }
 .mapa-panel .lema { color: var(--texto-2); margin: 0 0 14px; font-size: 18px; line-height: 1.4; }
 .mapa-panel p { font-size: 16.5px; margin: 0 0 12px; line-height: 1.5; }
@@ -207,6 +207,7 @@ a.estacion:hover { transform: scale(1.5); border-color: var(--texto); }
 .mapa-panel .boton-seguir { align-self: flex-start; margin: 14px 0 20px; }
 .mapa-panel .boton-atras { align-self: flex-start; padding: 2px 0; font-size: 15px; margin-bottom: 18px; background: none; border: 0; color: var(--tenue); }
 .mapa-panel .boton-atras:hover:not(:disabled) { color: var(--texto); background: none; }
+.panel-cuerpo, .mapa-pie { pointer-events: auto; }
 .panel-cuerpo { animation: aparece .4s var(--salida) both; display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #30354b transparent; }
 /* las paradas son un tramo de camino: un hilo con un punto por parada, cuyo brillo es tu grado */
 .mapa-conceptos { list-style: none; margin: 14px 0 0; padding: 0; font-size: 16.5px; line-height: 1.32; }

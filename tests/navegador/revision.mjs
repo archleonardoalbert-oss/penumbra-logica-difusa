@@ -176,3 +176,60 @@ t('final: las flechas mueven lo arrastrable, sin ratón', async ({ pg, ir }) => 
   await pg.keyboard.press('ArrowRight');
   afirmar((await pg.evaluate(() => pagina.escena.estado().e.p[0])) > antes, 'se movió');
 });
+
+// ---------------------------------------------------------------- tu lugar exacto
+const leerLugar = (pg) => pg.evaluate(() => JSON.parse(localStorage.getItem('penumbra-lugar-v1')));
+t('lugar: al volver con «Continuar», aparece en el latido exacto', async ({ pg, ir }) => {
+  await abrir(pg, ir, 'concepto.html?c=1-3-conjunto-difuso#entiende');
+  for (let i = 0; i < 4; i++) await pg.click('.pie-etapa .boton-seguir');
+  const texto = await pg.textContent('.pie-centro');
+  await pg.goto('about:blank');
+  await ir('index.html');
+  await pg.waitForFunction(() => window.mapa);
+  const panel = await pg.textContent('.mapa-panel');
+  afirmar(panel.includes('Qué es un conjunto difuso') && panel.includes('Entiéndelo'), panel.slice(0, 160));
+  await pg.click('.mapa-panel .boton-seguir');
+  await pg.waitForURL(/1-3-conjunto-difuso/);
+  await pg.waitForFunction(() => window.pagina);
+  afirmar((await pg.textContent('.pie-centro')) === texto, `${await pg.textContent('.pie-centro')} ≠ ${texto}`);
+  afirmar(await pg.locator('#rigor').isVisible(), 'no volvió a Entiéndelo');
+});
+t('lugar: recuerda el paso de la animación, el mando movido y el reto, también al recargar', async ({ pg, ir }) => {
+  await abrir(pg, ir, 'concepto.html?c=1-1-quien-es-alto#mira');
+  await pg.click('.pie-etapa .boton-seguir');
+  await pg.waitForTimeout(80);
+  const paso = await pg.evaluate(() => pagina.escena.estado().paso);
+  afirmar(paso === 1, `paso ${paso}`);
+  afirmar((await leerLugar(pg)).paradas['1-1-quien-es-alto'].paso === 1, 'no se guardó el paso');
+  await pg.reload();
+  await pg.waitForFunction(() => window.pagina);
+  afirmar((await pg.evaluate(() => pagina.escena.estado().paso)) === 1, 'al recargar perdió el paso');
+  await pg.evaluate(() => { pagina.irA(4); });
+  await pg.click('.pestanas-reto button:nth-child(2)');
+  await pg.reload();
+  await pg.waitForFunction(() => window.pagina);
+  afirmar(await pg.locator('.pestanas-reto button.actual').textContent() === 'Reto 2', 'perdió el reto');
+});
+t('lugar: el mando movido se conserva', async ({ pg, ir }) => {
+  await abrir(pg, ir, 'concepto.html?c=5-3-linguistica#toca');
+  await pg.evaluate(() => { pagina.escena.entradas.actualizar('p', 2.5); pagina.escena.notificar(); });
+  await pg.waitForTimeout(350);
+  await pg.reload();
+  await pg.waitForFunction(() => window.pagina);
+  afirmar((await pg.evaluate(() => pagina.escena.estado().e.p)) === 2.5, 'perdió el mando');
+});
+t('lugar: abrir una parada desde la lista empieza por el principio; empezar de cero olvida el lugar', async ({ pg, ir }) => {
+  await abrir(pg, ir, 'concepto.html?c=1-3-conjunto-difuso#entiende');
+  await pg.click('.pie-etapa .boton-seguir');
+  await pg.waitForTimeout(50);
+  await pg.goto('about:blank');
+  await ir('concepto.html?c=1-3-conjunto-difuso');
+  await pg.waitForFunction(() => window.pagina);
+  afirmar(await pg.locator('#pregunta').isVisible(), 'debía empezar por la pregunta');
+  await pg.goto('about:blank');
+  await ir('index.html');
+  await pg.waitForFunction(() => window.mapa);
+  await pg.click('text=Empezar de cero');
+  await pg.click('text=Sí, borrar todo');
+  afirmar((await leerLugar(pg)) === null, 'no olvidó el lugar');
+});
