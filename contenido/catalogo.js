@@ -59,7 +59,7 @@ export const CATALOGO = [
     listo('7-1-c-medias', 'Encontrar los grupos: c-medias difusas', ['alas-difusas', 'pertenencia-calc', 'cmedias-elegir', 'demuestra-centro']), listo('7-2-anfis', 'Reglas que se ajustan solas: ANFIS', ['entrena', 'gradiente-calc', 'anfis-elegir', 'demuestra-derivada']), listo('7-3-tipo-2', 'Dudar de la curva: conjuntos de tipo 2', ['ensancha', 'intervalo-calc', 'tipo2-elegir', 'demuestra-extremos']), listo('7-4-celulas', 'Tu propuesta: Células de Concepto Difusas', ['que-cambia', 'regla-ccd-calc', 'ccd-elegir', 'demuestra-producto']),
   ] },
   { id: 8, titulo: 'Solo para valientes', lema: 'La lógica misma, sin red.', posicion: [0.72, 0.86], conceptos: [
-    pend('8-1-bl', 'La lógica BL'), pend('8-2-lukasiewicz', 'Łukasiewicz, Gödel y producto'), pend('8-3-mtl', 'MTL'), pend('8-4-algebra', 'Semántica algebraica'), pend('8-5-completitud', 'Completitud'),
+    listo('8-1-bl', 'BL: la lógica de todas las normas', ['busca-residuo', 'residuo-calc', 'bl-elegir', 'demuestra-uno']), listo('8-2-lukasiewicz', 'Las tres grandes', ['busca-contraccion', 'negacion-calc', 'tres-elegir', 'demuestra-goedel']), listo('8-3-mtl', 'MTL: cuando la norma da un salto', ['cruza-salto', 'nilpotente-calc', 'mtl-elegir', 'demuestra-izquierda']), listo('8-4-algebra', 'El álgebra detrás de la lógica', ['busca-tabla', 'cadena-calc', 'algebra-elegir', 'demuestra-prelineal']), listo('8-5-completitud', 'Completitud: probar y ser verdad', ['encuentra-contra', 'valor-calc', 'completitud-elegir', 'demuestra-correccion']),
   ] },
 ];
 
