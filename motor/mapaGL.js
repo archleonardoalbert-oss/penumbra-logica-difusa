@@ -77,7 +77,7 @@ void main(){
  float e=step(.9,h)*smoothstep(.05+.09*pow(h21(id+3.),3.),.0,length(f+vec2(h21(id+7.),h21(id+9.))*.7-.35));
  c+=vec3(.82,.90,1.)*e*(.6+.3*sin(uT*.5+h*80.))*smoothstep(.015,.2,v.z)*.9;
  // la luna, a medio eclipsar: una penumbra de verdad, de borde suave, que la cruza muy despacio
- vec3 luna=normalize(vec3(uSol.xy,uSol.z*.27));float ang=acos(clamp(dot(v,luna),-1.,1.)),R=.027;
+ vec3 luna=normalize(vec3(uSol.xy,uSol.z*.17));float ang=acos(clamp(dot(v,luna),-1.,1.)),R=.027;
  if(ang<R*1.1){
   vec3 x=normalize(cross(luna,vec3(0.,0.,1.))),y=cross(x,luna);vec2 q=vec2(dot(v-luna,x),dot(v-luna,y))/R;
   float disco=smoothstep(1.,.93,length(q)),mar=texture(uRuido,q*.11+.3).r*.6+texture(uRuido,q*.31).g*.4;

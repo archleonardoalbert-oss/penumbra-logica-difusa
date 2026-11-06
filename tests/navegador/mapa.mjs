@@ -1,6 +1,6 @@
 import { t, afirmar } from '../banco.mjs';
 
-const abrir = async (ir, pg) => { await ir('index.html'); await pg.waitForFunction(() => window.mapa); };
+const abrir = async (ir, pg) => { await pg.emulateMedia({ reducedMotion: 'reduce' }); await ir('index.html'); await pg.waitForFunction(() => window.mapa); };
 const moverA = async (pg, id) => { const [x, y] = await pg.evaluate((i) => mapa.aPantalla(i), id); await pg.mouse.move(x, y); return [x, y]; };
 
 t('mapa: elegido un capítulo, pasar el ratón por otro no cambia sus temas', async ({ pg, ir }) => {
