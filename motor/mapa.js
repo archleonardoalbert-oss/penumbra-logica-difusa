@@ -180,7 +180,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     return { ...camaraValida(camara), ...(vuelo ? vuelo(t) : vista) };
   }
   /** La luz de la luna: se mueve tan despacio que la penumbra respira. */
-  function sol() { const az = (esAlba ? 1.16 : 1.1) + (reducido ? 0 : 0.05 * Math.sin(t / 26)), el = esAlba ? 0.115 : 0.26, c = Math.cos(el); return [Math.cos(az) * c, Math.sin(az) * c, Math.sin(el)]; }
+  function sol() { const az = (esAlba ? 1.16 : 1.24) + (reducido ? 0 : 0.05 * Math.sin(t / 26)), el = esAlba ? 0.115 : 0.26, c = Math.cos(el); return [Math.cos(az) * c, Math.sin(az) * c, Math.sin(el)]; }
   fijarCampo();
   let solActual = sol(), huellaCamara = '';
   function pintar(rehacer = true) {
