@@ -30,7 +30,7 @@ export default {
     primitivas({ q, paso, e }) {
       const al = ev(q(0), 0, 0.4), g1 = paso >= 1 ? ev(q(1), 0, 0.5) : 0, g2 = paso >= 2 ? ev(q(2), 0, 0.5) : 0, g3 = paso >= 3 ? ev(q(3), 0, 0.5) : 0, u = e.u, Rn = E0.m.length;
       const M = [];
-      E0.m.forEach((f, ri) => f.forEach((v, k) => { const Y = Rn - 1 - ri, entra = v > u, c = g1 > 0.5 && entra ? ORO : AZUL; M.push(poligono([[k + 0.05, Y + 0.05], [k + 0.95, Y + 0.05], [k + 0.95, Y + 0.95], [k + 0.05, Y + 0.95]], { color: v > 0 ? c : BLANCO, alfa: al * (v > 0 ? mix(0.2 + 0.7 * v, entra ? 0.9 : 0.12, g1) : 0.05) }), rotulo([k + 0.5, Y + 0.5], v > 0 ? coma(v) : '0', { clave: `m${ri}${k}`, tam: 13, color: g1 > 0.5 && entra ? '#14141f' : BLANCO, alfa: al * (v > 0 ? 1 : 0.35) })); }));
+      E0.m.forEach((f, ri) => f.forEach((v, k) => { const Y = Rn - 1 - ri, entra = v > u, c = g1 > 0.5 && entra ? ORO : AZUL; M.push(poligono([[k + 0.05, Y + 0.05], [k + 0.95, Y + 0.05], [k + 0.95, Y + 0.95], [k + 0.05, Y + 0.95]], { color: v > 0 ? c : BLANCO, alfa: al * (v > 0 ? mix(0.2 + 0.7 * v, entra ? 0.9 : 0.12, g1) : 0.05) }), rotulo([k + 0.5, Y + 0.5], v > 0 ? coma(v) : '0', { clave: `m${ri}${k}`, tam: 13, color: g1 > 0.5 && entra ? [20, 20, 31] : BLANCO, alfa: al * (v > 0 ? 1 : 0.35) })); }));
       NOMBRES_CCD.forEach((n, k) => M.push(rotulo([k + 0.5, 0], R`\text{${n.split(' ')[0]}}`, { clave: `k${k}`, dy: 14, tam: 12, color: GRIS2, alfa: al })));
       const F = [];
       if (g2 > 0) for (let r = 0; r < Rn; r++) F.push(rotulo([0, 2.5 - r], R`\text{Si ${frase(r, u)}:}\ \ \text{${salida(r)}}`, { clave: `fr${r}`, ancla: 'l', tam: 19, color: E0.m[r].some((v) => v > u) ? ORO : GRIS2, alfa: g2 * ev(q(2), r * 0.15, r * 0.15 + 0.4) }));

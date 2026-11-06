@@ -33,7 +33,7 @@ export default {
       if (Math.hypot(...p2) > 0) A.push(...flecha([0, 0], p2, { color: ORO, alfa: al, ancho: 3.4 })); else if (r > 0) A.push(punto(Z2, { color: ROJO, radio: 8, alfa: al }), rotulo(Z2, R`\text{muere}`, { clave: 'mu', dy: -18, tam: 17, color: ROJO, alfa: al }));
       const barrido = paso === 3 ? Math.max(ev(q(3), 0.12, 0.6) * (1 - ev(q(3), 0.72, 0.94)), 0) : 0, l = Math.max(Math.round(e.l), Math.round(barrido * 7)), C = CAMINO[l], R0 = C.m.length, K = NOMBRES_CCD.length, M = [];
       if (g3 > 0) {
-        C.m.forEach((f, ri) => f.forEach((v, k) => { const X = k, Y = R0 - 1 - ri; M.push(poligono([[X + 0.05, Y + 0.05], [X + 0.95, Y + 0.05], [X + 0.95, Y + 0.95], [X + 0.05, Y + 0.95]], { color: v > 0 ? ORO : BLANCO, alfa: g3 * (v > 0 ? 0.15 + 0.8 * v : 0.05) }), rotulo([X + 0.5, Y + 0.5], v > 0 ? coma(v) : '0', { clave: `m${ri}${k}`, tam: 13, color: v > 0.45 ? '#14141f' : BLANCO, alfa: g3 * (v > 0 ? 1 : 0.35) })); }));
+        C.m.forEach((f, ri) => f.forEach((v, k) => { const X = k, Y = R0 - 1 - ri; M.push(poligono([[X + 0.05, Y + 0.05], [X + 0.95, Y + 0.05], [X + 0.95, Y + 0.95], [X + 0.05, Y + 0.95]], { color: v > 0 ? ORO : BLANCO, alfa: g3 * (v > 0 ? 0.15 + 0.8 * v : 0.05) }), rotulo([X + 0.5, Y + 0.5], v > 0 ? coma(v) : '0', { clave: `m${ri}${k}`, tam: 13, color: v > 0.45 ? [20, 20, 31] : BLANCO, alfa: g3 * (v > 0 ? 1 : 0.35) })); }));
         NOMBRES_CCD.forEach((n, k) => M.push(rotulo([k + 0.5, 0], R`\text{${n.split(' ')[0]}}`, { clave: `k${k}`, dy: 15, tam: 12, color: GRIS2, alfa: g3 })));
         M.push(rotulo([3, R0], R`\lambda = ${coma(C.lambda, 3)}\quad \text{activos: } ${C.activos}\quad \text{acierto: } ${coma(C.exactitud)}`, { clave: 'res', dy: -22, tam: 17, color: ORO, alfa: g3 }));
       }
