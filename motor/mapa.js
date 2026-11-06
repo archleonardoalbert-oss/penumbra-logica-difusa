@@ -382,13 +382,15 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
 
   // --- el bucle: a 30 cuadros la luz se mueve; si la máquina no da para más, baja la resolución antes que la fluidez
   const DORMIR = 25000;
+  let pedido = 0;
+  const despertar = () => { ultGesto = performance.now(); if (!pedido) { ult = performance.now(); pedido = requestAnimationFrame(cuadro); } };
   let ult = performance.now(), ultCuadro = 0, ultFondo = 0, ultLuz = 0, ultGesto = performance.now(), activo = true, lentos = 0, congelado = false;
-  for (const ev2 of ['pointermove', 'pointerdown', 'keydown', 'wheel']) addEventListener(ev2, () => { ultGesto = performance.now(); }, { passive: true });
-  document.addEventListener('visibilitychange', () => { ultGesto = performance.now(); });
+  for (const ev2 of ['pointermove', 'pointerdown', 'keydown', 'wheel']) addEventListener(ev2, despertar, { passive: true });
+  document.addEventListener('visibilitychange', despertar);
   const io = new IntersectionObserver((e2) => { activo = e2[0].isIntersecting; });
   io.observe(pagina);
   const cuadro = (ms) => {
-    requestAnimationFrame(cuadro);
+    pedido = requestAnimationFrame(cuadro);
     if (!activo || document.hidden || congelado) { ult = ms; return; }
     const dt = Math.min(0.25, (ms - ult) / 1000);
     ult = ms;
@@ -400,6 +402,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     if (Math.abs(a.dist - vista.dist) > 1e-3) mueve = true;
     const animando = t < 1.2 || vuelo || mueve || modo !== 'normal' || mapaSucio;
     if (animando) {
+      if (ms - ultCuadro < 14) return; // pantallas de 144 Hz: con 60 cuadros basta y se ahorra CPU
       if (ultCuadro && !reducido) {
         if (ms - ultCuadro > 42) lentos++; else lentos = Math.max(0, lentos - 1);
         if (lentos > 14) { lentos = 0; escala = escala > 1 ? Math.max(1, escala * 0.86) : Math.max(0.7, escala * 0.9); }
@@ -411,7 +414,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     }
     // en reposo: solo lo que brilla encima, 30 veces por segundo, y el fondo muy de vez en cuando
     if (reducido || software) return;
-    if (ms - ultGesto > DORMIR) return; // nadie mira: no se dibuja nada hasta el próximo gesto
+    if (ms - ultGesto > DORMIR) { cancelAnimationFrame(pedido); pedido = 0; return; } // nadie toca nada: el bucle entero se para hasta el próximo gesto
     if (ms - ultCuadro < 32) return;
     ultCuadro = ms;
     if (ms - ultLuz > 4000) {
@@ -438,7 +441,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     addEventListener('keydown', (ev2) => { if (['Escape', ' ', 'Enter'].includes(ev2.key)) { ev2.preventDefault(); salirDeViaje(); } });
   }
   pintar();
-  requestAnimationFrame(cuadro);
+  pedido = requestAnimationFrame(cuadro);
 
   return {
     camara: () => camaraValida(camara),
