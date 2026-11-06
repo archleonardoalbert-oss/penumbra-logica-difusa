@@ -56,7 +56,7 @@ export const CATALOGO = [
     listo('6-4-tsukamoto', 'Tsukamoto: conclusiones que no retroceden', ['lleva-salida', 'tsukamoto-calc', 'tsukamoto-elegir']), listo('6-5-aproximacion', 'Pueden imitar cualquier curva', ['bajar-error', 'cuantas-reglas', 'demuestra-lipschitz']), listo('6-6-pendulo', 'El péndulo se sostiene', ['sostenlo', 'tabla-calc', 'quien-falta', 'demuestra-pd']),
   ] },
   { id: 7, titulo: 'Aprender', lema: 'Reglas que se ajustan solas.', posicion: [0.3, 0.85], conceptos: [
-    pend('7-1-c-medias', 'C-medias difusas'), pend('7-2-anfis', 'ANFIS'), pend('7-3-tipo-2', 'Conjuntos de tipo 2'), pend('7-4-celulas', 'Células de Concepto'),
+    listo('7-1-c-medias', 'Encontrar los grupos: c-medias difusas', ['alas-difusas', 'pertenencia-calc', 'cmedias-elegir', 'demuestra-centro']), listo('7-2-anfis', 'Reglas que se ajustan solas: ANFIS', ['entrena', 'gradiente-calc', 'anfis-elegir', 'demuestra-derivada']), listo('7-3-tipo-2', 'Dudar de la curva: conjuntos de tipo 2', ['ensancha', 'intervalo-calc', 'tipo2-elegir', 'demuestra-extremos']), listo('7-4-celulas', 'Tu propuesta: Células de Concepto Difusas', ['que-cambia', 'regla-ccd-calc', 'ccd-elegir', 'demuestra-producto']),
   ] },
   { id: 8, titulo: 'Solo para valientes', lema: 'La lógica misma, sin red.', posicion: [0.72, 0.86], conceptos: [
     pend('8-1-bl', 'La lógica BL'), pend('8-2-lukasiewicz', 'Łukasiewicz, Gödel y producto'), pend('8-3-mtl', 'MTL'), pend('8-4-algebra', 'Semántica algebraica'), pend('8-5-completitud', 'Completitud'),
