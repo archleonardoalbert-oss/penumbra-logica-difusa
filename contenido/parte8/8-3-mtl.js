@@ -38,7 +38,7 @@ export default {
         C.push(linea([0, b], [1, b], { color: ROSA, ancho: 2, alfa: corte, discontinua: true }), rotulo([0.98, b], R`{\color{#fc6282}b}`, { clave: 'b', ancla: 'r', dy: -12, tam: 18, alfa: corte }));
         C.push(punto([z, NILPOTENTE.t(a, z)], { color: ORO, radio: 8, alfa: corte }), rotulo([0.02, 0.9], R`a \to b = {\color{#f4d345}${coma(z)}}`, { clave: 'z', ancla: 'l', tam: 21, alfa: corte }));
       }
-      if (dr > 0) C.push(curva((u) => [u, 0], [0, 0.995], { n: 2, color: ROJO, ancho: 3, alfa: dr }), punto([1, a], { color: ROJO, radio: 7, alfa: dr }), rotulo([0.98, 0.22], R`{\color{#f05a5a}\text{drástica: si } b < a, \text{ sin mayor } z}`, { clave: 'dr', ancla: 'r', tam: 16, alfa: dr }));
+      if (dr > 0) C.push(curva((u) => [u, 0], [0, 0.995], { n: 2, color: ROJO, ancho: 3, alfa: dr }), punto([1, a], { color: ROJO, radio: 7, alfa: dr }), rotulo([0.02, 0.78], R`{\color{#f05a5a}\text{drástica: si } b < a, \text{ sin mayor } z}`, { clave: 'dr', ancla: 'l', tam: 15, alfa: dr }));
       const V = [mapaCalor(F, { clave: `mtl${M.toFixed(2)}` }), marco({ x: DOM, y: DOM }, { alfa: ba, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'a', y: 'z' } }), rotulo([0.5, 1], R`\text{Desde arriba}`, { clave: 'tm', dy: -16, tam: 15, color: GRIS2, alfa: ba })];
       return { principal: P, paneles: [{ ejes: { x: DOM, y: DOM, caja: { x: 690, y: 44, w: 180, h: 180 } }, prims: V }, { ejes: { x: DOM, y: DOM, caja: { x: 680, y: 310, w: 380, h: 280 } }, prims: C }] };
     },

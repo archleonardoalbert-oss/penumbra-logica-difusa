@@ -3,6 +3,7 @@ import { CATALOGO } from '../contenido/catalogo.js';
 import { crearProgreso } from '../nucleo/progreso.js';
 import { siguienteConcepto } from '../nucleo/recorrido.js';
 import { alturaMapa, glslMapa, regionEn } from './alturaMapa.js';
+import { crearTaller } from '../nucleo/taller.js';
 import { barraGrado, h, tituloDifuso, tryLocal } from './concepto.js';
 import { crearLienzo, soportaGL2 } from './lienzo.js';
 import { curva, punto, rotulo, terreno } from './primitivas.js';
@@ -23,6 +24,17 @@ function listaConceptos(region, progreso) {
 
 function listaPlana(raiz, catalogo, progreso) {
   raiz.append(h('div', { className: 'mapa-lista' }, catalogo.map((r) => h('section', {}, h('h2', { textContent: `${r.id}. ${r.titulo}` }), h('p', { textContent: r.lema }), listaConceptos(r, progreso)))));
+}
+
+/** El péndulo siempre está a mano, con lo que lleves construido. */
+function tuPendulo(almacen) {
+  const t = crearTaller(almacen).leer(), piezas = [];
+  if (t.anchoAngulo) piezas.push(`«inclinado» a ${String(t.anchoAngulo).replace('.', ',')}°`);
+  if (t.normaY) piezas.push(`«y» ${t.normaY}`);
+  if (t.fuerzaMaxima) piezas.push(`fuerza ${t.fuerzaMaxima.toFixed(1).replace('.', ',')}`);
+  return h('div', { className: 'tu-pendulo' },
+    h('p', { className: 'tenue', textContent: piezas.length ? `En tu taller: ${piezas.join(', ')}.` : 'Tu taller está vacío: los retos del péndulo le van añadiendo piezas.' }),
+    h('a', { className: 'enlace-pendulo', href: 'concepto.html?c=6-6-pendulo#toca', textContent: 'Probar tu péndulo →' }));
 }
 
 export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } = {}) {
@@ -62,7 +74,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   const r3 = crearRender3D(lienzo, { cx: 430, cy: 232, S: 450 });
   const glsl = glslMapa(catalogo);
   let camara = { yaw: -0.62, pitch: 0.92 }, t = matchMedia('(prefers-reduced-motion: reduce)').matches ? 9 : 0;
-  let enfocada = null, fijada = null;
+  let enfocada = null, fijada = null, mapaSucio = true;
 
   const grados = () => catalogo.map((r) => progreso.gradoRegion(r.id, catalogo));
   const sube = () => ev(t, 0, 1.6);
@@ -121,11 +133,11 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     const id = enfocada ?? fijada, r = catalogo.find((x) => x.id === id);
     if (!r) {
       const sig = siguienteConcepto(catalogo, progreso);
-      if (!sig) { rellenar(h('h2', { textContent: 'Has recorrido todo el curso' }), h('p', { textContent: 'Tus colinas brillan. Vuelve a cualquier parada cuando quieras.' })); return; }
+      if (!sig) { rellenar(h('h2', { textContent: 'Has recorrido todo el curso' }), h('p', { textContent: 'Tus colinas brillan. Vuelve a cualquier parada cuando quieras.' }), tuPendulo(almacen)); return; }
       const ir = h('button', { type: 'button', className: 'boton-seguir', textContent: 'Continuar el camino →' });
       ir.addEventListener('click', () => volarA(sig));
       rellenar(h('p', { className: 'rotulo-etapa', textContent: 'Tu siguiente parada' }), h('h2', { textContent: sig.titulo }), h('p', { className: 'tenue', textContent: `Región ${sig.region.id}: ${sig.region.titulo}` }), ir,
-        h('p', { className: 'tenue', textContent: 'El camino dorado es lo que llevas. Las colinas crecen con lo que demuestras en los retos; mirar no sube nada.' }));
+        h('p', { className: 'tenue', textContent: 'El camino dorado es lo que llevas. Las colinas crecen con lo que demuestras en los retos; mirar no sube nada.' }), tuPendulo(almacen));
       return;
     }
     const { el } = barraGrado(progreso.gradoRegion(r.id, catalogo));
@@ -162,6 +174,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     if (giro) {
       movido += Math.hypot(px[0] - giro[0], px[1] - giro[1]);
       camara = r3.camaraValida({ yaw: camara.yaw + (px[0] - giro[0]) * 0.006, pitch: camara.pitch + (px[1] - giro[1]) * 0.004 });
+      mapaSucio = true;
       giro = px;
       return;
     }
@@ -179,11 +192,14 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   zona.addEventListener('pointerup', soltar);
   zona.addEventListener('pointercancel', soltar);
 
-  alCambiar = () => { pintarPanel(); };
+  alCambiar = () => { pintarPanel(); mapaSucio = true; };
+  addEventListener('resize', () => { mapaSucio = true; });
   lienzo.animar((dt) => {
     t += dt;
-    for (const k of ['S', 'cx', 'cy']) vista[k] += (objetivo[k] - vista[k]) * Math.min(1, dt * 5);
-    pintar();
+    let mueve = false;
+    for (const k of ['S', 'cx', 'cy']) { const d = objetivo[k] - vista[k]; vista[k] += d * Math.min(1, dt * 5); if (Math.abs(d) > 0.02) mueve = true; }
+    // Con todo quieto, no se gasta GPU: el mapa solo se repinta si algo ha cambiado.
+    if (t < 2 || vuelo || mueve || mapaSucio) { mapaSucio = false; pintar(); }
   });
   pintarPanel();
   pintar();

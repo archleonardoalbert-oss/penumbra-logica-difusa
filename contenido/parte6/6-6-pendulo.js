@@ -78,7 +78,7 @@ export default {
       return { principal: c, paneles: [{ ejes: { x: [0, TF], y: [-30, 30], caja: { x: 600, y: 70, w: 450, h: 180 } }, prims: G }, { ejes: { x: [0, 520], y: [230, 0], caja: { x: 560, y: 320, w: 520, h: 230 } }, prims: Tb }] };
     },
   },
-  manipulacion: '<ul><li>Sube «cuánto mira la velocidad» y vuelve al comienzo con ↻: el palo se calma.</li><li>Activa el empujón. Quita fuerza. ¿Cuánto hace falta como mínimo para que aguante?</li></ul>',
+  manipulacion: '<ul><li>Sube «cuánto mira la velocidad» y recorre el tiempo con su deslizador: el palo se calma.</li><li>Activa el empujón. Quita fuerza. ¿Cuánto hace falta como mínimo para que aguante?</li></ul>',
   entender: [
     { tipo: 'idea', etiqueta: 'La idea', texto: 'Un equilibrista no resuelve ecuaciones: si se inclina y además cae rápido, corrige fuerte; si se inclina pero ya vuelve, casi no hace nada. Eso, escrito en nueve reglas, sostiene el palo. No has hecho ningún modelo matemático del péndulo para escribirlas: bastó con el sentido común.' },
     { tipo: 'ejemplo', texto: 'La tabla entera: en cada casilla, cuánta fuerza pide la regla, como fracción de la máxima $F$.', tabla: [['', 'Gira ←', 'Quieto', 'Gira →'], ['Inclinado a la izq.', '−1', '−0,5', '0'], ['Recto', '−0,5', '0', '0,5'], ['Inclinado a la der.', '0', '0,5', '1']], cierre: 'Fíjate en la casilla de arriba a la derecha: inclinado a la izquierda, pero girando a la derecha. Ya está volviendo solo: no hay que hacer nada.' },

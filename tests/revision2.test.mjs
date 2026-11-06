@@ -36,3 +36,15 @@ test('toda parada menos la última lleva a otra parada', async () => {
   L.slice(0, -1).forEach((c, i) => assert.equal(siguienteEnCurso(c.id)?.id, L[i + 1].id));
   assert.equal(siguienteEnCurso(L.at(-1).id), null);
 });
+test('una fórmula escrita por el alumno admite mín y máx, con su fórmula bonita', async () => {
+  const { compilar } = await import('../nucleo/expresion.js');
+  const c = compilar('min(x, 1 - x) + max(x, 0.2) * 0', ['x']);
+  assert.equal(c.error ?? null, null);
+  assert.ok(Math.abs(c.f(0.3) - 0.3) < 1e-9);
+  assert.match(c.latex, /\\min/);
+  assert.ok(compilar('min(x)', ['x']).error);
+});
+test('una fórmula sin ningún número válido avisa, en vez de dibujar 0 callada', async () => {
+  const def = { pasos: [{ dur: 1 }], primitivas: () => [], entradas: [{ id: 'f', tipo: 'expresion', vars: ['x'], valor: 'sqrt(x - 2)', dominio: [0, 1] }] };
+  assert.match(crearEntradas(def).avisos.f, /ningún número/);
+});

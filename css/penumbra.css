@@ -266,3 +266,8 @@ a.estacion:hover { transform: scale(1.5); border-color: var(--texto); }
   .mapa-cabecera { position: static; padding: 18px 16px; }
   .mapa-panel { position: static; width: auto; margin: 12px 16px; }
 }
+
+.tu-pendulo { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); }
+.enlace-pendulo { color: var(--oro, #f4d345); text-decoration: none; }
+.enlace-pendulo:hover { text-decoration: underline; }
+.escenario section:focus, .escena-lienzo canvas:focus { outline: none; }

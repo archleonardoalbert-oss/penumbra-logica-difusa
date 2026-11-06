@@ -81,5 +81,5 @@ export default {
         { texto: R`Queda $a \to a$, que vale 1 porque $a \le a$.`, porque: 'La implicación vale 1 justo cuando hay orden.' },
       ] },
   ],
-  referencias: ['P. Hájek, <em>Metamathematics of Fuzzy Logic</em>, 1998, cap. 3 y 4.', 'P. S. Mostert, A. L. Shields, «On the structure of semigroups on a compact manifold with boundary», <em>Annals of Mathematics</em> 65 (1957).', 'Stanford Encyclopedia of Philosophy, «Fuzzy Logic».'],
+  referencias: ['P. Hájek, <em>Metamathematics of Fuzzy Logic</em>, 1998, cap. 3 y 4.', 'P. Cintula, «About axiomatic systems of product fuzzy logic», <em>Soft Computing</em> 5 (2001).', 'P. S. Mostert, A. L. Shields, «On the structure of semigroups on a compact manifold with boundary», <em>Annals of Mathematics</em> 65 (1957).', 'Stanford Encyclopedia of Philosophy, «Fuzzy Logic».'],
 };

@@ -67,4 +67,5 @@ export const GLOSARIO = {
   'correcta': { titulo: 'Lógica correcta', texto: 'Todo lo que se demuestra con sus reglas es verdad en todas sus interpretaciones: no demuestra nada falso.', ejemplo: 'Si de los axiomas se deduce una fórmula, esa fórmula vale siempre 1.' },
   'completa': { titulo: 'Lógica completa', texto: 'Todo lo que es verdad en todas sus interpretaciones se puede demostrar con sus reglas: no le falta ninguna regla.', ejemplo: 'Si una fórmula vale siempre 1, existe una demostración de ella.' },
   ESI: { titulo: 'ESI', texto: 'Una escala de cinco niveles usada en urgencias para decidir a quién atender primero (Emergency Severity Index). El 1 es lo más urgente, y el 5, lo que menos.', ejemplo: 'Un paro cardiaco es ESI 1. Una receta es ESI 5.' },
+  'grado de dominio': { titulo: 'Tu grado de dominio', texto: 'Sale solo de los retos: mirar no sube nada. Cada reto da una nota de 0 a 1, y baja si pides pistas. El grado de una parada es la media de sus retos, y el de una región, la media de sus paradas. Nada queda «completado»: dominar algo también es cuestión de grado.', ejemplo: 'con notas 1, 0,5 y 0 en tres retos, tu grado aquí es 0,5.' },
 };

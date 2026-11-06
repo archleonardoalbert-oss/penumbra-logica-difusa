@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Sirve la curso en local y lo abre en el navegador.
+"""Sirve el curso en local y lo abre en el navegador.
 
-Uso: ./abrir-curso            (abre el navegador)
-     ./abrir-curso --sin-abrir (solo sirve; útil para pruebas)
+Uso: ./abrir-penumbra            (abre el navegador)
+     ./abrir-penumbra --sin-abrir (solo sirve; útil para pruebas)
 """
 import functools
 import http.server

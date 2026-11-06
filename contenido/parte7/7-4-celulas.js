@@ -20,7 +20,7 @@ const X_ESI = (v) => 800 + ((v - 1) / 4) * 250;
 export default {
   id: '7-4-celulas',
   titulo: 'Tu propuesta: Células de Concepto Difusas',
-  puente: 'Has recorrido las aplicaciones. Queda una última región, solo para quien quiera: la lógica difusa como lógica de verdad, con axiomas y demostraciones.',
+  puente: 'Una capa de reglas que aprende de ejemplos. Falta aplicarle lo mismo a lo tuyo: tu péndulo todavía lleva números elegidos a mano.',
   pregunta: 'Una IA de urgencias que dice «nivel 2», sin explicar por qué, no sirve. Con todo lo que sabes ya, ¿cómo harías que mostrara su razonamiento? Es tu propuesta de investigación.',
   escena: {
     id: 'celulas', formato: 'plano', W: 1100, H: 560, ejes: LIENZO(1100, 560),

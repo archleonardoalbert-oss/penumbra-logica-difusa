@@ -21,10 +21,10 @@ export const h = (tag, props = {}, ...hijos) => {
 };
 const prosa = (texto) => enlazarTerminos(texto ?? '', GLOSARIO);
 const html = (tag, texto, clase) => h(tag, { innerHTML: prosa(texto), className: clase });
-const OPCIONES_TEX = { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false };
+const OPCIONES_TEX = { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false, strict: false };
 const pintarTex = (el) => window.renderMathInElement?.(el, OPCIONES_TEX);
 const coma = (v, d = 2) => v.toFixed(d).replace('.', ',');
-const texto = (tex, display = false) => (window.katex ? window.katex.renderToString(tex, { displayMode: display, throwOnError: false }) : tex);
+const texto = (tex, display = false) => (window.katex ? window.katex.renderToString(tex, { displayMode: display, throwOnError: false, strict: false }) : tex);
 
 /** Título cuyas últimas letras pierden el borde. `--b` en el elemento regula cuánto: se aclara al avanzar. */
 export function tituloDifuso(t, tag = 'h1') {
@@ -41,7 +41,10 @@ export function tituloDifuso(t, tag = 'h1') {
 export function barraGrado(valor) {
   const barra = h('div', { className: 'grado', role: 'img' });
   const relleno = h('i'), num = h('b');
-  barra.append(h('span', { textContent: 'tu grado' }), h('div', { className: 'grado-carril' }, relleno), num);
+  instalarGlosario();
+  const nombre = h('button', { type: 'button', className: 'termino', textContent: 'tu grado' });
+  nombre.dataset.termino = 'grado de dominio';
+  barra.append(nombre, h('div', { className: 'grado-carril' }, relleno), num);
   const fijar = (v) => {
     relleno.style.width = `${v * 100}%`;
     num.textContent = coma(v);
@@ -205,7 +208,7 @@ function tarjetaReto(reto, { registrar, notaInicial, escena, escenaDisponible, t
       b.addEventListener('click', () => responder(notaDemostracion(n, pistas.usadas()), 'Anotado. Lo que cuenta es lo que te llevas de ella.'));
       auto.append(b);
     }
-    ver.addEventListener('click', () => { sol.hidden = false; auto.hidden = false; ver.hidden = true; pintarTex(sol); });
+    ver.addEventListener('click', () => { sol.hidden = false; auto.hidden = false; ver.hidden = true; pintarTex(sol); auto.scrollIntoView?.({ block: 'nearest' }); });
     acciones.append(ver);
     caja.append(sol, auto);
   }
@@ -381,12 +384,16 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
     centro.className = 'pie-centro escena-contador';
   }
 
+  for (const s of Object.values(secciones)) s.tabIndex = -1;
+  let yaEnfocable = false;
   function aplicarEtapa() {
     const e = ETAPAS[etapa];
     for (const [k, s] of Object.entries(secciones)) s.hidden = k !== e.id;
     [...raiel.children].forEach((li, k) => { li.className = k < etapa ? 'pasada' : k === etapa ? 'actual' : 'futura'; li.firstChild.setAttribute('aria-current', k === etapa ? 'step' : 'false'); });
     titulo.style.setProperty('--b', String(1 - etapa / (ETAPAS.length - 1)));
     app.dataset.etapa = e.id;
+    if (yaEnfocable) secciones[e.id].focus({ preventScroll: true });
+    yaEnfocable = true;
     centro.replaceChildren();
     if (e.id === 'mira') { huecoMira.replaceChildren(textos, encaje); centro.append(botonesEscena); controles.remove(); }
     if (e.id === 'toca') { huecoToca.replaceChildren(encaje); panelToca.append(controles); escena.reposo(); }
