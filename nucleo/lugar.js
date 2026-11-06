@@ -7,9 +7,11 @@ export function crearLugar(almacen) {
   try { const d = JSON.parse(almacen.getItem(CLAVE)); if (d?.paradas) datos = d; } catch { /* roto o bloqueado: se empieza de nuevo */ }
   const escribir = () => { try { almacen.setItem(CLAVE, JSON.stringify(datos)); } catch { /* sin almacenamiento */ } };
   return {
-    guardar(c, lugar) { datos.ultimo = c; datos.paradas[c] = { ...lugar }; escribir(); },
+    guardar(c, lugar) { datos.ultimo = c; datos.paradas[c] = { ...lugar, cuando: Date.now() }; escribir(); },
     de: (c) => datos.paradas[c] ?? null,
     ultimo: () => (datos.ultimo ? { c: datos.ultimo, ...datos.paradas[datos.ultimo] } : null),
+    /** El más reciente entre estas paradas: cada lado del mapa recuerda el suyo. */
+    ultimoEntre(ids) { const c = ids.filter((i) => datos.paradas[i]).sort((a, b) => (datos.paradas[b].cuando ?? 0) - (datos.paradas[a].cuando ?? 0))[0]; return c ? { c, ...datos.paradas[c] } : null; },
     olvidar() { datos = { ultimo: null, paradas: {} }; try { almacen.removeItem(CLAVE); } catch { /* sin almacenamiento */ } },
   };
 }

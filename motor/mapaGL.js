@@ -1,16 +1,28 @@
 // El paisaje de la portada, en WebGL2: montañas con sombras de borde suave, niebla en los valles, un camino que fluye y faros en las cimas.
 // El sentido del color es el del curso: azul y turquesa para lo que aún está por explorar, oro solo para lo que dominas.
+import { CAPAS } from './mapaRed.js';
 import { ANCHO_CIMA, BASE, OCTAVAS, SIGMA, campoMapa, DOMINIO, DOMINIO_CERCA } from './alturaMapa.js';
 
-const ESCZ = 0.46;
+const ESCZ = 0.46, CAPAS_N = CAPAS.length;
 
 const CIELO = `
+uniform float uAlba;
 vec3 cielo(vec3 v,vec3 sol){
  float e=max(v.z,0.),s=max(dot(v,sol),0.);
  vec3 c=mix(vec3(.0048,.011,.027),vec3(.0008,.0018,.006),smoothstep(0.,.14,e));
  c+=vec3(.10,.17,.27)*exp(-e*30.)*.07;
  c+=vec3(.42,.52,.70)*pow(s,40.)*.07;
  c+=vec3(.86,.90,1.)*pow(s,400.)*.3;
+ if(uAlba>0.){
+  // el sol asoma justo sobre el horizonte; la luz del suelo viene algo más alta, para que haya relieve
+  vec3 so=normalize(vec3(sol.xy,sol.z*.36));float sa=max(dot(v,so),0.);
+  vec3 d=mix(vec3(.46,.17,.085),vec3(.2,.105,.19),smoothstep(0.,.022,e));
+  d=mix(d,vec3(.052,.08,.2),smoothstep(.016,.06,e));d=mix(d,vec3(.008,.02,.07),smoothstep(.05,.2,e));
+  d+=vec3(1.,.5,.22)*pow(sa,18.)*.16*exp(-e*5.)+vec3(1.,.66,.36)*pow(sa,220.)*.42+vec3(1.,.86,.62)*pow(sa,2500.)*1.4;
+  d+=vec3(1.,.94,.82)*smoothstep(.99975,.99992,sa)*6.;
+  d+=vec3(.82,.9,1.)*0.;
+  c=mix(c,d,uAlba);
+ }
  return c;}`;
 
 // La altura se lee siempre de una textura: la del mapa hecho o, mientras nace, la que se recalcula una vez por cuadro.
@@ -60,9 +72,10 @@ void main(){
  roca*=(.74+.62*g1.b+.5*g2.b*deta)*(.62+.5*grieta);
  vec3 oro=vec3(.86,.60,.13);
  roca=mix(roca,oro*(.62+.62*g1.b)*(.75+.5*smoothstep(.25,.75,hn))*(.7+.4*grieta),dom*.92);
- vec3 lunar=vec3(.72,.88,1.)*2.9,ambiente=vec3(.04,.08,.16)*(.45+.55*nd.z)+vec3(.016,.034,.07)*max(dot(nd,v),0.);
+ roca=mix(roca,mix(vec3(.13,.115,.15),vec3(.40,.33,.30),smoothstep(.1,.72,hn))*(.78+.5*g1.b+.4*g2.b*deta)*(.66+.46*grieta),uAlba*(1.-dom*.8));
+ vec3 lunar=mix(vec3(.72,.88,1.)*2.9,vec3(1.,.70,.47)*4.2,uAlba),ambiente=mix(vec3(.04,.08,.16)*(.45+.55*nd.z)+vec3(.016,.034,.07)*max(dot(nd,v),0.),vec3(.20,.20,.34)*(.55+.45*nd.z)+vec3(.05,.05,.09)*max(dot(nd,v),0.),uAlba);
  c=roca*(lunar*dif*luz+ambiente*oc*1.7+vec3(.16,.10,.024)*dom*(.4+.6*oc));
- c+=vec3(.26,.40,.62)*pow(1.-max(dot(n,v),0.),4.)*.12*oc;
+ c+=mix(vec3(.26,.40,.62),vec3(1.,.62,.42),uAlba)*pow(1.-max(dot(n,v),0.),4.)*.12*oc;
  float cerca=exp(-dot(p-uFoco.xy,p-uFoco.xy)/.028)*uFoco.w;
  float dentro=smoothstep(-.02,.06,p.x)*smoothstep(1.02,.94,p.x)*smoothstep(-.02,.06,p.y)*smoothstep(1.02,.94,p.y);
  float linea=iso(hn,.07)*smoothstep(.1,.16,hn);
@@ -70,7 +83,7 @@ void main(){
  c+=mix(vec3(.05,.16,.22),vec3(.42,.28,.05),dom)*cerca*.55*(.35+dif);
  vec2 w=p*2.1+vec2(uT*.006,-uT*.004);float n1=texture(uRuido,w).r,n2=texture(uRuido,w*2.3-vec2(uT*.009,0.)).g,bruma=smoothstep(.34,.72,n1*.65+n2*.35);
  float valle=smoothstep(.13,.05,hn)*bruma;
- c=mix(c,vec3(.05,.10,.19)*(.3+.7*luz),valle*.5);
+ c=mix(c,mix(vec3(.05,.10,.19),vec3(.86,.54,.46),uAlba)*(.3+.7*luz),valle*mix(.5,.62,uAlba));
  vec3 h=cielo(-v,uSol);
  float r=length(p-.5),nieb=1.-exp(-pow(max(dist-1.9,0.)*.55,1.6));
  nieb=max(nieb,smoothstep(.95,1.28,r))*uMat;
@@ -140,15 +153,15 @@ void main(){
  vec3 c=cielo(v,uSol);
  vec2 g=vec2(atan(v.y,v.x)*92.,v.z*92.),id=floor(g),f=fract(g)-.5;float h=h21(id);
  float e=step(.9,h)*smoothstep(.05+.09*pow(h21(id+3.),3.),.0,length(f+vec2(h21(id+7.),h21(id+9.))*.7-.35));
- c+=vec3(.82,.90,1.)*e*(.6+.3*sin(uT*.5+h*80.))*smoothstep(.015,.2,v.z)*.9;
+ c+=vec3(.82,.90,1.)*e*(.6+.3*sin(uT*.5+h*80.))*smoothstep(.015,.2,v.z)*.9*(1.-uAlba);
  // la luna, a medio eclipsar: una penumbra de verdad, de borde suave, que la cruza muy despacio
  vec3 luna=normalize(vec3(uSol.xy,uSol.z*.17));float ang=acos(clamp(dot(v,luna),-1.,1.)),R=.027;
- if(ang<R*1.1){
+ if(ang<R*1.1&&uAlba<.5){
   vec3 x=normalize(cross(luna,vec3(0.,0.,1.))),y=cross(x,luna);vec2 q=vec2(dot(v-luna,x),dot(v-luna,y))/R;
   float disco=smoothstep(1.,.93,length(q)),mar=texture(uRuido,q*.11+.3).r*.6+texture(uRuido,q*.31).g*.4;
   vec2 cSombra=vec2(.86-.22*sin(uT*.018),.2);float pen=smoothstep(.62,1.5,length(q-cSombra));
   vec3 lu=vec3(1.,.97,.9)*(.74+1.5*(mar-.5));
-  c=mix(c,lu*(.012+1.25*pen)+vec3(.075,.022,.016)*(1.-pen),disco);
+  c=mix(c,lu*(.012+1.25*pen)+vec3(.075,.022,.016)*(1.-pen),disco*(1.-uAlba*2.));
  }
  o=vec4(c*uCielo,1.);}`;
 
@@ -183,6 +196,66 @@ void main(){vec4 c=uVP*vec4(iP,1.);d=iD;v=q;float g=iD.x,act=iD.y;
  vec2 tam=uHaz>.5?vec2(6.+5.*g+5.*act,(34.+96.*g+44.*act)):vec2(24.+20.*g+30.*act);
  vec2 base=uHaz>.5?vec2(q.x,(q.y+1.)):q;
  c.xy+=base*tam/uRes*2.*c.w;c.z-=.002*c.w;gl_Position=c;}`;
+
+// La red: neuronas que brillan según su activación, y aristas por las que viajan señales.
+const POS_RED = `
+uniform float uOrden,uBaja,uSube2;
+vec3 posRed(vec3 ca,vec3 or,vec3 fi){return mix(mix(ca,or,uOrden),fi,uBaja);}`;
+const VS_NEURONA = `#version 300 es
+precision highp float;
+in vec2 q;in vec3 aC,aO,aF;in vec3 aD;uniform mat4 uVP;uniform vec2 uRes;uniform float uHaz;
+${POS_RED}
+out vec2 v;out vec3 d;out float prof;
+void main(){vec4 c=uVP*vec4(posRed(aC,aO,aF),1.);d=aD;v=q;prof=c.w;
+ float ta=clamp((.02+.012*aD.x+(aD.z>=0.?.012:0.))/max(c.w,.02),0.,.75);
+ c.xy+=q*ta*vec2(uRes.y/uRes.x,1.)*c.w*2.4;c.z=min(c.z,c.w*.999);gl_Position=c;}`;
+const FS_NEURONA = `#version 300 es
+precision highp float;
+in vec2 v;in vec3 d;in float prof;uniform float uT,uOla,uOro,uVuelo,uTotal,uFuerza;out vec4 o;
+void main(){
+ float r=length(v),a=d.x,capa=d.y,ru=d.z;
+ // la ola hacia delante: cada capa se enciende al llegarle la señal, con su activación de verdad
+ float frente=fract(uT*.42),dx=capa-frente*1.25+.12,ola=exp(-dx*dx*90.)*uOla;
+ float brillo=(.2+.8*a)*(1.-.55*uOla)+ola*(.7+1.8*a);
+ float visitada=ru>=0.?smoothstep(ru-.04,ru+.02,uVuelo*uTotal):0.;
+ float dispara=ru>=0.?exp(-pow((uVuelo*uTotal-ru)*5.5,2.)):0.;
+ vec3 frio=mix(vec3(.30,.62,.92),vec3(.58,.90,.98),a),oro=vec3(1.,.72,.24);
+ vec3 col=mix(frio,oro,max(uOro*step(0.,ru),visitada*.75));
+ float nuc=smoothstep(.2,.1,r),hal=exp(-r*r*9.)*(1.-smoothstep(.75,1.,r));
+ float an=atan(v.y,v.x),aro=smoothstep(.022,.0,abs(r-.42))*step(fract((an/6.2832+.5)-uT*.05),a)*(ru>=0.?1.:.0);
+ vec3 s=col*(nuc*(1.1+1.6*brillo+6.*dispara)+hal*(.1+.42*brillo+1.4*dispara+.35*uOro*step(0.,ru))+aro*(1.2+2.*dispara));
+ o=vec4(s*uFuerza*exp(-max(prof-3.2,0.)*.42),0.);}`;
+const VS_ARISTA = `#version 300 es
+precision highp float;
+in vec2 q;in vec3 aC0,aO0,aF0,aC1,aO1,aF1;in vec3 aE;uniform mat4 uVP;uniform vec2 uRes;
+${POS_RED}
+out vec2 v;out vec3 e;out float prof;
+void main(){
+ vec4 a=uVP*vec4(posRed(aC0,aO0,aF0),1.),b=uVP*vec4(posRed(aC1,aO1,aF1),1.);
+ e=aE;v=vec2((q.x+1.)*.5,q.y);prof=mix(a.w,b.w,v.x);
+ if(a.w<.03||b.w<.03){gl_Position=vec4(2.,2.,2.,1.);return;}
+ vec2 pa=a.xy/a.w,pb=b.xy/b.w,dir=normalize((pb-pa)*uRes+1e-5),nor=vec2(-dir.y,dir.x)/uRes*2.;
+ float ancho=(1.+1.6*abs(aE.x)+(aE.z>=0.?1.4:0.));
+ vec4 p=mix(a,b,v.x);p.xy+=nor*q.y*ancho*p.w;gl_Position=p;}`;
+const FS_ARISTA = `#version 300 es
+precision highp float;
+in vec2 v;in vec3 e;in float prof;uniform float uT,uAristas,uOla,uOro,uVuelo,uTotal,uFuerza;out vec4 o;
+void main(){
+ float w=e.x,cap=e.y,ru=e.z,t=v.x,d=abs(v.y);
+ float linea=smoothstep(1.,.2,d);
+ vec3 c=w>=0.?vec3(.30,.72,.92):vec3(.95,.36,.52);
+ float pulso=pow(.5+.5*sin((t-uT*(.5+.3*abs(w))+cap*5.7)*9.42),18.)*(.3+.9*uOla);
+ float a=(.016+.06*abs(w))*uAristas*(1.-.55*uOro)+pulso*abs(w)*.8*uAristas*(1.-.4*uOro);
+ vec3 s=c*a;
+ if(ru>=0.){
+  float prog=clamp(uVuelo*uTotal-ru,0.,1.),hecho=smoothstep(t-.02,t+.02,prog);
+  float enc=max(hecho,uOro);
+  float viaje=exp(-pow((t-prog)*14.,2.))*step(.001,prog)*step(prog,.999);
+  s+=vec3(1.,.72,.26)*(enc*(.7+1.3*uOro)+viaje*6.);
+ }
+ o=vec4(s*linea*uFuerza*exp(-max(prof-3.2,0.)*.42),0.);}`;
+const FS_OSCURO = `#version 300 es
+precision highp float;uniform float uK;out vec4 o;void main(){o=vec4(0.,0.,0.,uK);}`;
 
 const FS_FARO = `#version 300 es
 precision highp float;
@@ -244,6 +317,16 @@ export function camaraMapa({ yaw, pitch, dist, objetivo, aspecto, corrimiento = 
   const V = new Float32Array([s[0], up[0], -f[0], 0, s[1], up[1], -f[1], 0, s[2], up[2], -f[2], 0, -pt(s, ojo), -pt(up, ojo), pt(f, ojo), 1]);
   const fy = 1 / Math.tan((38 * Math.PI) / 360), near = 0.04, far = 20;
   const P = new Float32Array([fy / aspecto, 0, 0, 0, 0, fy, 0, 0, corrimiento, 0, (far + near) / (near - far), -1, 0, 0, (2 * far * near) / (near - far), 0]);
+  P[8] = -corrimiento; P[9] = -alzado;
+  return { ojo, vp: mult(P, V) };
+}
+/** Cámara libre: desde un punto, mirando a otro. Para volar. */
+export function camaraLibre({ ojo, mira, aspecto, fov = 58, alabeo = 0, corrimiento = 0, alzado = 0 }) {
+  const f = norm(sub(mira, ojo)), s0 = norm(cruz(f, [0, 0, 1])), u0 = cruz(s0, f), c = Math.cos(alabeo), n = Math.sin(alabeo);
+  const s = [s0[0] * c + u0[0] * n, s0[1] * c + u0[1] * n, s0[2] * c + u0[2] * n], up = cruz(s, f);
+  const V = new Float32Array([s[0], up[0], -f[0], 0, s[1], up[1], -f[1], 0, s[2], up[2], -f[2], 0, -pt(s, ojo), -pt(up, ojo), pt(f, ojo), 1]);
+  const fy = 1 / Math.tan((fov * Math.PI) / 360), near = 0.02, far = 30;
+  const P = new Float32Array([fy / aspecto, 0, 0, 0, 0, fy, 0, 0, 0, 0, (far + near) / (near - far), -1, 0, 0, (2 * far * near) / (near - far), 0]);
   P[8] = -corrimiento; P[9] = -alzado;
   return { ojo, vp: mult(P, V) };
 }
@@ -426,6 +509,35 @@ export function crearPaisaje(canvas, { software = false } = {}) {
   const usarAltura = (P) => { t2(P.u.uCerca, 6, usarNace ? texNaceC : texCerca); t2(P.u.uLejos, 7, usarNace && texNaceL ? texNaceL : texLejos); };
   const t2 = (u, unidad, tex) => { gl.activeTexture(gl.TEXTURE0 + unidad); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(u, unidad); };
 
+  // --- la red del cruce
+  let redGL = null;
+  const pO = programa(gl, VS_PANTALLA, FS_OSCURO);
+  let pN2 = null, pA2 = null;
+  /** Prepara las neuronas y las aristas una sola vez: todo lo que se mueve se calcula en la GPU, con tres posiciones por punto. */
+  function fijarRed(red) {
+    pN2 = programa(gl, VS_NEURONA, FS_NEURONA); pA2 = programa(gl, VS_ARISTA, FS_ARISTA);
+    const cuad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, cuad); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const atr = (P, nombre, n, paso, ofs) => { const l = gl.getAttribLocation(P.p, nombre); if (l < 0) return; gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, n, gl.FLOAT, false, paso, ofs); gl.vertexAttribDivisor(l, 1); };
+    const L = CAPAS_N - 1;
+    const vaoN = gl.createVertexArray(); gl.bindVertexArray(vaoN);
+    gl.bindBuffer(gl.ARRAY_BUFFER, cuad); { const l = gl.getAttribLocation(pN2.p, 'q'); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, 2, gl.FLOAT, false, 0, 0); }
+    const dN = new Float32Array([...red.nodos.flatMap((n) => [...n.caos, ...n.orden, ...n.fin, n.activ, n.capa / L, n.ruta]), ...red.polvo.flatMap((n) => [...n.caos, n.caos[0], n.caos[1], n.caos[2] + 40, n.caos[0], n.caos[1], n.caos[2] + 40, n.activ * 0.5, 2, -1])]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, dN, gl.STATIC_DRAW);
+    atr(pN2, 'aC', 3, 48, 0); atr(pN2, 'aO', 3, 48, 12); atr(pN2, 'aF', 3, 48, 24); atr(pN2, 'aD', 3, 48, 36);
+    const vaoA = gl.createVertexArray(); gl.bindVertexArray(vaoA);
+    gl.bindBuffer(gl.ARRAY_BUFFER, cuad); { const l = gl.getAttribLocation(pA2.p, 'q'); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, 2, gl.FLOAT, false, 0, 0); }
+    const dA = new Float32Array(red.aristas.flatMap((e) => { const a = red.nodos[e.a], b = red.nodos[e.b], esRuta = a.ruta >= 0 && b.ruta === a.ruta + 1; return [...a.caos, ...a.orden, ...a.fin, ...b.caos, ...b.orden, ...b.fin, e.w, a.capa / L, esRuta ? a.ruta : -1]; }));
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, dA, gl.STATIC_DRAW);
+    const P = 84; [['aC0', 0], ['aO0', 12], ['aF0', 24], ['aC1', 36], ['aO1', 48], ['aF1', 60], ['aE', 72]].forEach(([n, o]) => atr(pA2, n, 3, P, o));
+    redGL = { vaoN, vaoA, nN: red.nodos.length + red.polvo.length, nA: red.aristas.length, total: L };
+  }
+  function dibujarRed(e, vp) {
+    const r = e.red, comun = (P) => { gl.useProgram(P.p); gl.uniformMatrix4fv(P.u.uVP, false, vp); gl.uniform2f(P.u.uRes, esc.w, esc.h); gl.uniform1f(P.u.uOrden, r.orden); gl.uniform1f(P.u.uBaja, r.baja); gl.uniform1f(P.u.uT, e.t); gl.uniform1f(P.u.uOla, r.ola); gl.uniform1f(P.u.uOro, r.oro); gl.uniform1f(P.u.uVuelo, r.vuelo); gl.uniform1f(P.u.uTotal, redGL.total); gl.uniform1f(P.u.uFuerza, r.fuerza); };
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
+    comun(pA2); gl.uniform1f(pA2.u.uAristas, r.aristas); gl.bindVertexArray(redGL.vaoA); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, redGL.nA);
+    comun(pN2); gl.uniform1f(pN2.u.uHaz, 0); gl.bindVertexArray(redGL.vaoN); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, redGL.nN);
+  }
+
   /** e: { vp, ojo, sol, sube, t, expo, foco:[x,y,_,fuerza], hecho, aparece, faros:Float32Array(n×6), pasos } */
   function dibujar(e) {
     const { vp, ojo, sol } = e;
@@ -436,22 +548,32 @@ export function crearPaisaje(canvas, { software = false } = {}) {
       gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
       gl.depthMask(true); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.disable(gl.DEPTH_TEST); gl.useProgram(pC.p); gl.bindVertexArray(vacioVAO);
-      gl.uniformMatrix4fv(pC.u.uIVP, false, inversa(vp)); gl.uniform3fv(pC.u.uCam, ojo); gl.uniform3fv(pC.u.uSol, sol); gl.uniform1f(pC.u.uT, e.t); gl.uniform1f(pC.u.uCielo, e.nace?.cielo ?? 1); t2(pC.u.uRuido, 1, ruido);
+      gl.uniformMatrix4fv(pC.u.uIVP, false, inversa(vp)); gl.uniform3fv(pC.u.uCam, ojo); gl.uniform3fv(pC.u.uSol, sol); gl.uniform1f(pC.u.uT, e.t); gl.uniform1f(pC.u.uCielo, e.nace?.cielo ?? 1); gl.uniform1f(pC.u.uAlba, e.alba ?? 0); t2(pC.u.uRuido, 1, ruido);
       if ((e.nace?.cielo ?? 1) > 0) gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (e.sinTerreno) { gl.depthMask(true); }
+      if (!e.sinTerreno) {
       gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.useProgram(pT.p);
+      gl.uniform1f(pT.u.uAlba, e.alba ?? 0);
       gl.uniformMatrix4fv(pT.u.uVP, false, vp); gl.uniform3fv(pT.u.uCam, ojo); gl.uniform3fv(pT.u.uSol, sol); gl.uniform1f(pT.u.uT, e.t); gl.uniform4fv(pT.u.uFoco, e.foco);
       gl.uniform1f(pT.u.uMat, e.nace?.mat ?? 1); gl.uniform1f(pT.u.uCaja, e.nace?.caja ?? 1); gl.uniform1f(pT.u.uBarrido, e.nace ? -0.02 + 1.04 * e.nace.plano : 9);
       t2(pT.u.uRuido, 1, ruido); t2(pT.u.uLuzC, 2, luzC); t2(pT.u.uLuzL, 3, luzL); usarAltura(pT);
       gl.bindVertexArray(mallaCerca.vao); gl.uniform4f(pT.u.uMalla, -0.1, -0.1, 1.2, 1.2); gl.uniform1f(pT.u.uEsLejos, 0); gl.drawElements(gl.TRIANGLES, mallaCerca.cuantos, gl.UNSIGNED_INT, 0);
       if ((e.nace?.caja ?? 1) > 0) { gl.bindVertexArray(mallaLejos.vao); gl.uniform4f(pT.u.uMalla, -1, -1, 3, 3); gl.uniform1f(pT.u.uEsLejos, 1); gl.drawElements(gl.TRIANGLES, mallaLejos.cuantos, gl.UNSIGNED_INT, 0); }
+      }
     }
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, base.fb); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, esc.fb);
     gl.blitFramebuffer(0, 0, base.w, base.h, 0, 0, esc.w, esc.h, gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
     gl.bindFramebuffer(gl.FRAMEBUFFER, esc.fb); gl.viewport(0, 0, esc.w, esc.h);
     gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);
+    // en el cruce, el paisaje aparece poco a poco desde lo negro
+    if (e.red && e.red.fondo < 1) {
+      gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFunc(gl.ZERO, gl.SRC_ALPHA); gl.depthMask(false);
+      gl.useProgram(pO.p); gl.bindVertexArray(vacioVAO); gl.uniform1f(pO.u.uK, e.red.fondo); gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST);
+    }
     // camino: encendido sobre el suelo y, muy tenue, a través de las montañas
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.depthMask(false);
-    if (nCamino) {
+    if (nCamino && e.aparece > 0) {
       gl.useProgram(pR.p); gl.bindVertexArray(vaoR);
       gl.uniformMatrix4fv(pR.u.uVP, false, vp); gl.uniform1f(pR.u.uZ, 0.0085); gl.uniform1f(pR.u.uT, e.t); gl.uniform1f(pR.u.uHecho, e.hecho); gl.uniform1f(pR.u.uAparece, e.aparece); gl.uniform2fv(pR.u.uCometa, e.cometa ?? [0, 0]); usarAltura(pR);
       gl.uniform1f(pR.u.uFuerza, 1); gl.drawArrays(gl.TRIANGLE_STRIP, 0, nCamino);
@@ -467,6 +589,7 @@ export function crearPaisaje(canvas, { software = false } = {}) {
       gl.uniform1f(pF.u.uHaz, 1); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n);
       gl.uniform1f(pF.u.uHaz, 0); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n);
     }
+    if (e.red && redGL) dibujarRed(e, vp);
     gl.disable(gl.BLEND); gl.depthMask(true);
     // resplandor
     gl.useProgram(pB.p); gl.bindVertexArray(vacioVAO);
@@ -477,5 +600,5 @@ export function crearPaisaje(canvas, { software = false } = {}) {
     gl.useProgram(pS.p); t2(pS.u.uTex, 0, esc.t); t2(pS.u.uBri, 1, b2.t); gl.uniform1f(pS.u.uExpo, e.expo); gl.uniform1f(pS.u.uT, e.t); gl.uniform2f(pS.u.uPx, 1 / canvas.width, 1 / canvas.height);
     gl.disable(gl.DEPTH_TEST); gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
-  return { gl, ajustar, dibujar, fijarCampo, fijarCamino, leerCampo, hornearLuz, avanzarLuz, hornearNace, terminarNace };
+  return { gl, ajustar, dibujar, fijarCampo, fijarCamino, leerCampo, hornearLuz, avanzarLuz, hornearNace, terminarNace, fijarRed };
 }

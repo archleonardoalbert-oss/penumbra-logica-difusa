@@ -19,9 +19,9 @@ test('ningún tema del catálogo está mal escrito', () => {
   for (const c of todosLosConceptos()) for (const t of c.temas ?? []) assert.ok(TITULOS.includes(t), t);
 });
 
-test('las 8 regiones existen, en orden', () => {
-  assert.deepEqual(CATALOGO.map((r) => r.id), [1, 2, 3, 4, 5, 6, 7, 8]);
-  assert.deepEqual(CATALOGO.map((r) => r.titulo), ['El borde', 'La forma', 'El álgebra', 'Relaciones y extensión', 'Razonar', 'Sistemas', 'Aprender', 'Solo para valientes']);
+test('las 8 regiones de la noche y las 5 del amanecer existen, en orden', () => {
+  assert.deepEqual(CATALOGO.map((r) => r.id), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+  assert.deepEqual(CATALOGO.filter((r) => !r.lado).map((r) => r.titulo), ['El borde', 'La forma', 'El álgebra', 'Relaciones y extensión', 'Razonar', 'Sistemas', 'Aprender', 'Solo para valientes']);
 });
 
 test('ids únicos', () => {
@@ -41,5 +41,5 @@ test('buscarConcepto', () => {
 
 test('el curso está entero: ninguna parada pendiente', async () => {
   const { todosLosConceptos: todos } = await import('../contenido/catalogo.js');
-  assert.deepEqual(todos().filter((c) => c.estado !== 'listo').map((c) => c.id), []);
+  assert.deepEqual(todos().filter((c) => c.estado !== 'listo' && !/^(9|1[0-3])-/.test(c.id)).map((c) => c.id), []);
 });

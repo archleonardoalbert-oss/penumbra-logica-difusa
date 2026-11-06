@@ -68,7 +68,7 @@ t('mapa: sin WebGL2 hay una lista normal', async ({ pg, ir }) => {
   await ir('index.html');
   await pg.waitForSelector('.mapa-lista');
   afirmar(await pg.locator('.mapa-lista a[href="concepto.html?c=1-8-cortes-alfa"]').count() === 1, 'sin enlaces');
-  afirmar(await pg.locator('.mapa-lista h2').count() === 8, 'faltan regiones');
+  afirmar(await pg.locator('.mapa-lista h2').count() === 13, 'faltan regiones');
 });
 
 t('mapa: de entrada dice cuál es tu siguiente parada, y lleva a ella', async ({ pg, ir }) => {
@@ -91,7 +91,7 @@ t('mapa: la GPU y JS calculan la misma altura', async ({ pg, ir }) => {
   const { CATALOGO } = await import('../../contenido/catalogo.js');
   for (const [x, y] of [[0.16, 0.2], [0.33, 0.41], [0.77, 0.63], [0.05, 0.95]]) {
     const r = await pg.evaluate(([a, b]) => mapa.campo(a, b), [x, y]);
-    const js = alturaMapa(r.x, r.y, Array(8).fill(0), CATALOGO);
+    const js = alturaMapa(r.x, r.y, Array(8).fill(0), CATALOGO.filter((c) => !c.lado));
     afirmar(Math.abs(r.valor[0] - js) < 2e-3, `(${x}, ${y}): GPU ${r.valor[0]}, JS ${js}`);
   }
 });
@@ -140,4 +140,24 @@ t('mapa: sin GPU, en reposo no dibuja nada', async ({ pg, ir }) => {
     setTimeout(() => res(k), 700);
   }));
   afirmar(n === 0, `${n} dibujos en reposo`);
+});
+
+t('mapa: en la sombra de la luna hay una luz; tocarla lleva al amanecer', async ({ pg, ir }) => {
+  await abrir(ir, pg);
+  await pg.waitForTimeout(300);
+  afirmar(await pg.locator('.mapa-chispa').isVisible(), 'no se ve la luz');
+  await pg.click('.mapa-chispa', { force: true });
+  await pg.waitForURL(/lado=alba/);
+  await pg.waitForFunction(() => window.mapa);
+  afirmar((await pg.textContent('.mapa-indice')).includes('La neurona difusa'), 'no es el amanecer');
+  afirmar((await pg.textContent('.mapa-cabecera')).includes('A'), 'sin título');
+});
+t('mapa: el cruce nace de la red, se puede saltar y deja el amanecer', async ({ pg, ir }) => {
+  await ir('index.html?lado=alba&cruce=1');
+  await pg.waitForFunction(() => window.mapa);
+  afirmar((await pg.evaluate(() => mapa.modo())) === 'cruce', 'no cruza');
+  await pg.evaluate(() => mapa.fijarT(14.5));
+  await pg.click('.mapa-cruce .nace-saltar');
+  afirmar((await pg.evaluate(() => mapa.modo())) === 'normal', 'no saltó');
+  afirmar(await pg.locator('.mapa-cruce').count() === 0, 'quedó la capa');
 });

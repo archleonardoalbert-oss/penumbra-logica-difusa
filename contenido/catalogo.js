@@ -63,13 +63,29 @@ export const CATALOGO = [
   { id: 8, titulo: 'Solo para valientes', lema: 'La lógica misma, sin red.', posicion: [0.72, 0.86], conceptos: [
     listo('8-1-bl', 'BL: la lógica de las normas continuas', ['busca-residuo', 'residuo-calc', 'bl-elegir', 'demuestra-uno']), listo('8-2-lukasiewicz', 'Las tres grandes', ['busca-contraccion', 'negacion-calc', 'tres-elegir', 'demuestra-goedel']), listo('8-3-mtl', 'MTL: cuando la norma da un salto', ['cruza-salto', 'nilpotente-calc', 'mtl-elegir', 'demuestra-izquierda']), listo('8-4-algebra', 'El álgebra detrás de la lógica', ['busca-tabla', 'cadena-calc', 'algebra-elegir', 'demuestra-prelineal']), listo('8-5-completitud', 'Completitud: probar y ser verdad', ['encuentra-contra', 'valor-calc', 'completitud-elegir', 'demuestra-correccion']),
   ] },
+  // --- el otro lado del mapa: el amanecer. La misma lógica, dentro de las redes.
+  { id: 9, lado: 'alba', titulo: 'La neurona difusa', lema: 'Cada neurona calcula un grado.', posicion: [0.14, 0.34], conceptos: [
+    pend('9-1-neurona', 'Una neurona es una curva de pertenencia'), pend('9-2-softmax', 'Softmax: quién decide'), pend('9-3-gradientes', 'Operadores que dejan pasar el gradiente'), pend('9-4-implicacion', 'La implicación y sus gradientes'),
+  ] },
+  { id: 10, lado: 'alba', titulo: 'Reglas que enseñan', lema: 'Una regla también puede ser una pérdida.', posicion: [0.38, 0.72], conceptos: [
+    pend('10-1-regla-perdida', 'Una regla como función de pérdida'), pend('10-2-cuantificadores', '«Para todo» y «existe», suaves'), pend('10-3-pocas-etiquetas', 'Aprender con pocas etiquetas'),
+  ] },
+  { id: 11, lado: 'alba', titulo: 'Grados en los que confiar', lema: 'Un 80 % tiene que significar algo.', posicion: [0.56, 0.28], conceptos: [
+    pend('11-1-probabilidad', 'Cuándo una probabilidad es un grado'), pend('11-2-calibrar', 'Calibrar: decir la verdad sobre tu duda'), pend('11-3-isotonica', 'Regresión isotónica'), pend('11-4-decisor', 'Un modelo decisor como fuzzificador'), pend('11-5-owa', 'Preguntar de varias formas: OWA'),
+  ] },
+  { id: 12, lado: 'alba', titulo: 'Conceptos y reglas', lema: 'Entre el texto y la decisión, algo que se pueda leer.', posicion: [0.74, 0.66], conceptos: [
+    pend('12-1-cuello', 'El cuello de botella de conceptos'), pend('12-2-fugas', 'Cuando los conceptos filtran'), pend('12-3-literal', 'El literal suave'), pend('12-4-group-lasso', 'Group lasso: quedarse con pocas preguntas'), pend('12-5-extraer', 'De pesos a frases'),
+  ] },
+  { id: 13, lado: 'alba', titulo: 'Decidir y rendir cuentas', lema: 'Una decisión tiene consecuencias, y hay que probarla.', posicion: [0.88, 0.26], conceptos: [
+    pend('13-1-coste', 'Errores que no pesan igual'), pend('13-2-contrafactual', 'Qué habría cambiado la decisión'), pend('13-3-evaluar', '¿Funciona de verdad?'), pend('13-4-ccd', 'Células de Concepto Difusas, enteras'),
+  ] },
 ];
 
 export const todosLosConceptos = (cat = CATALOGO) => cat.flatMap((r) => r.conceptos);
 
 /** La parada que viene después en todo el curso, cruzando de región. Tras la última, null. */
 export function siguienteEnCurso(id, cat = CATALOGO) {
-  const L = todosLosConceptos(cat), i = L.findIndex((c) => c.id === id);
+  const r = cat.find((x) => x.conceptos.some((c) => c.id === id)), L = todosLosConceptos(cat.filter((x) => (x.lado ?? 'noche') === (r?.lado ?? 'noche'))), i = L.findIndex((c) => c.id === id);
   return L[i + 1] ?? null;
 }
 

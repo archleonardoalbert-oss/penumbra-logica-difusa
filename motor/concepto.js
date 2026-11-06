@@ -225,7 +225,7 @@ function rutaRegion(region, ficha, progreso) {
     punto.style.setProperty('--color', rgb(g > 0 ? escalaGrado(g) : [58, 62, 84]));
     ol.append(h('li', {}, punto));
   });
-  return h('nav', { className: 'ruta-region', ariaLabel: `Paradas de ${region.titulo}` }, h('a', { href: 'index.html', className: 'volver-mapa', textContent: '⌂ Mapa' }), h('span', { className: 'ruta-nombre', textContent: `${region.id}. ${region.titulo}` }), ol);
+  return h('nav', { className: 'ruta-region', ariaLabel: `Paradas de ${region.titulo}` }, h('a', { href: region.lado === 'alba' ? 'index.html?lado=alba' : 'index.html', className: 'volver-mapa', textContent: '⌂ Mapa' }), h('span', { className: 'ruta-nombre', textContent: `${region.id}. ${region.titulo}` }), ol);
 }
 
 // ---------------------------------------------------------------- página
@@ -286,7 +286,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   const notaLlegada = h('p', { className: 'tenue' });
   // dentro del capítulo, se sigue andando; al cambiar de capítulo, se viaja por el mapa
   const cambiaCapitulo = proxima && !region.conceptos.some((x) => x.id === proxima.id), regionSig = cambiaCapitulo ? buscarConcepto(proxima.id, catalogo).region : null;
-  const destinoFinal = !proxima ? 'index.html' : cambiaCapitulo ? `index.html?viaje=${proxima.id}` : `concepto.html?c=${proxima.id}`;
+  const destinoFinal = !proxima ? (region.lado === 'alba' ? 'index.html?lado=alba' : 'index.html') : cambiaCapitulo ? `index.html?viaje=${proxima.id}` : `concepto.html?c=${proxima.id}`;
   const textoFinal = !proxima ? 'Volver al mapa' : cambiaCapitulo ? `Viajar al capítulo ${regionSig.id}: ${regionSig.titulo}` : `Siguiente parada: ${proxima.titulo}`;
   secciones.llegada = h('section', { id: 'llegada', className: 'llegada' },
     h('p', { className: 'rotulo-etapa', textContent: 'Parada terminada' }), html('p', c.puente, 'puente'), notaLlegada,
