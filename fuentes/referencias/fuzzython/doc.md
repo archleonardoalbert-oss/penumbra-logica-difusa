@@ -6,7 +6,7 @@ Documentación que el proyecto no tiene, sacada de leer todo su código. Es mate
 - **Autores:** Carloluis Evelio Rodríguez Pérez, Yudivián Almeida Cruz y Nayla López Gil (MATCOM, Universidad de La Habana).
 - **Licencia:** tipo BSD: permite redistribuir conservando el aviso de copyright. Antes de copiar código, leer `LICENSE`.
 
-> **Estado de la verificación.** Nada de esto se ha ejecutado todavía: el permiso para correr el código descargado fue denegado. Todo sale de leer el código, y los resultados «esperados» de la sección 2 salen de `propio.py`, un cálculo independiente que no importa fuzzython. `verifica.py` comprueba cada afirmación en cuanto se autorice ejecutarlo. Hasta entonces, cada fallo de la sección 11 es una deducción de lectura, no algo observado.
+> **Estado de la verificación (2026-11-06).** Ejecutado con Python 3.14 y `verifica.py`. **Se confirman los ejemplos de la sección 2 y los fallos F1–F5, F7–F11 y F13–F19, además de F12 en `ACT` y F21; F6 se confirma por sus efectos.** Sigue sin ejecutarse la lectura de FCL (`store/reader.py`), porque requiere el runtime `antlr3` con el parche que indica su código: lo que dice la sección 9 sobre leer FCL, y F23, son de lectura. `dump_()` sí se ejecutó. F20 se ve en el `MM` de la sección 2.2. F22 y el fallo de `AND` en F12 son también de lectura.
 
 ---
 
@@ -109,11 +109,11 @@ MamdaniSystem('ms1', block).compute({'temp': 33})
 | Acumulación | máximo de los tres recortes | área $16{,}2$ |
 | Desdifusión | centro de gravedad | $\approx 24{,}144$ |
 
-**Salida esperada:** `{'first': {'minutes': 24.144...}}`. Es un diccionario de bloques, y dentro, de variables.
+**Salida obtenida:** `{'first': {'minutes': 24.144...}}`. Es un diccionario de bloques, y dentro, de variables.
 
-Otros métodos sobre el mismo conjunto, según `propio.py` y la lectura de `Polygon`:
+Otros métodos sobre el mismo conjunto, ejecutados y coincidentes con el cálculo independiente de `propio.py`:
 
-| Método | Esperado | Nota |
+| Método | Obtenido | Nota |
 |---|---|---|
 | `COG` | $24{,}144$ | |
 | `COA` | $26{,}0$ | |
@@ -135,7 +135,7 @@ block.add_rules(
 SugenoSystem('ss1', block).compute({'temp': 33})
 ```
 
-Esperado: `{'second': 17.44}`, porque $\frac{0{,}4 \cdot 10{,}9 + 0{,}6 \cdot 21{,}8}{0{,}4 + 0{,}6} = 17{,}44$. El resultado se indexa **por bloque**, y la `z` se descarta: es solo un adorno de la sintaxis.
+Obtenido: `{'second': 17.44}`, porque $\frac{0{,}4 \cdot 10{,}9 + 0{,}6 \cdot 21{,}8}{0{,}4 + 0{,}6} = 17{,}44$. El resultado se indexa **por bloque**, y la `z` se descarta: es solo un adorno de la sintaxis.
 
 ### 2.4 Tsukamoto
 
@@ -154,7 +154,7 @@ block.add_rule('t:if temp is hot then minutes is large', scope)
 TsukamotoSystem('tsk', block).compute({'temp': 33})
 ```
 
-Esperado: `{'third': 20.0}` aproximado, porque $\frac{0{,}2 \cdot 17 + 0{,}6 \cdot 21}{0{,}8} = 20$.
+Obtenido: `{'third': 20.00000007}` (bisección con tolerancia), porque $\frac{0{,}2 \cdot 17 + 0{,}6 \cdot 21}{0{,}8} = 20$.
 
 ---
 
@@ -335,6 +335,8 @@ mamdani.compute({'temp': Triangular((30, 0), (33, 1), (36, 0))})   # «unos 33 g
 mamdani.compute({'temp': Singleton(33, 0.5)})                      # 33, con grado 0,5
 ```
 
+Con el ejemplo de 2.2 dan $23{,}255$ y $23{,}348$, frente a $24{,}144$ de la entrada exacta.
+
 El grado es $\sup_x T(\mu_A(x), \mu_{\text{entrada}}(x))$: la composición sup-min de la inferencia composicional. Entre polígonos se calcula exacto; en otros casos, con 100 muestras. En Sugeno solo sirve para el antecedente: si la expresión del consecuente usa esa variable, falla, porque `float()` no admite un conjunto.
 
 ---
@@ -405,7 +407,7 @@ END_FUNCTION_BLOCK
 
 ---
 
-## 11. Fallos encontrados por lectura
+## 11. Fallos encontrados
 
 Severidad: **alta** si impide o falsea un cálculo normal, **media** si afecta a una función concreta, **baja** si es una rareza.
 
@@ -429,11 +431,13 @@ Severidad: **alta** si impide o falsea un cálculo normal, **media** si afecta a
 | F16 | `interval.py:164` | Compara `_min` dos veces | `Interval(2, 4) == (2, 4)` da `False` | **Baja** |
 | F17 | `fsets/fuzzy_set.py:222…393` y `interval.py` | Una unión disjunta da un `Compound`, cuyo `__iter__` produce intervalos | Entre conjuntos no poligonales, `a, b = self.interval` rompe `COG` y similares. La salida es `default` por F6 | **Alta** con gaussianas separadas |
 | F18 | `Polygon.union` | Une los puntos de ambos con rectas | Dos polígonos separados de borde no nulo inventan área en el hueco | **Media** |
-| F19 | `fsets/fuzzy_set.py` | `a += step` acumula error de redondeo | `area` puede dar un paso de más. Por eso conviene `Polygon`, que no acumula | **Baja** |
+| F19 | `fsets/fuzzy_set.py` | `a += step` acumula error de redondeo | `area` puede dar un paso de más: el área de $1$ en $[0, 1]$ da $1{,}143$ con resolución 7 y $1{,}1$ con 10. Con la de por defecto, 100, el error es despreciable. `Polygon` no acumula | **Media** con resolución baja |
 | F20 | `Polygon.MM` | Promedia vértices | Mesetas con vértices desiguales dan un valor sesgado (2.2) | **Media** |
 | F21 | Borde vertical | `Rect.build_from` divide por $x_2 - x_1$ | `Trapezoid((0, 0), (0, 1), ...)` lanza `ZeroDivisionError`. Para una pared, usar `Polygon((0, 1), ...)`, que se prolonga constante | **Media** |
 | F22 | `TRule.get_strength_x` | Bisección que supone monotonía | Con consecuente no monótono, el resultado es arbitrario, sin error | **Media** |
 | F23 | `store/FCL.g:87,158,287,303,305` | `_MAMDAMI_`; `ACT` opcional sin valor por defecto; `WITH nombre` usa un `scope` inexistente; `RANGE` se descarta | Sección 9 | **Media** |
+
+| F24 | `fsets/*.py` | Los dibujos ASCII de los comentarios contienen `\\_` | Python 3.14 avisa con `SyntaxWarning`; en una versión futura será un error de sintaxis | **Baja** |
 
 Además, sin ser fallos: `README` escribe «Mandani», y `SUGENO`/`YAGER` por nombre son `ZADEH` disfrazados (sección 5).
 

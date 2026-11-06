@@ -5,7 +5,7 @@ import { ANCHO_CIMA, BASE, OCTAVAS, SIGMA, campoMapa, DOMINIO, DOMINIO_CERCA } f
 
 const ESCZ = 0.46, CAPAS_N = CAPAS.length;
 
-import { LUNA_DAZ, LUNA_KZ, LUNA_L, LUNA_R, hornearLuna } from './lunaGL.js';
+import { LUNA_D, LUNA_L, LUNA_R, hornearLuna } from './lunaGL.js';
 
 const CIELO = `
 uniform float uAlba,uConLuna,uHaloLuna;
@@ -13,7 +13,7 @@ vec3 cielo(vec3 v,vec3 sol){
  float e=max(v.z,0.),s=max(dot(v,sol),0.);
  vec3 c=mix(vec3(.0048,.011,.027),vec3(.0008,.0018,.006),smoothstep(0.,.14,e));
  c+=vec3(.10,.17,.27)*exp(-e*30.)*.07;
- float sl=max(dot(v,normalize(vec3(mat2(cos(${LUNA_DAZ}),sin(${LUNA_DAZ}),-sin(${LUNA_DAZ}),cos(${LUNA_DAZ}))*sol.xy,sol.z*${LUNA_KZ}))),0.);
+ float sl=max(dot(v,vec3(${LUNA_D[0]},${LUNA_D[1]},${LUNA_D[2]})),0.);
  c+=vec3(.42,.52,.70)*pow(sl,40.)*.07*uConLuna*uHaloLuna;
  c+=vec3(.62,.72,1.)*(pow(sl,180.)*.1+pow(sl,1100.)*.1)*(1.-uAlba)*uConLuna*uHaloLuna;
  if(uAlba>0.){
@@ -158,7 +158,7 @@ void main(){
  float e=step(.9,h)*smoothstep(.05+.09*pow(h21(id+3.),3.),.0,length(f+vec2(h21(id+7.),h21(id+9.))*.7-.35));
  c+=vec3(.82,.90,1.)*e*(.6+.3*sin(uT*.5+h*80.))*smoothstep(.015,.2,v.z)*.9*(1.-uAlba);
  // la luna: relieve horneado, con su luz rasante y un eclipse que la cruza muy despacio
- vec3 luna=normalize(vec3(mat2(cos(${LUNA_DAZ}),sin(${LUNA_DAZ}),-sin(${LUNA_DAZ}),cos(${LUNA_DAZ}))*uSol.xy,uSol.z*${LUNA_KZ}));float R=${LUNA_R};
+ vec3 luna=vec3(${LUNA_D[0]},${LUNA_D[1]},${LUNA_D[2]});float R=${LUNA_R};
  vec3 lx=normalize(cross(luna,vec3(0.,0.,1.))),ly=cross(lx,luna);vec2 qL=vec2(dot(v-luna,lx),dot(v-luna,ly))/R;
  vec2 qx=dFdx(qL),qy=dFdy(qL);
  float lq=length(qL);
@@ -175,7 +175,7 @@ void main(){
   float lam=max(dot(N,Ll),0.),mu=max(N.z,.05),ls=2.*lam/(lam+mu+.001);        // la Luna refleja así: Lommel-Seeliger, de ahí que parezca plana de frente
   float al=tl.z*(1.+gm.x*.5*micro);
   float luz=mix(1.,tl.w,.68);
-  vec2 cSombra=vec2(.92-.1*sin(uT*.018),.2);float pen=smoothstep(.56,1.42,length(qL-cSombra));
+  vec2 cSombra=vec2(.86,.2);float pen=smoothstep(.56,1.42,length(qL-cSombra));
   float termina=smoothstep(-.04,.16,dot(n0,Ll));
   vec3 solar=vec3(1.,.965,.9)*al*ls*luz*1.32;
   // la cara eclipsada no es negra: recibe la luz roja que cruza la atmósfera de la Tierra

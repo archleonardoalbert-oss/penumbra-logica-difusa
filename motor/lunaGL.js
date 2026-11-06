@@ -3,6 +3,9 @@
 export const LUNA_R = 0.044; // radio aparente, en radianes
 export const LUNA_KZ = 0.085; // su altura en el cielo, respecto a la del sol
 export const LUNA_DAZ = -0.1; // lo que se aparta del sol en azimut: queda libre, entre el título y el panel
+// la Luna está quieta en el cielo: no sigue la lenta respiración de la luz del terreno
+const azL = 1.24 + LUNA_DAZ, elL = 0.26, lL = Math.hypot(Math.cos(elL), Math.sin(elL) * LUNA_KZ);
+export const LUNA_D = [Math.cos(azL) * Math.cos(elL) / lL, Math.sin(azL) * Math.cos(elL) / lL, (Math.sin(elL) * LUNA_KZ) / lL];
 export const LUNA_L = [-0.72, 0.3, 0.626]; // de dónde le llega la luz, en su propio plano
 
 const VS = `#version 300 es

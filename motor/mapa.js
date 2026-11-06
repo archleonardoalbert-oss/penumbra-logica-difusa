@@ -9,7 +9,7 @@ import { buscarConcepto } from '../contenido/catalogo.js';
 import { barraGrado, h, tituloDifuso, tryLocal } from './concepto.js';
 import { soportaGL2 } from './lienzo.js';
 import { camaraLibre, camaraMapa, crearPaisaje, proyectar } from './mapaGL.js';
-import { LUNA_DAZ, LUNA_KZ, LUNA_R } from './lunaGL.js';
+import { LUNA_D, LUNA_R } from './lunaGL.js';
 import { DURA_CRUCE, crearRed, crearVuelo, guionCruce } from './mapaRed.js';
 import { DURA_NACER, DURA_VIAJE, formulaNacer, guionNacer, guionViaje } from './mapaGuion.js';
 import { ev, mix } from './tiempo.js';
@@ -269,10 +269,10 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
   saltaCruce.addEventListener('click', (ev2) => { ev2.stopPropagation(); terminarCruce(); });
 
   // --- la Luna es la puerta: en su sombra parpadea una luz, y al tocarla la cámara entra en esa sombra
-  const aroLuna = h('span', { className: 'luna-aro' }), pistaLuna = h('span', { className: 'luna-pista', textContent: 'Toca la Luna' }), chispa = h('button', { type: 'button', className: 'mapa-chispa', ariaLabel: 'Toca la Luna: lleva a la ruta del amanecer' }, aroLuna, pistaLuna), R_LUNA = LUNA_R;
+  const aroLuna = h('span', { className: 'luna-aro' }), chispa = h('button', { type: 'button', className: 'mapa-chispa', ariaLabel: 'Toca la Luna: lleva a la ruta del amanecer' }, aroLuna), R_LUNA = LUNA_R;
   /** La dirección exacta de un punto de la Luna, en su propio plano: el mismo cálculo que el cielo. */
   const dirLuna = (qx, qy) => {
-    const s0 = sol(), cd = Math.cos(LUNA_DAZ), sd = Math.sin(LUNA_DAZ), sx = cd * s0[0] - sd * s0[1], sy = sd * s0[0] + cd * s0[1], l = Math.hypot(sx, sy, s0[2] * LUNA_KZ), luna = [sx / l, sy / l, (s0[2] * LUNA_KZ) / l];
+    const luna = LUNA_D;
     const n = Math.hypot(luna[1], luna[0]), x = [luna[1] / n, -luna[0] / n, 0], y = [x[1] * luna[2], -x[0] * luna[2], x[0] * luna[1] - x[1] * luna[0]];
     return [0, 1, 2].map((i) => luna[i] + (x[i] * qx + y[i] * qy) * R_LUNA);
   };

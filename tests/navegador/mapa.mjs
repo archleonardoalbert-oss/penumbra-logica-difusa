@@ -161,3 +161,11 @@ t('mapa: el cruce nace de la red, se puede saltar y deja el amanecer', async ({ 
   afirmar((await pg.evaluate(() => mapa.modo())) === 'normal', 'no saltó');
   afirmar(await pg.locator('.mapa-cruce').count() === 0, 'quedó la capa');
 });
+
+t('mapa: la Luna no se desplaza con el tiempo, y no lleva cartel', async ({ pg, ir }) => {
+  await abrir(ir, pg);
+  const pos = async (v) => { await pg.evaluate((x) => mapa.fijarT(x), v); await pg.waitForTimeout(250); return pg.evaluate(() => document.querySelector('.mapa-chispa').style.transform); };
+  const a = await pos(13), b = await pos(53);
+  afirmar(a === b, `se mueve: ${a} y ${b}`);
+  afirmar(await pg.locator('.luna-pista').count() === 0, 'sigue el cartel');
+});
