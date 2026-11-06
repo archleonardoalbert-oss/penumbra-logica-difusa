@@ -3,6 +3,7 @@
 import { CATALOGO, buscarConcepto } from '../contenido/catalogo.js';
 import { GLOSARIO } from '../contenido/glosario.js';
 import { crearProgreso } from '../nucleo/progreso.js';
+import { crearTaller } from '../nucleo/taller.js';
 import { enlazarTerminos } from '../nucleo/recorrido.js';
 import { notaCalculo, notaDemostracion, notaEleccion, notaManipular } from '../nucleo/retos.js';
 import { montarEscena } from './escena.js';
@@ -20,10 +21,10 @@ export const h = (tag, props = {}, ...hijos) => {
 };
 const prosa = (texto) => enlazarTerminos(texto ?? '', GLOSARIO);
 const html = (tag, texto, clase) => h(tag, { innerHTML: prosa(texto), className: clase });
-const OPCIONES_TEX = { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false };
+const OPCIONES_TEX = { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false, strict: false };
 const pintarTex = (el) => window.renderMathInElement?.(el, OPCIONES_TEX);
 const coma = (v, d = 2) => v.toFixed(d).replace('.', ',');
-const texto = (tex, display = false) => (window.katex ? window.katex.renderToString(tex, { displayMode: display, throwOnError: false }) : tex);
+const texto = (tex, display = false) => (window.katex ? window.katex.renderToString(tex, { displayMode: display, throwOnError: false, strict: false }) : tex);
 
 /** Título cuyas últimas letras pierden el borde. `--b` en el elemento regula cuánto: se aclara al avanzar. */
 export function tituloDifuso(t, tag = 'h1') {
@@ -40,7 +41,10 @@ export function tituloDifuso(t, tag = 'h1') {
 export function barraGrado(valor) {
   const barra = h('div', { className: 'grado', role: 'img' });
   const relleno = h('i'), num = h('b');
-  barra.append(h('span', { textContent: 'tu grado' }), h('div', { className: 'grado-carril' }, relleno), num);
+  instalarGlosario();
+  const nombre = h('button', { type: 'button', className: 'termino', textContent: 'tu grado' });
+  nombre.dataset.termino = 'grado de dominio';
+  barra.append(nombre, h('div', { className: 'grado-carril' }, relleno), num);
   const fijar = (v) => {
     relleno.style.width = `${v * 100}%`;
     num.textContent = coma(v);
@@ -145,7 +149,7 @@ function zonaPistas(pistas) {
   return { el: h('div', {}, lista, pistas.length ? boton : null), usadas: () => usadas };
 }
 
-function tarjetaReto(reto, { registrar, notaInicial, escena, escenaDisponible }) {
+function tarjetaReto(reto, { registrar, notaInicial, escena, escenaDisponible, taller }) {
   const marca = h('span', { className: 'reto-nota' });
   let mejor = notaInicial;
   const fijarNota = () => { marca.textContent = mejor > 0 ? `mejor nota ${coma(mejor)}` : ''; };
@@ -190,6 +194,7 @@ function tarjetaReto(reto, { registrar, notaInicial, escena, escenaDisponible })
       const b = h('button', { type: 'button', textContent: 'Comprobar en la escena' });
       b.addEventListener('click', () => {
         const pr = reto.precision(escena.estado().e), nota = notaManipular(pr, pistas.usadas());
+        if (pr >= 1 && reto.guardar) taller.guardar(reto.guardar(escena.estado().e));
         responder(nota, pr >= 1 ? `Conseguido. ${reto.explicacion ?? ''}` : (reto.pendiente?.(escena.estado().e) ?? `Vas por ${coma(pr)}. Sigue moviendo.`));
       });
       acciones.append(b);
@@ -203,7 +208,7 @@ function tarjetaReto(reto, { registrar, notaInicial, escena, escenaDisponible })
       b.addEventListener('click', () => responder(notaDemostracion(n, pistas.usadas()), 'Anotado. Lo que cuenta es lo que te llevas de ella.'));
       auto.append(b);
     }
-    ver.addEventListener('click', () => { sol.hidden = false; auto.hidden = false; ver.hidden = true; pintarTex(sol); });
+    ver.addEventListener('click', () => { sol.hidden = false; auto.hidden = false; ver.hidden = true; pintarTex(sol); auto.scrollIntoView?.({ block: 'nearest' }); });
     acciones.append(ver);
     caja.append(sol, auto);
   }
@@ -249,11 +254,11 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   const hallado = id ? buscarConcepto(id, catalogo) : null;
   if (!hallado) return mensajeAmable(raiz, 'Aquí no hay nada', 'No encuentro ese concepto. Quizá el enlace está mal; en el mapa están todos.');
   const { region, concepto: ficha, siguiente } = hallado;
-  if (ficha.estado !== 'listo') return mensajeAmable(raiz, ficha.titulo, `Este concepto de la región «${region.titulo}» aún no está escrito. La región 1 ya se puede recorrer entera.`);
+  if (ficha.estado !== 'listo') return mensajeAmable(raiz, ficha.titulo, `Este concepto de la región «${region.titulo}» aún no está escrito.`);
   const c = (await ficha.carga()).default;
   document.title = `${c.titulo} · Penumbra`;
 
-  const progreso = crearProgreso(almacen === undefined ? tryLocal() : almacen);
+  const guardado = almacen === undefined ? tryLocal() : almacen, progreso = crearProgreso(guardado), taller = crearTaller(guardado);
   const grado = barraGrado(progreso.gradoConcepto(c.id, c.retos));
   const titulo = tituloDifuso(c.titulo, 'h1');
   titulo.classList.add('titulo-parada');
@@ -300,7 +305,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
       grado.el.classList.add('sube'); setTimeout(() => grado.el.classList.remove('sube'), 900);
       pintarPestanas();
     },
-    notaInicial: progreso.notaReto(c.id, reto.id), escena, escenaDisponible,
+    notaInicial: progreso.notaReto(c.id, reto.id), escena, escenaDisponible, taller,
   }));
   let iReto = 0;
   function pintarPestanas() {
@@ -379,12 +384,16 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
     centro.className = 'pie-centro escena-contador';
   }
 
+  for (const s of Object.values(secciones)) s.tabIndex = -1;
+  let yaEnfocable = false;
   function aplicarEtapa() {
     const e = ETAPAS[etapa];
     for (const [k, s] of Object.entries(secciones)) s.hidden = k !== e.id;
     [...raiel.children].forEach((li, k) => { li.className = k < etapa ? 'pasada' : k === etapa ? 'actual' : 'futura'; li.firstChild.setAttribute('aria-current', k === etapa ? 'step' : 'false'); });
     titulo.style.setProperty('--b', String(1 - etapa / (ETAPAS.length - 1)));
     app.dataset.etapa = e.id;
+    if (yaEnfocable) secciones[e.id].focus({ preventScroll: true });
+    yaEnfocable = true;
     centro.replaceChildren();
     if (e.id === 'mira') { huecoMira.replaceChildren(textos, encaje); centro.append(botonesEscena); controles.remove(); }
     if (e.id === 'toca') { huecoToca.replaceChildren(encaje); panelToca.append(controles); escena.reposo(); }

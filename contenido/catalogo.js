@@ -1,5 +1,5 @@
 // El mapa del curso: 8 regiones con sus conceptos. `temas` enlaza con los títulos de los vídeos que dieron el alcance.
-const listo = (id, titulo, retos, temas = []) => ({ id, titulo, estado: 'listo', carga: () => import(`./parte1/${id}.js`), retos: retos.map((r) => ({ id: r })), temas });
+const listo = (id, titulo, retos, temas = []) => ({ id, titulo, estado: 'listo', carga: () => import(`./parte${id.split('-')[0]}/${id}.js`), retos: retos.map((r) => ({ id: r })), temas });
 const pend = (id, titulo, temas = []) => ({ id, titulo, estado: 'pendiente', retos: [], temas });
 
 export const CATALOGO = [
@@ -16,57 +16,67 @@ export const CATALOGO = [
     listo('1-10-convexidad', 'Convexidad', ['contraejemplo', 'interseccion', 'demostrar-cortes-convexos']),
   ] },
   { id: 2, titulo: 'La forma', lema: 'Cada idea vaga tiene su curva.', posicion: [0.5, 0.15], conceptos: [
-    pend('2-1-parametrizadas', 'Funciones de membresía parametrizadas', ['1.4 Funciones de membresía (1)']),
-    pend('2-2-tipicas', 'Triangular, trapecial, gaussiana, campana y sigmoidal', ['1.4 Funciones de membresía típicas (2)']),
-    pend('2-3-construirlas', 'Cómo se construye una función de membresía'),
+    listo('2-1-parametrizadas', 'Una curva con pocos botones', ['ajusta-triangulo', 'punto-triangulo', 'cuantos-numeros'], ['1.4 Funciones de membresía (1)']),
+    listo('2-2-tipicas', 'Las cinco formas de siempre', ['elige-forma', 'calcula-gaussiana', 'sin-puntas'], ['1.4 Funciones de membresía típicas (2)']),
+    listo('2-3-construirlas', 'De dónde salen los grados', ['jurado-suficiente', 'contar-votos', 'directo-o-indirecto']),
+    listo('2-4-pendulo', 'Tu péndulo: darle palabras al ángulo', ['ajusta-angulo', 'grado-angulo']),
   ] },
   { id: 3, titulo: 'El álgebra', lema: 'Y, o, no: cuando dejan de ser únicos.', posicion: [0.84, 0.22], conceptos: [
-    pend('3-1-zadeh', 'Las operaciones de Zadeh', ['1.2 Operaciones entre conjuntos difusos']),
-    pend('3-2-leyes', 'Las leyes que se conservan', ['1.3 Propiedades de las operaciones difusas (1)']),
-    pend('3-3-leyes-que-caen', 'Las leyes que caen', ['1.3 Propiedades de las operaciones difusas (2)']),
-    pend('3-4-normas-t', 'Normas T', ['2.2.1 Normas T']),
-    pend('3-5-normas-s', 'Normas S y dualidad', ['2.2.2 Normas S']),
-    pend('3-6-complementos', 'Complementos', ['2.2.3 Complemento difuso']),
-    pend('3-7-generadores', 'Generadores arquimedianos'),
-    pend('3-8-parametrizados', 'Operadores parametrizados'),
+    listo('3-1-zadeh', 'Y, o, no: las operaciones de Zadeh', ['acerca-nubes', 'casa-interseccion', 'casa-complemento'], ['1.2 Operaciones entre conjuntos difusos']),
+    listo('3-2-leyes', 'Las leyes que se conservan', ['comprueba-ley', 'cual-se-conserva', 'demuestra-morgan'], ['1.3 Propiedades de las operaciones difusas (1)']),
+    listo('3-3-leyes-que-caen', 'Las leyes que caen', ['borrar-joroba', 'joroba-punto', 'demuestra-tope'], ['1.3 Propiedades de las operaciones difusas (2)']),
+    listo('3-4-normas-t', 'Muchos «y»: las normas T', ['elige-y', 'calcula-normas', 'demuestra-tope-min'], ['2.2.1 Normas T']),
+    listo('3-5-normas-s', 'Muchos «o»: normas S y dualidad', ['calcula-dual', 'dual-elegir', 'demuestra-dual'], ['2.2.2 Normas S']),
+    listo('3-6-complementos', 'Muchos «no»: los complementos', ['punto-fijo', 'calcula-sugeno', 'demuestra-involucion'], ['2.2.3 Complemento difuso']),
+    listo('3-7-generadores', 'Fabricar un «y» con una sola curva', ['generador-suma', 'calcula-generador', 'demuestra-asociativa']),
+    listo('3-8-parametrizados', 'Un botón para ajustar el «y»', ['ajusta-p', 'extremos-p', 'la-gente-compensa']),
   ] },
   { id: 4, titulo: 'Relaciones y extensión', lema: 'Cuando el grado une dos mundos.', posicion: [0.84, 0.54], conceptos: [
-    pend('4-1-relaciones', 'Relaciones difusas', ['2.0 Otras operaciones difusas (contenido)', '2.1.1 Relaciones difusas']),
-    pend('4-2-producto', 'Producto cartesiano', ['2.1.2 Producto cartesiano difuso']),
-    pend('4-3-proyeccion', 'Proyección y extensión cilíndrica'),
-    pend('4-4-composicion', 'Composición', ['2.1.3 Composición entre relaciones difusas']),
-    pend('4-5-similitud', 'Similitud'),
-    pend('4-6-extension-1d', 'Principio de extensión', ['2.3.1 Principio de extensión unidimensional']),
-    pend('4-7-extension-nd', 'Extensión en varias variables', ['2.3.2 Principio de extensión multidimensional']),
-    pend('4-8-numeros', 'Números difusos y su aritmética'),
+    listo('4-1-relaciones', 'Relaciones difusas', ['leer-relacion', 'relacion-o-no'], ['2.0 Otras operaciones difusas (contenido)', '2.1.1 Relaciones difusas']),
+    listo('4-2-producto', 'Producto cartesiano', ['busca-punto', 'producto-cuenta', 'producto-y'], ['2.1.2 Producto cartesiano difuso']),
+    listo('4-3-proyeccion', 'Sombras y cortinas: proyección y extensión', ['proyecta-calc', 'proyecta-pierde', 'demuestra-cilindro']),
+    listo('4-4-composicion', 'Encadenar relaciones: la composición', ['compone-calc', 'compone-elegir', 'demuestra-monotona'], ['2.1.3 Composición entre relaciones difusas']),
+    listo('4-5-similitud', 'Parecerse: las relaciones de similitud', ['grupos-alfa', 'transitiva-calc', 'demuestra-corte']),
+    listo('4-6-extension-1d', 'El principio de extensión', ['centra-entrada', 'extiende-calc', 'por-que-max'], ['2.3.1 Principio de extensión unidimensional']),
+    listo('4-7-extension-nd', 'Extensión con varias entradas', ['busca-z', 'suma-discreta', 'demuestra-clasico'], ['2.3.2 Principio de extensión multidimensional']),
+    listo('4-8-numeros', 'Números difusos y su aritmética', ['ajusta-suma', 'pie-suma', 'resta-sorpresa']),
   ] },
   { id: 5, titulo: 'Razonar', lema: 'Sacar conclusiones de lo que es casi cierto.', posicion: [0.5, 0.5], conceptos: [
-    pend('5-1-clasica-difusa', 'Lógica clásica frente a difusa', ['3.0 Razonamiento difuso (contenido)', '3.1 Lógica clásica vs difusa']),
-    pend('5-2-implicaciones', 'Implicaciones R, S y QL'),
-    pend('5-3-linguistica', 'Variables lingüísticas y modificadores', ['3.2.1 Variable lingüística']),
-    pend('5-4-reglas', 'Reglas si-entonces', ['3.2.2 Regla si-entonces']),
-    pend('5-5-modus-ponens', 'Modus ponens generalizado', ['3.2.3 Modus ponens difuso']),
-    pend('5-6-composicional', 'La regla composicional'),
-    pend('5-7-ecuaciones', 'Ecuaciones relacionales'),
+    listo('5-1-clasica-difusa', 'De dos valores a infinitos', ['tabla-verdad', 'dos-valores'], ['3.0 Razonamiento difuso (contenido)', '3.1 Lógica clásica vs difusa']),
+    listo('5-2-implicaciones', '«Si… entonces», con grados', ['busca-diferencia', 'implica-calc', 'demuestra-esquinas']),
+    listo('5-3-linguistica', 'Hablar con palabras: variables lingüísticas', ['ajusta-muy', 'muy-calc', 'hedge-elegir'], ['3.2.1 Variable lingüística']),
+    listo('5-4-reglas', 'Reglas si-entonces', ['encuentra-verdad', 'regla-calc', 'mamdani-o-implica'], ['3.2.2 Regla si-entonces']),
+    listo('5-5-modus-ponens', 'Modus ponens generalizado', ['altura-recorte', 'mp-calc', 'demuestra-recorte'], ['3.2.3 Modus ponens difuso']),
+    listo('5-6-composicional', 'La regla composicional', ['cri-calc', 'cri-elegir', 'demuestra-cri']),
+    listo('5-7-ecuaciones', 'Razonar hacia atrás: ecuaciones relacionales', ['alfa-calc', 'hay-solucion', 'demuestra-sanchez']),
+    listo('5-8-pendulo', 'Tu péndulo: su primera regla', ['elige-signo', 'peso-regla']),
   ] },
   { id: 6, titulo: 'Sistemas', lema: 'De las reglas a una máquina que decide.', posicion: [0.16, 0.54], conceptos: [
-    pend('6-1-mamdani', 'Mamdani'), pend('6-2-defuzzificacion', 'Defuzzificación'), pend('6-3-sugeno', 'Sugeno'),
-    pend('6-4-tsukamoto', 'Tsukamoto'), pend('6-5-aproximacion', 'Aproximación universal'), pend('6-6-pendulo', 'El péndulo se sostiene'),
+    listo('6-1-mamdani', 'Mamdani: la máquina completa', ['ajusta-rapido', 'mamdani-fuerza', 'mamdani-orden', 'demuestra-sin-reglas']), listo('6-2-defuzzificacion', 'De una figura a un número', ['separa-metodos', 'centroide-calc', 'metodo-elegir', 'demuestra-simetrica']), listo('6-3-sugeno', 'Sugeno: cada regla da una fórmula', ['lleva-a-z', 'sugeno-calc', 'sugeno-elegir', 'demuestra-entre']),
+    listo('6-4-tsukamoto', 'Tsukamoto: conclusiones que no retroceden', ['lleva-salida', 'tsukamoto-calc', 'tsukamoto-elegir']), listo('6-5-aproximacion', 'Pueden imitar cualquier curva', ['bajar-error', 'cuantas-reglas', 'demuestra-lipschitz']), listo('6-6-pendulo', 'El péndulo se sostiene', ['sostenlo', 'tabla-calc', 'quien-falta', 'demuestra-pd']),
+    listo('6-7-diseno', 'Diseñar de verdad: el riel y la estabilidad', ['centra', 'umbral-calc', 'cobertura-elegir', 'demuestra-muelle']),
   ] },
   { id: 7, titulo: 'Aprender', lema: 'Reglas que se ajustan solas.', posicion: [0.3, 0.85], conceptos: [
-    pend('7-1-c-medias', 'C-medias difusas'), pend('7-2-anfis', 'ANFIS'), pend('7-3-tipo-2', 'Conjuntos de tipo 2'), pend('7-4-celulas', 'Células de Concepto'),
+    listo('7-1-c-medias', 'Encontrar los grupos: c-medias difusas', ['alas-difusas', 'pertenencia-calc', 'cmedias-elegir', 'demuestra-centro']), listo('7-2-anfis', 'Reglas que se ajustan solas: ANFIS', ['entrena', 'gradiente-calc', 'anfis-elegir', 'demuestra-derivada']), listo('7-3-tipo-2', 'Dudar de la curva: conjuntos de tipo 2', ['ensancha', 'intervalo-calc', 'tipo2-elegir', 'demuestra-extremos']), listo('7-4-celulas', 'Tu propuesta: Células de Concepto Difusas', ['que-cambia', 'regla-ccd-calc', 'ccd-elegir', 'demuestra-producto']),
+    listo('7-5-pendulo', 'Tu péndulo se ajusta solo', ['ajusta-solo', 'paso-calc', 'ajuste-elegir', 'demuestra-tanteo']),
   ] },
   { id: 8, titulo: 'Solo para valientes', lema: 'La lógica misma, sin red.', posicion: [0.72, 0.86], conceptos: [
-    pend('8-1-bl', 'La lógica BL'), pend('8-2-lukasiewicz', 'Łukasiewicz, Gödel y producto'), pend('8-3-mtl', 'MTL'), pend('8-4-algebra', 'Semántica algebraica'), pend('8-5-completitud', 'Completitud'),
+    listo('8-1-bl', 'BL: la lógica de las normas continuas', ['busca-residuo', 'residuo-calc', 'bl-elegir', 'demuestra-uno']), listo('8-2-lukasiewicz', 'Las tres grandes', ['busca-contraccion', 'negacion-calc', 'tres-elegir', 'demuestra-goedel']), listo('8-3-mtl', 'MTL: cuando la norma da un salto', ['cruza-salto', 'nilpotente-calc', 'mtl-elegir', 'demuestra-izquierda']), listo('8-4-algebra', 'El álgebra detrás de la lógica', ['busca-tabla', 'cadena-calc', 'algebra-elegir', 'demuestra-prelineal']), listo('8-5-completitud', 'Completitud: probar y ser verdad', ['encuentra-contra', 'valor-calc', 'completitud-elegir', 'demuestra-correccion']),
   ] },
 ];
 
 export const todosLosConceptos = (cat = CATALOGO) => cat.flatMap((r) => r.conceptos);
 
+/** La parada que viene después en todo el curso, cruzando de región. Tras la última, null. */
+export function siguienteEnCurso(id, cat = CATALOGO) {
+  const L = todosLosConceptos(cat), i = L.findIndex((c) => c.id === id);
+  return L[i + 1] ?? null;
+}
+
 export function buscarConcepto(id, cat = CATALOGO) {
   for (const region of cat) {
     const i = region.conceptos.findIndex((c) => c.id === id);
-    if (i >= 0) return { region, concepto: region.conceptos[i], anterior: region.conceptos[i - 1] ?? null, siguiente: region.conceptos[i + 1] ?? null };
+    if (i >= 0) return { region, concepto: region.conceptos[i], anterior: region.conceptos[i - 1] ?? null, siguiente: siguienteEnCurso(id, cat) };
   }
   return null;
 }

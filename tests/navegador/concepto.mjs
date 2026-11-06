@@ -145,10 +145,10 @@ t('concepto: id inexistente da un mensaje con vuelta al mapa', async ({ pg, ir }
   afirmar(await pg.locator('a[href="index.html"]').count() === 1, 'sin enlace');
 });
 
-t('concepto: uno pendiente también', async ({ pg, ir }) => {
-  await ir('concepto.html?c=6-1-mamdani');
+t('concepto: uno que no existe avisa con amabilidad', async ({ pg, ir }) => {
+  await ir('concepto.html?c=9-9-nada');
   await pg.waitForSelector('.mensaje');
-  afirmar((await pg.textContent('.mensaje')).includes('aún no está escrito'), 'mensaje');
+  afirmar((await pg.textContent('.mensaje')).includes('No encuentro'), 'mensaje');
 });
 
 t('concepto: sin parámetro, también', async ({ pg, ir }) => {

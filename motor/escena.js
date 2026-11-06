@@ -1,5 +1,7 @@
 // Una escena es una función pura (paso, p, entradas) → primitivas. El reloj solo decide p; todo lo que se ve se
 // deriva de ese estado, así que ◀ restaura exactamente y pulsar rápido no puede dejar nada a medias.
+import { GLOSARIO } from '../contenido/glosario.js';
+import { enlazarTerminos } from '../nucleo/recorrido.js';
 import { compilar } from '../nucleo/expresion.js';
 import { clamp } from './tiempo.js';
 import { crearLienzo } from './lienzo.js';
@@ -42,10 +44,14 @@ export function crearEntradas(def) {
       const f = (...a) => { const v = c.f(...a); return Number.isFinite(v) ? clamp(v) : 0; };
       avisos[id] = null;
       const [a, b] = d.dominio ?? [0, 1];
+      let finitos = 0;
       for (let i = 0; i <= 200; i++) {
         const v = c.f(a + ((b - a) * i) / 200);
-        if (Number.isFinite(v) && (v < -1e-9 || v > 1 + 1e-9)) { avisos[id] = 'Se ha recortado a [0, 1]: un grado no puede salir de ahí.'; break; }
+        if (!Number.isFinite(v)) continue;
+        finitos++;
+        if (!avisos[id] && (v < -1e-9 || v > 1 + 1e-9)) avisos[id] = 'Se ha recortado a [0, 1]: un grado no puede salir de ahí.';
       }
+      if (finitos === 0) avisos[id] = 'Esta fórmula no da ningún número en este dominio, así que se dibuja 0.';
       e[id] = f;
       e[`${id}_tex`] = c.latex;
       previos[id] = valor;
@@ -121,12 +127,12 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
     def.pasos.forEach((d, i) => {
       const el = document.createElement('p');
       el.className = 'paso-texto';
-      el.innerHTML = d.texto ?? '';
-      el.addEventListener('click', () => irA(i));
+      el.innerHTML = enlazarTerminos(d.texto ?? '', GLOSARIO);
+      el.addEventListener('click', (ev) => { if (!ev.target.closest?.('.termino')) irA(i); });
       textos.append(el);
       lineas.push(el);
     });
-    window.renderMathInElement?.(textos, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
+    window.renderMathInElement?.(textos, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false, strict: false });
   }
   const destinoCtl = controles ?? contenedor;
   const barra = document.createElement('div');
@@ -191,7 +197,8 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
 
   // --- ratón
   const aModelo = (d, px) => {
-    if (r3 || d.panel !== undefined) {
+    if (r3 && d.panel === undefined) return entradas.e[d.id];
+    if (d.panel !== undefined) {
       const { paneles } = normalizar(actual());
       const r = panel(d.panel, paneles[d.panel].ejes);
       return [r.deX(px[0]), r.deY(px[1])];
@@ -200,7 +207,8 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
     return px;
   };
   const aLogico = (d, m) => {
-    if (r3 || d.panel !== undefined) {
+    if (r3 && d.panel === undefined) return entradas.e[d.id];
+    if (d.panel !== undefined) {
       const { paneles } = normalizar(actual());
       const r = panel(d.panel, paneles[d.panel].ejes);
       return [r.aX(m[0]), r.aY(m[1])];
@@ -213,6 +221,19 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
   let agarre = null, giro = null;
   const sueltaTodo = () => { agarre = null; giro = null; };
   const raiz = lienzo.raiz;
+  // Sin ratón: el lienzo describe lo que muestra, y las flechas mueven lo que se puede arrastrar.
+  const arrastrable = (def.entradas ?? []).find((d) => d.tipo === 'arrastre');
+  raiz.setAttribute('role', 'img');
+  raiz.tabIndex = arrastrable ? 0 : -1;
+  raiz.addEventListener('keydown', (ev) => {
+    const dir = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[ev.key];
+    if (!arrastrable || !dir || document.activeElement !== raiz) return;
+    ev.preventDefault(); ev.stopPropagation();
+    const r = arrastrable.region, [x, y] = entradas.e[arrastrable.id];
+    entradas.actualizar(arrastrable.id, [x + dir[0] * 0.02 * (r.x[1] - r.x[0]), y + dir[1] * 0.02 * (r.y[1] - r.y[0])]);
+    sucio = true;
+    notificar();
+  });
   raiz.addEventListener('pointerdown', (ev) => {
     const px = lienzo.pos(ev);
     let mejor = null, md = 30;

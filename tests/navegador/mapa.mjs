@@ -19,12 +19,12 @@ t('mapa: clic abre sus conceptos, con enlace y grado', async ({ pg, ir }) => {
   afirmar(await pg.locator('.mapa-panel li').count() === 10, 'no están los 10');
 });
 
-t('mapa: las regiones pendientes indican que aún no están, sin enlace roto', async ({ pg, ir }) => {
+t('mapa: la región 6 enlaza todas sus paradas, sin ninguna pendiente', async ({ pg, ir }) => {
   await abrir(ir, pg);
   const [x, y] = await moverA(pg, 6);
   await pg.mouse.click(x, y);
-  afirmar(await pg.locator('.mapa-panel li a').count() === 0, 'hay enlaces a lo que no existe');
-  afirmar((await pg.textContent('.mapa-panel')).includes('aún no'), 'no lo avisa');
+  afirmar(await pg.locator('.mapa-panel li a').count() === 7, 'faltan enlaces');
+  afirmar(!(await pg.textContent('.mapa-panel')).includes('aún no'), 'dice que falta algo');
 });
 
 t('mapa: el progreso se refleja, y empezar de cero pide confirmación y lo borra', async ({ pg, ir }) => {

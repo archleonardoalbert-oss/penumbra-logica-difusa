@@ -38,3 +38,8 @@ test('buscarConcepto', () => {
   assert.equal(buscarConcepto('1-8-cortes-alfa').region.id, 1);
   assert.equal(buscarConcepto('no-existe'), null);
 });
+
+test('el curso está entero: ninguna parada pendiente', async () => {
+  const { todosLosConceptos: todos } = await import('../contenido/catalogo.js');
+  assert.deepEqual(todos().filter((c) => c.estado !== 'listo').map((c) => c.id), []);
+});

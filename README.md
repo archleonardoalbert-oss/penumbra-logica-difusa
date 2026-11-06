@@ -10,8 +10,8 @@ Hace falta Python 3 para servirlo y un navegador con WebGL2. Sin WebGL2, el text
 
 ## Cómo está hecho
 
-- `contenido/catalogo.js`: las 8 regiones y sus paradas. `contenido/parte1/*.js`: un concepto por archivo. `contenido/glosario.js`: toda palabra técnica.
-- `nucleo/`: matemáticas, progreso y calificación, sin navegador.
+- `contenido/catalogo.js`: las 8 regiones y sus 55 paradas. `contenido/parteN/*.js`: un concepto por archivo. `contenido/glosario.js`: toda palabra técnica.
+- `nucleo/`: matemáticas, progreso y calificación, sin navegador. Cada región tiene su módulo (`operadores`, `relaciones`, `razonar`, `sistemas`, `diseno`, `aprender`, `logicas`), y `pendulo` más `taller` sostienen el hilo del péndulo.
 - `motor/`: una escena es una función pura `(paso, p, entradas) → primitivas`, en coordenadas del modelo. La dibujan tres renderizadores: 3D y niebla en WebGL2, y plano en Canvas 2D.
 
 ## Añadir un concepto

@@ -120,6 +120,9 @@ for (const f of todosLosConceptos().filter((c) => c.estado === 'listo')) {
       await pg.click('.pie-etapa .boton-seguir');
     }
     afirmar(total === 0, `${total} fórmulas con error`);
+    await pg.evaluate(() => pagina.irA(1));
+    const crudo = await pg.evaluate(() => [...document.querySelectorAll('.paso-texto')].map((x) => x.textContent).find((x) => x.includes('[[')));
+    afirmar(!crudo, `marca de glosario a la vista: ${crudo}`);
     for (let e = 0; e < 6; e++) {
       await pg.evaluate((i) => pagina.irA(i), e);
       await pg.waitForTimeout(30);
@@ -129,3 +132,47 @@ for (const f of todosLosConceptos().filter((c) => c.estado === 'listo')) {
     }
   });
 }
+
+// ---------------------------------------------------------------- la fase final
+t('final: el grado explica su fórmula', async ({ pg, ir }) => {
+  await abrir(pg, ir, 'concepto.html?c=2-1-parametrizadas');
+  await pg.click('.grado .termino');
+  afirmar((await pg.textContent('.glosario-tarjeta')).includes('media de sus retos'), 'la tarjeta explica la media');
+});
+t('final: desde el mapa se llega a tu péndulo, con tus piezas', async ({ pg, ir }) => {
+  await pg.addInitScript(() => localStorage.setItem('penumbra-taller-v1', JSON.stringify({ anchoAngulo: 22, normaY: 'mínimo', fuerzaMaxima: 12 })));
+  await ir('index.html');
+  await pg.waitForSelector('.tu-pendulo');
+  const txt = await pg.textContent('.tu-pendulo');
+  afirmar(txt.includes('22') && txt.includes('mínimo'), txt);
+  await pg.click('.enlace-pendulo');
+  await pg.waitForFunction(() => window.pagina?.escena);
+  const e = await pg.evaluate(() => pagina.escena.estado().e);
+  afirmar(e.a === 22 && e.F === 12 && e.norma === 0, JSON.stringify([e.a, e.F, e.norma]));
+});
+t('final: al acabar una región, el botón lleva a la siguiente; solo la última vuelve al mapa', async ({ pg, ir }) => {
+  await abrir(pg, ir, 'concepto.html?c=2-4-pendulo#llegada');
+  afirmar((await pg.textContent('#llegada .boton-seguir')).includes('Siguiente parada'), 'de la 2 a la 3');
+  await pg.goto('about:blank');
+  await abrir(pg, ir, 'concepto.html?c=8-5-completitud#llegada');
+  afirmar((await pg.textContent('#llegada .boton-seguir')).includes('mapa'), 'la última vuelve al mapa');
+});
+t('final: el mapa quieto no repinta', async ({ pg, ir }) => {
+  await pg.emulateMedia({ reducedMotion: 'reduce' });
+  await ir('index.html');
+  await pg.waitForTimeout(1200);
+  const n = await pg.evaluate(() => new Promise((res) => {
+    const c = document.querySelector('.mapa-lienzo canvas'), gl = c.getContext('webgl2'); let k = 0;
+    const o = gl.drawArrays.bind(gl); gl.drawArrays = (...a) => { k++; return o(...a); };
+    const o2 = gl.drawElements.bind(gl); gl.drawElements = (...a) => { k++; return o2(...a); };
+    setTimeout(() => res(k), 500);
+  }));
+  afirmar(n === 0, `${n} dibujos con el mapa quieto`);
+});
+t('final: las flechas mueven lo arrastrable, sin ratón', async ({ pg, ir }) => {
+  await abrir(pg, ir, 'concepto.html?c=5-2-implicaciones#toca');
+  const antes = await pg.evaluate(() => pagina.escena.estado().e.p[0]);
+  await pg.focus('.escena-lienzo [role=img]');
+  await pg.keyboard.press('ArrowRight');
+  afirmar((await pg.evaluate(() => pagina.escena.estado().e.p[0])) > antes, 'se movió');
+});

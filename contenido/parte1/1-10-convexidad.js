@@ -64,8 +64,9 @@ export default {
       }
       const ln = ev(q(1), 0, 0.5);
       if (ln > 0) {
-        C.push(punto([px1, mn], { radio: 2, color: ROJO, alfa: ln, halo: 0 }), punto([px2, mn], { radio: 2, color: ROJO, alfa: ln, halo: 0 }));
-        C.push(linea([px1, mn], [px2, mn], { color: ROJO, ancho: 1.8, alfa: 0.9 * ln }));
+        const cLinea = roto ? ROJO : BLANCO;
+        C.push(punto([px1, mn], { radio: 2, color: cLinea, alfa: ln, halo: 0 }), punto([px2, mn], { radio: 2, color: cLinea, alfa: ln, halo: 0 }));
+        C.push(linea([px1, mn], [px2, mn], { color: cLinea, ancho: 1.8, alfa: 0.9 * ln }));
         if (ln > 0.5) C.push(rotulo([0.98, 0.9], roto ? R`\text{no convexo}` : R`\text{se cumple}`, { clave: 'est', ancla: 'r', tam: 19, color: roto ? ROJO : ORO, alfa: ln }));
       }
       const pm = ev(q(0), 0.3, 0.9);

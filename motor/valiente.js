@@ -16,9 +16,9 @@ const fijarSilencio = (v) => { try { localStorage.setItem(SILENCIO, v ? '1' : '0
 // ---------------------------------------------------------------- sonido
 function crearSonido() {
   const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC || silenciado()) return { braam() {}, viento() {}, golpe() {}, cerrar() {} };
+  if (!AC) return { braam() {}, viento() {}, golpe() {}, cerrar() {}, silenciar() {} };
   const ac = new AC(), salida = ac.createGain();
-  salida.gain.value = 0.55; salida.connect(ac.destination);
+  salida.gain.value = silenciado() ? 0 : 0.55; salida.connect(ac.destination);
   const ruido = (seg) => {
     const b = ac.createBuffer(1, ac.sampleRate * seg, ac.sampleRate), d = b.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -57,6 +57,7 @@ function crearSonido() {
       s.connect(f); f.connect(gn); gn.connect(salida); s.start(t0);
       this.braam(t + 0.02, 3.2);
     },
+    silenciar(v) { salida.gain.setTargetAtTime(v ? 0 : 0.55, ac.currentTime, 0.02); },
     cerrar() { setTimeout(() => ac.close().catch(() => {}), 400); },
   };
 }
@@ -85,7 +86,7 @@ export function reproducirEntrada({ titulo, subtitulo = 'Demostración solo para
   const botonSilencio = capa.querySelector('.cine-silencio');
   const pintarSilencio = () => { botonSilencio.textContent = silenciado() ? '🔇 sin sonido' : '🔊 sonido'; };
   pintarSilencio();
-  botonSilencio.addEventListener('click', (ev) => { ev.stopPropagation(); fijarSilencio(!silenciado()); pintarSilencio(); });
+  botonSilencio.addEventListener('click', (ev) => { ev.stopPropagation(); fijarSilencio(!silenciado()); pintarSilencio(); sonido.silenciar(silenciado()); });
 
   // trazos de niebla en 3D que vuelan hacia la cámara
   const marcas = Array.from({ length: 520 }, () => ({ x: (Math.random() - 0.5) * 16, y: (Math.random() - 0.5) * 10, z: Math.random() * 30 + 1, a: Math.random() * Math.PI - Math.PI / 2, c: Math.random() }));
@@ -165,8 +166,8 @@ export function reproducirEntrada({ titulo, subtitulo = 'Demostración solo para
     cancelAnimationFrame(pedido); removeEventListener('resize', ajustar); removeEventListener('keydown', tecla);
     sonido.cerrar();
     alTerminar?.();
-    // la capa se queda negra hasta que la página nueva cargue (si se navega); si no, se retira
-    setTimeout(() => capa.remove(), 1500);
+    capa.style.transition = 'opacity .25s'; capa.style.opacity = '0';
+    setTimeout(() => capa.remove(), 280);
   };
   const tecla = (ev) => { if (['Escape', ' ', 'Enter'].includes(ev.key)) { ev.preventDefault(); terminar(); } };
   addEventListener('keydown', tecla);

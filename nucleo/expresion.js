@@ -1,6 +1,7 @@
 // Expresiones que escribe el usuario (el lado derecho f(t, y) de una EDO): análisis seguro, sin eval,
 // a un árbol que se evalúa como función y que se imprime como LaTeX para el rótulo de la escena.
 
+const FUNCIONES2 = { min: Math.min, max: Math.max };
 const FUNCIONES = {
   sin: Math.sin, cos: Math.cos, tan: Math.tan, exp: Math.exp, ln: Math.log, log: Math.log,
   sqrt: Math.sqrt, abs: Math.abs, arctan: Math.atan,
@@ -41,7 +42,7 @@ function trocear(texto, nombres) {
       }
       i += m.length; continue;
     }
-    if ('+-*/^()·×−'.includes(c)) { fichas.push({ t: 'op', v: { '·': '*', '×': '*', '−': '-' }[c] ?? c }); i++; continue; }
+    if ('+-*/^(),·×−'.includes(c)) { fichas.push({ t: 'op', v: { '·': '*', '×': '*', '−': '-' }[c] ?? c }); i++; continue; }
     throw new Error(`símbolo no permitido: «${c}»`);
   }
   return fichas;
@@ -81,6 +82,12 @@ function analizar(fichas) {
     if (f.t === 'num') { i++; return { num: f.v }; }
     if (f.t === 'id') {
       i++;
+      if (FUNCIONES2[f.v]) {
+        if (!es('(')) throw new Error(`escribe ${f.v}(a, b) con paréntesis`);
+        i++; const a = suma(); if (!es(',')) throw new Error(`${f.v} necesita dos cosas: ${f.v}(a, b)`);
+        i++; const b = suma(); tomar(')');
+        return { fn2: f.v, a, b };
+      }
       if (FUNCIONES[f.v]) {
         if (!es('(')) throw new Error(`escribe ${f.v}(…) con paréntesis`);
         i++; const a = suma(); tomar(')');
@@ -103,6 +110,7 @@ function evaluador(n, indice) {
     if (n.id in indice) { const k = indice[n.id]; return (v) => v[k]; }
     const c = CONSTANTES[n.id]; return () => c;
   }
+  if ('fn2' in n) { const g = FUNCIONES2[n.fn2], a = evaluador(n.a, indice), b = evaluador(n.b, indice); return (v) => g(a(v), b(v)); }
   if ('fn' in n) { const g = FUNCIONES[n.fn], a = evaluador(n.a, indice); return (v) => g(a(v)); }
   const a = evaluador(n.a, indice), b = n.b && evaluador(n.b, indice);
   switch (n.op) {
@@ -127,6 +135,7 @@ function latex(n) {
   n = sinPar(n);
   if ('num' in n) return String(n.num);
   if ('id' in n) return n.id === 'pi' ? '\\pi' : n.id;
+  if ('fn2' in n) return `\\${n.fn2}(${latex(n.a)},\\ ${latex(n.b)})`;
   if ('fn' in n) {
     if (n.fn === 'sqrt') return `\\sqrt{${latex(n.a)}}`;
     if (n.fn === 'abs') return `\\left|${latex(n.a)}\\right|`;
@@ -160,7 +169,7 @@ function latex(n) {
 export function compilar(texto, vars = ['t', 'y'], params = []) {
   try {
     if (!String(texto).trim()) throw new Error('escribe una expresión');
-    const nombres = [...Object.keys(FUNCIONES), ...Object.keys(CONSTANTES), ...vars, ...params];
+    const nombres = [...Object.keys(FUNCIONES2), ...Object.keys(FUNCIONES), ...Object.keys(CONSTANTES), ...vars, ...params];
     const arbol = analizar(trocear(String(texto), nombres));
     const indice = Object.fromEntries([...vars, ...params].map((n, k) => [n, k]));
     const ev = evaluador(arbol, indice);
