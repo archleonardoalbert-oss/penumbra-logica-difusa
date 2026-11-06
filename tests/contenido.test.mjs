@@ -73,13 +73,12 @@ test('lo reescrito no suelta jerga sin explicar, ni empieza por lo formal', asyn
   const JERGA = /supremo|ínfimo|norma\b|cuasi|vectorial|inducción|indicadora|parte entera|cutworthy/i;
   for (const ficha of listos) {
     const c = (await ficha.carga()).default;
-    if (!c.entender) continue;
+    assert.ok(c.entender, `${c.id}: falta reescribir`);
     assert.equal(c.entender[0].tipo, 'idea', `${c.id}: debe empezar por una idea en palabras`);
     const iFormal = c.entender.findIndex((b) => b.tipo === 'formal');
     assert.ok(c.entender.slice(0, iFormal).some((b) => b.tipo === 'ejemplo'), `${c.id}: antes de lo formal, un ejemplo`);
     assert.ok(c.entender.slice(0, iFormal).some((b) => b.tipo === 'simbolos'), `${c.id}: antes de lo formal, leer los símbolos`);
-    for (const b of c.entender) for (const t of [b.texto, b.lee, b.plan, b.intro, b.tex].filter(Boolean)) {
-      if (b.titulo?.startsWith('Para curiosos')) continue;
+    for (const b of [...c.entender, ...c.tecnicas]) for (const t of [b.texto, b.lee, b.plan, b.intro, b.tex, ...(b.pasos ?? []).flatMap((p) => [p.texto, p.porque]), ...(b.piezas ?? []).map((p) => p.dice)].filter(Boolean)) {
       const limpio = t.replace(/\[\[[^\]]+\]\]/g, '');
       assert.ok(!JERGA.test(limpio), `${c.id}: jerga sin explicar en «${t.slice(0, 70)}»`);
     }

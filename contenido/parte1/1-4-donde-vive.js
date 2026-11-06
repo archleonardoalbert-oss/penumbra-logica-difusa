@@ -49,10 +49,20 @@ export default {
   manipulacion: `<ul>
     <li>Arrastra la línea vertical por la temperatura: mira cómo pierde fuerza una regla mientras la gana la otra.</li>
     <li>Cambia las velocidades de cada regla: es decir, cambia lo que «sabe» el controlador, sin ninguna ecuación física.</li></ul>`,
-  rigor: [
-    { tipo: 'EJ', titulo: 'El controlador de la escena', tex: R`Con $a = \mu_{\text{templado}}(T)$, $b = \mu_{\text{caliente}}(T)$ y velocidades $v_a$, $v_b$, la salida es la media ponderada $\dfrac{a\, v_a + b\, v_b}{a + b}$. Es un sistema de Sugeno de orden cero, que estudiarás en la región 6.` },
-    { tipo: 'NOTA', titulo: 'Aplicaciones históricas', tex: R`El caso más citado es el metro de Sendai (Japón), en cuya línea Namboku, abierta en 1987, un control difuso desarrollado por Hitachi gobernaba aceleración, frenado y parada. A partir de finales de los años 80, fabricantes japoneses como Matsushita sacaron electrodomésticos «difusos»: lavadoras, aspiradoras, cámaras. El término también fue en parte reclamo comercial: conviene no creerse todas las etiquetas.` },
-    { tipo: 'NOTA', titulo: 'Cuándo encaja', tex: R`Encaja bien cuando hay conocimiento experto expresable en reglas y no hay un modelo matemático preciso, o es muy caro de obtener; también si interesa que el sistema sea legible. Encaja mal cuando el problema exige exactitud y hay un modelo o algoritmo preciso: comprobar una firma digital no admite grados.` },
+  entender: [
+    { tipo: 'idea', etiqueta: 'La idea', texto: 'El termostato conoce una sola frontera. Tú, en cambio, piensas con reglas vagas: «si está templado, despacio; si hace calor, fuerte». Un sistema difuso hace justo eso: traduce esas reglas a números.' },
+    { tipo: 'ejemplo', texto: 'Con las dos reglas de la escena, y velocidades 0,2 y 1:', tabla: [['Temperatura', '20', '25', '27', '30'], ['Grado de «templado»', '1', '0,5', '0,3', '0'], ['Grado de «caliente»', '0', '0,5', '0,7', '1'], ['Velocidad', '0,2', '0,6', '0,76', '1']], cierre: 'A 25 °C, las dos reglas pesan igual, y sale la media entre 0,2 y 1.' },
+    { tipo: 'simbolos', intro: 'La mezcla, pieza a pieza.', piezas: [
+      { tex: R`a,\ b`, dice: 'Los grados con que se cumple cada regla: «templado» y «caliente».' },
+      { tex: R`v_a,\ v_b`, dice: 'La velocidad que pide cada regla.' },
+      { tex: R`a\, v_a + b\, v_b`, dice: 'Cada velocidad pesa según lo que se cumple su regla.' },
+      { tex: R`\div\ (a + b)`, dice: 'Dividir por el peso total, para que el resultado quede entre las dos velocidades.' },
+    ], todo: R`v = \dfrac{a\, v_a + b\, v_b}{a + b}`, lee: 'Es una [[media ponderada|media-ponderada]]: como la nota de un curso en el que cada examen pesa distinto.' },
+    { tipo: 'formal', titulo: 'Un sistema de reglas, en pequeño', tex: R`Si cada regla $i$ se cumple con grado $g_i$ y pide una salida $v_i$, la salida del sistema es $\dfrac{\sum_i g_i\, v_i}{\sum_i g_i}$, siempre que algún $g_i$ sea positivo.`, lee: 'El símbolo $\\sum_i$ quiere decir «suma para todas las reglas». En la región 6 lo llamarás sistema de Sugeno.' },
+    { tipo: 'idea', etiqueta: 'Para qué sirve', texto: 'Zimmermann resume su utilidad en varios objetivos. Los tres más claros: convertir decisiones de sí o no en decisiones graduales; resumir montañas de datos en pocas palabras; y conseguir soluciones aproximadas más baratas que un modelo exacto.' },
+    { tipo: 'nota', titulo: 'En el mundo real', texto: 'El caso más citado es el metro de Sendai, en Japón: en su línea Namboku, abierta en 1987, un control difuso de Hitachi gobernaba aceleración, frenado y parada. Desde finales de los años 80, fabricantes japoneses como Matsushita lanzaron lavadoras, aspiradoras y cámaras «difusas». También fue en parte un reclamo comercial: no te creas todas las etiquetas.' },
+    { tipo: 'nota', titulo: 'De dónde sale lo vago', texto: 'Hay dos fuentes. A veces está en la palabra misma: «alto» no tiene frontera, sepas lo que sepas. Otras veces es falta de capacidad: se podría definir con exactitud quién es un «cliente solvente», pero harían falta más datos de los que una persona puede manejar a la vez.' },
+    { tipo: 'nota', titulo: 'Cuándo no usarla', texto: 'Encaja si hay conocimiento experto en palabras y no hay un modelo preciso, o sale muy caro. No encaja si el problema exige exactitud y hay un algoritmo exacto: comprobar una contraseña no admite grados.' },
   ],
   tecnicas: [
     { titulo: 'Pregúntate quién tiene el conocimiento', texto: 'Si lo tiene una persona experta y lo cuenta con palabras vagas («si va un poco rápido, frena algo»), la lógica difusa puede traducirlo. Si lo tiene una ecuación exacta, usa la ecuación.' },
@@ -64,5 +74,5 @@ export default {
     { id: 'decidir-ventilador', tipo: 'calcular', enunciado: R`Con el controlador de la escena ($v_a = 0{,}2$ y $v_b = 1$), ¿qué velocidad da a $T = 27$ °C?`,
       respuesta: 0.76, tol: 0.006, pistas: [R`Entre 20 y 30 °C, $\mu_{\text{caliente}}(T) = (T - 20) \div 10$.`, R`$a = 0{,}3$ y $b = 0{,}7$; además $a + b = 1$.`], explicacion: R`$0{,}3 \cdot 0{,}2 + 0{,}7 \cdot 1 = 0{,}76$.` },
   ],
-  referencias: ['Sendai Subway 1000 series y control difuso de Hitachi (historia de la línea Namboku, 1987).', 'Tech Monitor (c. 1990): gama de electrodomésticos difusos de Matsushita.', 'The Japan Times (2017): historia de las arroceras y «fuzzy logic» como reclamo.'],
+  referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'Sendai Subway 1000 series y control difuso de Hitachi (historia de la línea Namboku, 1987).', 'Tech Monitor (c. 1990): gama de electrodomésticos difusos de Matsushita.', 'The Japan Times (2017): historia de las arroceras y «fuzzy logic» como reclamo.'],
 };

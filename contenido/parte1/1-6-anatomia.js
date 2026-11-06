@@ -74,9 +74,9 @@ export default {
   manipulacion: '<ul><li>Arrastra por el eje los puntos <em>a, b, c, d</em> para moldear el trapecio: las piezas se recalculan solas.</li><li>Baja la «altura» por debajo de 1: el conjunto deja de ser normal.</li></ul>',
   entender: [
     { tipo: 'idea', texto: 'Un conjunto difuso no tiene un borde, pero sí se le pueden preguntar tres cosas muy concretas. Las tres son preguntas de andar por casa.' },
-    { tipo: 'ejemplo', texto: 'Imagina «buena temperatura para un baño», medida en cinco temperaturas:', tabla: [['Temperatura', '20', '30', '37', '42', '50'], ['Grado', '0', '0,4', '1', '0,4', '0']] },
-    { tipo: 'idea', texto: 'Primera pregunta: <b>¿quién pertenece aunque sea un poco?</b> Aquí: 30, 37 y 42. Eso se llama <b style="color:#58c4dd;font-weight:400">soporte</b>. Es el territorio del conjunto: fuera de él, grado 0.' },
-    { tipo: 'idea', texto: 'Segunda pregunta: <b>¿quién pertenece del todo?</b> Aquí: solo 37. Eso se llama <b style="color:#f4d345;font-weight:400">núcleo</b>. Es el corazón del conjunto.' },
+    { tipo: 'ejemplo', texto: 'Vuelve a «casa cómoda para una familia de cuatro», con universo de 1 a 10 dormitorios:', tabla: [['Dormitorios', '1', '2', '3', '4', '5', '6', '7 a 10'], ['Grado', '0,2', '0,5', '0,8', '1', '0,7', '0,3', '0']] },
+    { tipo: 'idea', texto: 'Primera pregunta: <b>¿quién pertenece aunque sea un poco?</b> Aquí: de 1 a 6 dormitorios; las de 7 o más quedan fuera. Eso se llama <b style="color:#58c4dd;font-weight:400">soporte</b>. Es el territorio del conjunto.' },
+    { tipo: 'idea', texto: 'Segunda pregunta: <b>¿quién pertenece del todo?</b> Aquí: solo la de 4. Eso se llama <b style="color:#f4d345;font-weight:400">núcleo</b>. Es el corazón del conjunto.' },
     { tipo: 'idea', texto: 'Tercera pregunta: <b>¿cuánto se llega a pertenecer, como mucho?</b> Aquí: 1. Eso se llama <b style="color:#fc6282;font-weight:400">altura</b>. Si es 1, el conjunto se llama <em>normal</em>; si nadie llega a 1, es [[subnormal]].' },
     { tipo: 'simbolos', intro: 'Ahora, la misma primera pregunta como se escribe en los libros. Primero las piezas.', piezas: [
       { tex: R`\{\ \dots\ \}`, dice: 'Las llaves hacen un [[conjunto]]: «el grupo de…».' },
@@ -90,11 +90,11 @@ export default {
       { texto: R`Toma cualquier $x$ del núcleo. Por lo que significa «núcleo», $\mu_A(x) = 1$.`, porque: 'Solo se ha aplicado la definición de núcleo.' },
       { texto: R`Como $1 > 0$, se cumple $\mu_A(x) > 0$. Eso es justo lo que pide el soporte, así que $x$ está en el soporte.`, porque: 'Definición de soporte. Como $x$ era cualquiera, vale para todo el núcleo.' },
     ] },
-    { tipo: 'nota', titulo: 'Para curiosos: por qué «supremo» y no «máximo»', texto: 'Imagina los números entre 0 y 1, sin incluir el 1, con grado igual a sí mismos: 0,9; 0,99; 0,999… Los grados se acercan a 1 todo lo que quieras, y nadie lo alcanza. No hay un mayor grado, pero sí un techo: el 1. Por eso la altura es 1, aunque el conjunto no sea normal. Con un número finito de cosas, esto no pasa.' },
+    { tipo: 'nota', titulo: 'Para curiosos: por qué «supremo» y no «máximo»', texto: 'Imagina los números entre 0 y 1, sin incluir el 1, con grado igual a sí mismos: 0,9; 0,99; 0,999… Los grados se acercan a 1 todo lo que quieras, y nadie lo alcanza. No hay un mayor grado, pero sí un techo: el 1. Por eso la altura es 1, aunque el conjunto no sea normal. Con un número finito de cosas, esto no pasa. Ojo al leer libros: Zimmermann llama normal a tener altura 1; otros autores exigen que algún punto llegue a 1. Solo se diferencian en casos como este.' },
   ],
   tecnicas: [
     { titulo: 'Supremo frente a máximo', texto: 'Antes de escribir «el máximo», pregúntate si se alcanza. Un contraejemplo en un intervalo abierto suele resolver la duda.' },
-    { titulo: 'Busca el contraejemplo en un intervalo abierto', texto: 'Para refutar el recíproco de algo que involucra un supremo, prueba con una función creciente en un intervalo abierto.' },
+    { titulo: 'Busca el contraejemplo en un intervalo abierto', texto: 'Para refutar el recíproco de algo que involucra un [[supremo]], prueba con una función creciente en un intervalo abierto.' },
   ],
   retos: [
     { id: 'moldear-trapecio', tipo: 'manipular', enunciado: R`Moldea el trapecio para que el soporte sea $(2, 8)$ y el núcleo $[4, 6]$, con error menor que $0{,}25$.`,
@@ -103,5 +103,5 @@ export default {
     { id: 'calcular-anatomia', tipo: 'calcular', enunciado: R`Sea $X = \{1, 2, 3, 4, 5\}$ y $A = \{(1, 0),\ (2, 0{,}4),\ (3, 0{,}9),\ (4, 0{,}4),\ (5, 0)\}$. ¿Cuánto vale la altura, más el número de elementos del soporte?`,
       respuesta: 3.9, tol: 0.001, pistas: ['La altura es el mayor grado.', 'El soporte es {2, 3, 4}.'], explicacion: R`$0{,}9 + 3 = 3{,}9$. Y el núcleo está vacío: $A$ es subnormal.` },
   ],
-  referencias: ['G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, cap. 1.', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga.'],
+  referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, cap. 1.', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga.'],
 };

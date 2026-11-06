@@ -54,11 +54,20 @@ export default {
     },
   },
   manipulacion: '<ul><li>Cambia el número de las etiquetas: por muy alto que sea, A y B siguen significando cosas distintas. En B, un número alto solo reduce la frecuencia del desastre.</li><li>Pulsa ↻ en el tercer paso y mira qué ocurre con cada número al abrirlas.</li></ul>',
-  rigor: [
-    { tipo: 'DEF', titulo: 'Probabilidad', tex: R`En un espacio finito $\Omega$, una probabilidad cumple $P(E) \ge 0$, $P(\Omega) = 1$ y $P(E \cup F) = P(E) + P(F)$ si $E \cap F = \varnothing$. En particular, $\sum_{\omega \in \Omega} P(\{\omega\}) = 1$.` },
-    { tipo: 'DEF', titulo: 'Grado de pertenencia', tex: R`Una función $\mu_A : X \to [0, 1]$ no tiene ninguna ligadura entre puntos distintos: los valores $\mu_A(x)$ se eligen por separado. Por eso $\sum_x \mu_A(x)$ puede valer cualquier número entre $0$ y $|X|$.` },
-    { tipo: 'NOTA', titulo: 'Qué mide cada una', tex: R`La probabilidad cuantifica la <em>incertidumbre sobre un hecho</em>, que está definido y aún no se conoce: basta observar para resolverla. El grado cuantifica la <em>vaguedad de una propiedad</em>: aunque lo sepamos todo sobre un caso, «alto» sigue sin tener frontera. Son dos fenómenos distintos, que pueden darse a la vez: «probablemente mañana hará bastante calor».` },
-    { tipo: 'NOTA', titulo: 'Una discusión viva', tex: R`El ejemplo de las botellas es de Bezdek (1993), y su número exacto varía de una fuente a otra. La frontera entre las dos teorías se ha discutido mucho: Kosko llegó a defender que la probabilidad es un caso de la pertenencia, y hay interpretaciones que relacionan ambas (por ejemplo, conjuntos aleatorios). Lo que importa aquí es no confundir sus cálculos: los grados no se combinan con las reglas de la probabilidad salvo que se justifique.` },
+  entender: [
+    { tipo: 'idea', etiqueta: 'La duda', texto: 'Es la primera objeción que todo el mundo hace, y es buena: si ya existe la probabilidad, ¿para qué otro número de 0 a 1? Porque responden a preguntas distintas.' },
+    { tipo: 'ejemplo', texto: 'Mira qué pasa con cada botella al saberlo todo sobre ella:', tabla: [['', 'Antes de abrir', 'Tras analizarla'], ['A, grado en «potable»', '0,91', '0,91'], ['B, probabilidad de ser potable', '0,91', '0 o 1']], cierre: 'En A no había nada oculto: el 0,91 describía cómo es. En B había un hecho oculto, y al conocerlo el número desaparece.' },
+    { tipo: 'idea', etiqueta: 'Dos tipos de duda', texto: 'La probabilidad mide lo que <em>no sabes</em> de un hecho que está bien definido: ¿lloverá mañana? El grado mide algo que <em>no tiene frontera</em>, aunque lo sepas todo: ¿es alta esta persona de 1,74?' },
+    { tipo: 'ejemplo', texto: 'Zimmermann usa un ejemplo muy claro: ¿qué es un pájaro? Sabemos todo sobre estos animales, y aun así:', tabla: [['Animal', 'gorrión', 'pingüino', 'murciélago'], ['¿Es un pájaro, según el habla común?', '1', 'dudoso', 'dudoso']], cierre: 'Nadie está esperando a descubrir un dato. Lo vago es la palabra.' },
+    { tipo: 'simbolos', intro: 'La otra diferencia está en las cuentas.', piezas: [
+      { tex: R`P(\omega)`, dice: 'La probabilidad de la posibilidad $\\omega$ («omega»).' },
+      { tex: R`\sum_\omega`, dice: 'Sumar para todas las posibilidades.' },
+      { tex: R`\sum_\omega P(\omega) = 1`, dice: 'Las probabilidades <b>tienen</b> que sumar 1: algo tiene que pasar.' },
+      { tex: R`\sum_x \mu_A(x)`, dice: 'Los grados <b>pueden</b> sumar lo que sea: cada uno se fija sin mirar a los demás.' },
+    ], todo: R`\sum_\omega P(\omega) = 1 \qquad \text{pero} \qquad \sum_x \mu_A(x) \text{ es libre}`, lee: 'Si diez personas son todas bastante jóvenes, sus grados suman mucho más que 1, y no hay nada que arreglar.' },
+    { tipo: 'formal', titulo: 'Lo que distingue a una probabilidad', tex: R`En un espacio finito $\Omega$, una probabilidad cumple $P(E) \ge 0$, $P(\Omega) = 1$ y $P(E \cup F) = P(E) + P(F)$ si $E$ y $F$ no tienen nada en común. Una función $\mu_A : X \to [0, 1]$ no tiene ninguna de esas ligaduras entre puntos.`, lee: 'Aquí $E$ y $F$ son sucesos, es decir, grupos de posibilidades; $\\cup$ se lee «o».' },
+    { tipo: 'nota', titulo: 'Pueden ir juntas', texto: '«Probablemente mañana hará bastante calor»: hay un hecho que no conoces (probabilidad) sobre una palabra vaga (grado). Por eso no compiten: se ocupan de cosas distintas.' },
+    { tipo: 'nota', titulo: 'Una discusión viva', texto: 'El ejemplo de las botellas es de Bezdek (1993), y el número varía según la fuente. La frontera entre las dos teorías se ha discutido mucho: Kosko llegó a defender que la probabilidad es un caso de la pertenencia. Lo importante para ti: no combines grados con las reglas de la probabilidad sin justificarlo.' },
   ],
   tecnicas: [
     { titulo: 'La prueba de la observación', texto: 'Para clasificar un número entre 0 y 1, pregúntate: si lo supiera todo sobre este caso, ¿seguiría teniendo sentido? Si sí, es un grado. Si colapsa a 0 o 1, es una probabilidad.' },
@@ -71,5 +80,5 @@ export default {
     { id: 'botellas', tipo: 'calcular', enunciado: R`Analizas por completo la composición de la botella A, de grado $0{,}91$ en «potable». ¿Qué grado tiene ahora en «potable»?`,
       respuesta: 0.91, tol: 0.001, pistas: ['¿Observar cambia el contenido, o cambia lo que sabes?'], explicacion: 'Sigue siendo 0,91: lo que había que saber ya lo decía el grado. La probabilidad sí habría colapsado.' },
   ],
-  referencias: ['J. C. Bezdek, «Fuzzy models — what are they and why?», <em>IEEE Transactions on Fuzzy Systems</em> 1 (1993), 1–6.', 'B. Kosko, «Fuzziness vs. probability», <em>International Journal of General Systems</em> 17 (1990), 211–240.', 'G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, Prentice Hall, 1995.'],
+  referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'J. C. Bezdek, «Fuzzy models — what are they and why?», <em>IEEE Transactions on Fuzzy Systems</em> 1 (1993), 1–6.', 'B. Kosko, «Fuzziness vs. probability», <em>International Journal of General Systems</em> 17 (1990), 211–240.', 'G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, Prentice Hall, 1995.'],
 };

@@ -84,19 +84,27 @@ export default {
     },
   },
   manipulacion: '<ul><li>Mueve «nivel α»: el plano sube y baja, y todas las vistas se recalculan a la vez.</li><li>Arrastra la vista 3D para girar la cámara: la intersección del plano con el terreno es real.</li></ul>',
-  rigor: [
-    { tipo: 'DEF', titulo: 'α-corte y corte fuerte', tex: R`Para $\alpha \in [0, 1]$: el $\alpha$-corte es $A_\alpha = \{x \in X : \mu_A(x) \ge \alpha\}$, y el corte fuerte $A_{\alpha^+} = \{x \in X : \mu_A(x) > \alpha\}$. Ambos son conjuntos clásicos.` },
-    { tipo: 'NOTA', titulo: 'Viejos conocidos', tex: R`$A_{0^+} = \operatorname{sop}(A)$, $A_1 = \operatorname{nuc}(A)$ y $A_0 = X$. Si $A$ es clásico, $A_\alpha = A$ para todo $\alpha \in (0, 1]$.` },
-    { tipo: 'PROP', titulo: 'Los cortes se anidan', tex: R`Si $\alpha \le \beta$, entonces $A_\beta \subseteq A_\alpha$ y $A_{\beta^+} \subseteq A_{\alpha^+}$.`, pasos: [
-      { texto: R`Sea $x \in A_\beta$. Entonces $\mu_A(x) \ge \beta$.`, porque: 'Definición de α-corte.' },
-      { texto: R`Como $\beta \ge \alpha$, resulta $\mu_A(x) \ge \alpha$, luego $x \in A_\alpha$.`, porque: 'Transitividad de $\\ge$. Para los cortes fuertes, igual con $>$.' },
+  entender: [
+    { tipo: 'idea', etiqueta: 'La idea', texto: 'Pon un listón. Fija, por ejemplo, 0,5, y pregunta: ¿quién pertenece al conjunto <em>al menos</em> con ese grado? La respuesta es un grupo normal y corriente: se está dentro o fuera. Has convertido lo difuso en nítido.' },
+    { tipo: 'ejemplo', texto: 'La «casa cómoda» otra vez (dormitorios 1 a 6, con grados 0,2; 0,5; 0,8; 1; 0,7; 0,3). Sube el listón:', tabla: [['Listón', '0,2', '0,5', '0,8', '1'], ['Quién llega', '1, 2, 3, 4, 5, 6', '2, 3, 4, 5', '3, 4', '4']], cierre: 'Cuanto más alto el listón, menos gente. Y cada grupo está dentro del anterior.' },
+    { tipo: 'simbolos', intro: 'A ese grupo se le llama α-corte. Pieza a pieza:', piezas: [
+      { tex: R`\alpha`, dice: '«Alfa»: el listón, un número entre 0 y 1.' },
+      { tex: R`A_\alpha`, dice: 'El corte de $A$ al nivel $\\alpha$: el grupo de los que llegan.' },
+      { tex: R`\mu_A(x) \ge \alpha`, dice: 'Su grado llega al listón: mayor o igual.' },
+    ], todo: R`A_\alpha = \{x \in X : \mu_A(x) \ge \alpha\}`, lee: '«El corte de nivel $\\alpha$ es el grupo de los $x$ cuyo grado llega a $\\alpha$». En la escena es la isla que asoma sobre el plano, vista desde arriba.' },
+    { tipo: 'formal', titulo: 'α-corte y corte fuerte', tex: R`Para $\alpha \in [0, 1]$: $\ A_\alpha = \{x \in X : \mu_A(x) \ge \alpha\}$ y, con «mayor estricto», el corte fuerte $A_{\alpha^+} = \{x \in X : \mu_A(x) > \alpha\}$.`, lee: 'Ambos son conjuntos [[clásicos|clasico]]. En la casa, $A_{0{,}8} = \\{3, 4\\}$, pero el fuerte es $A_{0{,}8^+} = \\{4\\}$: quien llega justo al listón ya no pasa.' },
+    { tipo: 'nota', titulo: 'Viejos conocidos', texto: R`Ya habías visto dos cortes sin saberlo: el soporte es el corte fuerte de nivel 0, $A_{0^+}$, y el núcleo es el corte de nivel 1, $A_1$.` },
+    { tipo: 'demo', titulo: 'Los cortes se anidan', plan: 'Lo viste en la tabla. Ahora, que nadie pueda negarlo: subir el listón nunca añade a nadie.', tex: R`Si $\alpha \le \beta$, entonces $A_\beta \subseteq A_\alpha$. ($\beta$ es «beta», otro listón, más alto.)`, pasos: [
+      { texto: R`Toma cualquier $x$ de $A_\beta$. Entonces $\mu_A(x) \ge \beta$.`, porque: 'Es lo que significa estar en el corte de nivel $\\beta$.' },
+      { texto: R`Como $\beta \ge \alpha$, también $\mu_A(x) \ge \alpha$, así que $x$ está en $A_\alpha$.`, porque: 'Si superas el listón alto, superas el bajo.' },
     ] },
-    { tipo: 'PROP', titulo: 'Los cortes conmutan con mínimo y máximo', tex: R`Con $\mu_{A \cap B} = \min(\mu_A, \mu_B)$ y $\mu_{A \cup B} = \max(\mu_A, \mu_B)$: $(A \cap B)_\alpha = A_\alpha \cap B_\alpha$ y $(A \cup B)_\alpha = A_\alpha \cup B_\alpha$.`, pasos: [
-      { texto: R`$x \in (A \cap B)_\alpha \iff \min(\mu_A(x), \mu_B(x)) \ge \alpha$.`, porque: 'Definiciones de corte e intersección difusa.' },
-      { texto: R`$\min(a, b) \ge \alpha \iff a \ge \alpha \text{ y } b \ge \alpha$.`, porque: 'El mínimo de dos números es $\\ge \\alpha$ exactamente cuando ambos lo son.' },
-      { texto: R`Eso es $x \in A_\alpha$ y $x \in B_\alpha$. Para la unión: $\max(a, b) \ge \alpha \iff a \ge \alpha \text{ o } b \ge \alpha$.`, porque: 'El máximo es uno de los dos números, y ambos son $\\le$ que él.' },
+    { tipo: 'idea', etiqueta: 'El mínimo y el corte', texto: 'Ahora, algo que usarás mucho. Se llama <em>intersección</em> de dos conjuntos difusos al que da a cada cosa el menor de sus dos grados. Cortar esa intersección es lo mismo que cortar cada conjunto y quedarse con lo común.' },
+    { tipo: 'demo', titulo: 'Cortar conserva la intersección y la unión', plan: 'La clave es una equivalencia muy simple sobre el mínimo. Lo mismo vale con el máximo, que da la <em>unión</em>.', tex: R`$(A \cap B)_\alpha = A_\alpha \cap B_\alpha$ y $(A \cup B)_\alpha = A_\alpha \cup B_\alpha$.`, pasos: [
+      { texto: R`$x$ está en $(A \cap B)_\alpha$ si y solo si $\min(\mu_A(x), \mu_B(x)) \ge \alpha$.`, porque: 'Definiciones de corte y de intersección.' },
+      { texto: R`El menor de dos números llega a $\alpha$ si y solo si llegan los dos.`, porque: 'Si el menor llega, el mayor también; y si llegan los dos, llega el menor.' },
+      { texto: R`Eso es estar en $A_\alpha$ y en $B_\alpha$. Con el máximo: el mayor de dos llega a $\alpha$ si y solo si llega alguno de ellos.`, porque: 'El máximo es uno de los dos números.' },
     ] },
-    { tipo: 'NOTA', titulo: 'Con infinitos conjuntos, cuidado', tex: R`Para una familia infinita $(A_i)$, con la unión definida por el supremo, solo se garantiza $\bigcup_i (A_i)_\alpha \subseteq (\bigcup_i A_i)_\alpha$, y la inclusión puede ser estricta: el supremo puede valer $\alpha$ sin que ningún $\mu_{A_i}(x)$ llegue a $\alpha$. Los cortes fuertes, en cambio, sí conmutan con esa unión.` },
+    { tipo: 'nota', titulo: 'Para curiosos: con infinitos conjuntos', texto: R`Si unes infinitos conjuntos, usando el [[supremo]] en vez del máximo, solo se garantiza $\bigcup_i (A_i)_\alpha \subseteq (\bigcup_i A_i)_\alpha$. Puede que los grados de $x$ se acerquen a $\alpha$ sin que ninguno llegue. Los cortes fuertes, en cambio, sí conservan esa unión.` },
   ],
   tecnicas: [
     { titulo: 'Traduce lo difuso a lo clásico', texto: 'Los cortes convierten una propiedad difusa en una familia de propiedades clásicas. Muchas demostraciones se reducen a un argumento clásico en cada nivel.' },
@@ -108,5 +116,5 @@ export default {
     { id: 'propiedad-monotonia', tipo: 'elegir', enunciado: R`Como $0{,}3 \le 0{,}7$, ¿qué relación hay siempre entre $A_{0{,}3}$ y $A_{0{,}7}$?`, opciones: [R`$A_{0{,}3} \subseteq A_{0{,}7}$`, R`$A_{0{,}7} \subseteq A_{0{,}3}$`, 'Son disjuntos', 'Depende de la forma de $A$'], correcta: 1,
       explicacion: 'Pedir grado al menos 0,7 es más exigente: quien lo cumple, también cumple grado al menos 0,3.' },
   ],
-  referencias: ['G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, cap. 1–2.', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga: cortes, propiedades «cutworthy».'],
+  referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, cap. 1–2.', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga: cortes, propiedades «cutworthy».'],
 };

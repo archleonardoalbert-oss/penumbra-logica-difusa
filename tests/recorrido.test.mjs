@@ -38,3 +38,10 @@ test('el glosario explica en palabras y con un ejemplo', () => {
 test('todo concepto listo dice por qué viene el siguiente', async () => {
   for (const f of todosLosConceptos().filter((c) => c.estado === 'listo')) assert.ok((await f.carga()).default.puente, f.id);
 });
+
+test('todos los términos marcados en el contenido existen en el glosario', async () => {
+  for (const f of todosLosConceptos().filter((c) => c.estado === 'listo')) {
+    const c = (await f.carga()).default;
+    enlazarTerminos(JSON.stringify(c), GLOSARIO);
+  }
+});

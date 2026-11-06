@@ -60,20 +60,29 @@ export default {
     <li>Desde el tercer paso, arrastra sobre la gráfica la línea blanca: quita granos y lee la verdad que queda.</li>
     <li>Cambia ε. Con ε muy pequeño hacen falta muchísimas reglas para notar nada.</li>
     <li>Compara las curvas dorada y rosa: la misma regla, dos formas de encadenarla.</li></ul>`,
-  rigor: [
-    { tipo: 'DEF', titulo: 'Modus ponens con grados', tex: R`Dadas una norma T $T$ y las verdades $v(A)$ y $v(A \to B)$, la conclusión admite la cota $v(B) \ge T\big(v(A),\, v(A \to B)\big)$.` },
-    { tipo: 'PROP', titulo: 'El desgaste de Łukasiewicz', tex: R`Si $v(M_{n})$ es la verdad de «$n$ granos son un montón», $v(M_{100}) = 1$, cada regla $M_n \to M_{n-1}$ vale $1 - \varepsilon$ y se usa $T(a, b) = \max(0,\ a + b - 1)$, entonces tras $k$ aplicaciones $v(M_{100 - k}) \ge \max(0,\ 1 - k\varepsilon)$.`,
-      pasos: [
-        { texto: R`Para $k = 0$: $v(M_{100}) = 1 = \max(0,\ 1 - 0 \cdot \varepsilon)$.`, porque: 'Caso base de la inducción: es la hipótesis.' },
-        { texto: R`Supongamos $v(M_{100-k}) \ge \max(0,\ 1 - k\varepsilon)$. El modus ponens da $v(M_{100-k-1}) \ge \max\big(0,\ v(M_{100-k}) + (1 - \varepsilon) - 1\big) = \max\big(0,\ v(M_{100-k}) - \varepsilon\big)$.`, porque: 'Definición de la cota, con la fórmula de $T$ y simplificando.' },
-        { texto: R`Si $1 - k\varepsilon \ge 0$: $v(M_{100-k}) - \varepsilon \ge 1 - (k + 1)\varepsilon$.`, porque: 'Hipótesis de inducción, y restar $\\varepsilon$ conserva la desigualdad.' },
-        { texto: R`Si $1 - k\varepsilon < 0$, también $1 - (k + 1)\varepsilon < 0$, y la cota $\max(0,\ \cdot) = 0$ se cumple porque toda verdad es $\ge 0$.`, porque: 'Los grados viven en $[0, 1]$.' },
-        { texto: R`En ambos casos $v(M_{100-(k+1)}) \ge \max\big(0,\ 1 - (k + 1)\varepsilon\big)$.`, porque: 'Paso inductivo terminado: basta aplicar el máximo con 0.' },
-      ] },
-    { tipo: 'NOTA', tex: R`Con la norma producto, $T(a, b) = ab$, la cota es $(1 - \varepsilon)^k$: nunca llega a 0, pero se hace tan pequeña como se quiera. Goguen propuso en 1969 un análisis de este tipo. Es uno de los análisis posibles de la paradoja, no el único: la filosofía de la vaguedad sigue discutiéndolo.` },
+  entender: [
+    { tipo: 'idea', etiqueta: 'La trampa', texto: 'El argumento del montón es una cadena. Cada eslabón parece impecable, y aun así el final es absurdo. Algo se escapa en el camino.' },
+    { tipo: 'ejemplo', texto: 'En la lógica de toda la vida, una regla verdadera conserva la verdad sin perder nada:', tabla: [['Granos', '100', '99', '98', '…', '1'], ['Verdad', '1', '1', '1', '…', '1']], cierre: 'Por eso la conclusión absurda sale con verdad 1: nada la frena.' },
+    { tipo: 'idea', etiqueta: 'La salida', texto: 'Pero la regla «quitar un grano no cambia nada» no es del todo cierta: es <em>casi</em> cierta. Digamos que su verdad es 0,99. Si solo es casi cierta, cada vez que la usas pierdes un poco.' },
+    { tipo: 'ejemplo', texto: 'Con una pérdida de 0,01 en cada paso:', tabla: [['Granos quitados', '0', '1', '2', '30', '100'], ['Verdad que queda', '1', '0,99', '0,98', '0,70', '0']], cierre: 'En un solo paso no se nota nada. En cien, no queda nada. Ahí está la paradoja, deshecha.' },
+    { tipo: 'simbolos', intro: 'Esa tabla cabe en una fórmula.', piezas: [
+      { tex: R`v`, dice: 'De «verdad»: un número entre 0 y 1.' },
+      { tex: R`\varepsilon`, dice: '«Épsilon», la letra que se usa para una cantidad pequeña. Aquí, lo que falla cada regla.' },
+      { tex: R`k`, dice: 'Cuántas veces has usado la regla.' },
+      { tex: R`1 - k\varepsilon`, dice: 'Partes de 1 y pierdes $\\varepsilon$ cada vez, $k$ veces.' },
+      { tex: R`\max(0,\ \cdot\ )`, dice: 'El mayor de los dos números: si la cuenta se hace negativa, se queda en 0. La verdad no baja de ahí.' },
+    ], todo: R`v_k = \max(0,\ 1 - k\varepsilon)`, lee: '«La verdad tras $k$ pasos es lo que queda de 1 al restar $k$ veces $\\varepsilon$, sin bajar de 0».' },
+    { tipo: 'formal', titulo: 'Cómo se arrastra la verdad', tex: R`Si $A$ tiene verdad $a$ y la regla «si $A$, entonces $B$» tiene verdad $r$, entonces $B$ tiene verdad al menos $\max(0,\ a + r - 1)$.`, lee: 'Se lee: lo que le falta a la regla para ser 1, es lo que pierdes. Si $r = 1$, conservas todo, como en la lógica clásica.' },
+    { tipo: 'demo', titulo: 'Tras k pasos, la verdad es al menos 1 − kε', plan: 'Se demuestra por [[inducción]]: es verdad al principio, y si es verdad en un paso, es verdad en el siguiente. Como una fila de fichas de dominó.', tex: R`Sean $v_0 = 1$, cada regla con verdad $1 - \varepsilon$, y $v_k$ la verdad que garantiza el paso $k$. Queremos ver que $v_k \ge \max(0,\ 1 - k\varepsilon)$.`, pasos: [
+      { texto: R`Para $k = 0$: $v_0 = 1 = \max(0,\ 1 - 0 \cdot \varepsilon)$.`, porque: 'La primera ficha: es justo de donde partimos.' },
+      { texto: R`Supón que vale en el paso $k$. La regla da $v_{k+1} \ge \max\big(0,\ v_k + (1 - \varepsilon) - 1\big) = \max(0,\ v_k - \varepsilon)$.`, porque: 'Es la fórmula del arrastre con $a = v_k$ y $r = 1 - \varepsilon$; lo demás es simplificar.' },
+      { texto: R`Si $1 - k\varepsilon \ge 0$: como $v_k \ge 1 - k\varepsilon$, restando $\varepsilon$ queda $v_k - \varepsilon \ge 1 - (k + 1)\varepsilon$.`, porque: 'Restar lo mismo a los dos lados no cambia la desigualdad.' },
+      { texto: R`Si $1 - k\varepsilon < 0$: también $1 - (k + 1)\varepsilon < 0$, y lo que hay que probar es solo $v_{k+1} \ge 0$, que siempre se cumple.`, porque: 'Los grados nunca son negativos.' },
+    ] },
+    { tipo: 'nota', titulo: 'Otra forma de perder', texto: R`Si en vez de restar se multiplica, la verdad tras $k$ pasos es al menos $(1 - \varepsilon)^k$: nunca llega a 0, pero se acerca todo lo que quieras. Es la curva rosa. A la resta se la llama de Łukasiewicz, un lógico polaco. Verás en la región 3 que hay muchas formas legítimas de combinar grados. Goguen propuso en 1969 este tipo de análisis, aunque la filosofía aún lo discute: no es la única salida a la paradoja.` },
   ],
   tecnicas: [
-    { titulo: 'Inducción con pérdida', texto: 'Cuando una propiedad se transmite con un pequeño coste, plantea la inducción sobre una cota que incluya el coste acumulado: aquí, $1 - k\\varepsilon$.' },
+    { titulo: 'Una cadena con pérdida', texto: 'Cuando una propiedad se transmite con un pequeño coste, plantea la [[inducción]] sobre una cota que incluya el coste acumulado: aquí, $1 - k\\varepsilon$.' },
     { titulo: 'Separa los casos del máximo', texto: 'Frente a un $\\max(0, \\cdot)$, demuestra por separado la parte positiva y la parte en la que manda el 0.' },
   ],
   retos: [
@@ -83,5 +92,5 @@ export default {
       opciones: ['El primer paso: 100 granos no son un montón', 'Cada regla es casi cierta, y lo casi cierto se desgasta al encadenarlo', 'Quitar un grano cambia mucho las cosas', 'La lógica no se puede aplicar a los montones'],
       correcta: 1, explicacion: 'Ninguna regla falla de golpe; cada una pierde un poco, y es la acumulación lo que acaba en una conclusión falsa.' },
   ],
-  referencias: ['J. A. Goguen, «The logic of inexact concepts», <em>Synthese</em> 19 (1969), 325–373.', 'P. Hájek, <em>Metamathematics of Fuzzy Logic</em>, Kluwer, 1998.', 'Stanford Encyclopedia of Philosophy, «Fuzzy Logic».'],
+  referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'J. A. Goguen, «The logic of inexact concepts», <em>Synthese</em> 19 (1969), 325–373.', 'P. Hájek, <em>Metamathematics of Fuzzy Logic</em>, Kluwer, 1998.', 'Stanford Encyclopedia of Philosophy, «Fuzzy Logic».'],
 };

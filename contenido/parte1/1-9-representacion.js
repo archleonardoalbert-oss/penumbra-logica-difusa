@@ -66,24 +66,32 @@ export default {
     },
   },
   manipulacion: '<ul><li>Mueve «niveles» de 1 a 40. Con un solo nivel, se ve el conjunto clásico; con muchos, se recupera la curva.</li><li>Arrastra la línea vertical y compara el error con su cota.</li></ul>',
-  rigor: [
-    { tipo: 'DEF', titulo: 'Función indicadora', tex: R`Para un conjunto clásico $E$, $\mathbf{1}_E(x) = 1$ si $x \in E$ y $0$ si no. Con ella, $\alpha \cdot \mathbf{1}_{A_\alpha}$ es un conjunto difuso: un bloque de altura $\alpha$ sobre el corte.` },
-    { tipo: 'TEO', titulo: 'Teorema de representación', tex: R`Para todo conjunto difuso $A$ y todo $x \in X$: $\ \mu_A(x) = \sup_{\alpha \in (0, 1]} \alpha \cdot \mathbf{1}_{A_\alpha}(x)$.`, valiente: true,
-      cartelas: ['En un mundo de conjuntos sin borde…', 'alguien afirmó que bastan <em>bordes nítidos</em> para reconstruirlo todo…', 'nadie le creyó. Hasta que trajo un supremo.'],
-      pasos: [
-        { texto: R`Fijemos $x \in X$ y llamemos $m = \mu_A(x)$. Hay que demostrar que el supremo vale $m$. Separamos los niveles $\alpha$ en dos grupos.`, porque: 'Una igualdad de funciones se demuestra punto a punto.' },
-        { texto: R`Si $\alpha > m$: entonces $\mu_A(x) < \alpha$, luego $x \notin A_\alpha$ y $\alpha \cdot \mathbf{1}_{A_\alpha}(x) = 0$.`, porque: 'Definición de corte: $x \in A_\alpha$ exige $\mu_A(x) \ge \alpha$.' },
-        { texto: R`Si $0 < \alpha \le m$: entonces $\mu_A(x) \ge \alpha$, luego $x \in A_\alpha$ y $\alpha \cdot \mathbf{1}_{A_\alpha}(x) = \alpha$.`, porque: 'Definición de corte, de nuevo.' },
-        { texto: R`Si $m = 0$, no hay niveles del segundo grupo: todos los valores son $0$ y el supremo es $0 = m$.`, porque: 'Solo actúa el primer caso, pues $\\alpha > 0 = m$ para todo $\\alpha \\in (0, 1]$.' },
-        { texto: R`Si $m > 0$, los valores son $0$ (primer grupo) y todos los $\alpha \in (0, m]$. Su supremo es $m$, y se alcanza en $\alpha = m$.`, porque: '$m \\in (0, 1]$, así que $\\alpha = m$ es un nivel permitido, y ningún valor supera a $m$.' },
-        { texto: R`En ambos casos, $\sup_{\alpha \in (0,1]} \alpha \cdot \mathbf{1}_{A_\alpha}(x) = m = \mu_A(x)$.`, porque: 'Como $x$ era arbitrario, la igualdad vale en todo $X$.' },
-      ] },
-    { tipo: 'PROP', titulo: 'Con finitos niveles', tex: R`Con los niveles $\alpha = \frac{k}{n}$, $k = 1, \dots, n$, la silueta $r_n(x) = \max_k \frac{k}{n} \mathbf{1}_{A_{k \div n}}(x)$ cumple $0 \le \mu_A(x) - r_n(x) < \frac{1}{n}$.`, pasos: [
-      { texto: R`$x \in A_{k \div n} \iff \frac{k}{n} \le \mu_A(x) \iff k \le n\, \mu_A(x)$.`, porque: 'Definición de corte, multiplicando por $n > 0$.' },
-      { texto: R`Por tanto, el mayor $k$ válido es $\lfloor n\, \mu_A(x) \rfloor$, y $r_n(x) = \frac{\lfloor n\, \mu_A(x) \rfloor}{n}$.`, porque: 'Definición de parte entera; si ningún $k \\ge 1$ vale, la parte entera es 0 y $r_n(x) = 0$.' },
-      { texto: R`Como $t - 1 < \lfloor t \rfloor \le t$ para todo real $t$, con $t = n\, \mu_A(x)$ y dividiendo por $n$: $\mu_A(x) - \frac{1}{n} < r_n(x) \le \mu_A(x)$.`, porque: 'Propiedad de la parte entera. Reordenar da la cota.' },
+  entender: [
+    { tipo: 'idea', etiqueta: 'La sorpresa', texto: 'Los cortes parecen perder información: de cada uno solo sabes quién está dentro, sin grados. Pero si tienes <em>todos</em> los cortes, puedes reconstruir cada grado. Sin perder nada.' },
+    { tipo: 'ejemplo', texto: '¿Qué grado tiene la casa de 3 dormitorios? Mira en qué cortes aparece:', tabla: [['Listón', '0,2', '0,5', '0,8', '1'], ['¿Está el 3?', 'sí', 'sí', 'sí', 'no']], cierre: 'El listón más alto que supera es 0,8. Y ese es exactamente su grado. Cada elemento lleva su grado escrito en el último corte que pasa.' },
+    { tipo: 'idea', etiqueta: 'Bloques', texto: 'Eso es lo que hacen los bloques de la escena: cada corte se convierte en un bloque de altura α. En cada punto, el bloque más alto que lo cubre llega hasta su grado.' },
+    { tipo: 'simbolos', intro: 'Dicho en fórmula. Necesitamos una pieza nueva.', piezas: [
+      { tex: R`\mathbf{1}_E(x)`, dice: 'Un interruptor: vale 1 si $x$ está en $E$, y 0 si no. Se llama función [[indicadora]].' },
+      { tex: R`\alpha \cdot \mathbf{1}_{A_\alpha}(x)`, dice: 'El bloque: vale $\\alpha$ si $x$ está en el corte, y 0 si no.' },
+      { tex: R`\sup_\alpha`, dice: 'De todos los niveles, el valor más alto. Se llama [[supremo]]; por ahora, piensa en él como «el mayor».' },
+    ], todo: R`\mu_A(x) = \sup_{\alpha \in (0, 1]} \alpha \cdot \mathbf{1}_{A_\alpha}(x)`, lee: '«El grado de $x$ es la altura del bloque más alto que lo cubre». Es lo que has hecho a mano con la casa de 3 dormitorios.' },
+    { tipo: 'formal', titulo: 'Teorema de representación', tex: R`Para todo conjunto difuso $A$ y todo $x \in X$: $\ \mu_A(x) = \sup_{\alpha \in (0, 1]} \alpha \cdot \mathbf{1}_{A_\alpha}(x)$.`, lee: 'También se le llama teorema de descomposición: un conjunto difuso se descompone en clásicos.' },
+    { tipo: 'demo', titulo: 'Teorema de representación', valiente: true, cartelas: ['En un mundo de conjuntos sin borde…', 'alguien afirmó que bastan <em>bordes nítidos</em> para reconstruirlo todo…', 'nadie le creyó. Hasta que trajo un supremo.'], plan: 'La idea: fija un punto, llama $m$ a su grado, y reparte los listones en dos grupos: los que supera y los que no.', pasos: [
+      { texto: R`Fijemos $x \in X$ y llamemos $m = \mu_A(x)$. Hay que ver que el [[supremo]] vale $m$.`, porque: 'Dos funciones son iguales si coinciden en cada punto.' },
+      { texto: R`Si $\alpha > m$: $x$ no llega al listón, luego $x \notin A_\alpha$ y el bloque vale $0$.`, porque: 'Definición de corte.' },
+      { texto: R`Si $0 < \alpha \le m$: $x$ sí llega, luego $x \in A_\alpha$ y el bloque vale $\alpha$.`, porque: 'Definición de corte, otra vez.' },
+      { texto: R`Si $m = 0$: todos los listones están en el primer grupo. Todos los bloques valen 0, y el supremo es $0 = m$.`, porque: 'Como $\\alpha > 0$, siempre $\\alpha > m$.' },
+      { texto: R`Si $m > 0$: los valores son 0 y todos los $\alpha \in (0, m]$. El mayor es $m$, y se alcanza con $\alpha = m$.`, porque: '$m$ está entre los listones permitidos, y ningún valor lo supera.' },
+      { texto: R`En ambos casos el supremo es $m = \mu_A(x)$.`, porque: 'Como $x$ era cualquiera, vale para todo $X$.' },
     ] },
-    { tipo: 'NOTA', titulo: 'Por qué importa', tex: R`Se puede trabajar con un conjunto difuso nivel a nivel, con herramientas clásicas, y recomponerlo al final. Lo usarán la aritmética de números difusos y el principio de extensión, en la región 4. En los libros se conoce también como teorema de descomposición.` },
+    { tipo: 'idea', etiqueta: 'Con finitos niveles', texto: 'En la práctica no se usan infinitos listones. ¿Cuánto se pierde con unos pocos? Muy poco, y se puede decir con exactitud: con $n$ niveles repartidos por igual, el error nunca llega a $\\frac{1}{n}$.' },
+    { tipo: 'ejemplo', texto: 'Con 4 niveles (0,25; 0,5; 0,75; 1):', tabla: [['Grado real', '0,8', '0,3', '0,5'], ['Bloque más alto', '0,75', '0,25', '0,5'], ['Error', '0,05', '0,05', '0']], cierre: 'Siempre menos de $\\frac{1}{4}$.' },
+    { tipo: 'demo', titulo: 'El error es menor que 1 entre n', plan: 'Se usa la [[parte entera]]: $\\lfloor t \\rfloor$ es $t$ sin decimales, por ejemplo $\\lfloor 3{,}2 \\rfloor = 3$. Siempre cumple $t - 1 < \\lfloor t \\rfloor \\le t$.', tex: R`Con niveles $\frac{k}{n}$, la altura es $r_n(x) = \dfrac{\lfloor n\, \mu_A(x) \rfloor}{n}$, y $0 \le \mu_A(x) - r_n(x) < \frac{1}{n}$.`, pasos: [
+      { texto: R`$x$ supera el nivel $\frac{k}{n}$ si y solo si $k \le n\, \mu_A(x)$.`, porque: 'Definición de corte, multiplicando por $n$, que es positivo.' },
+      { texto: R`El mayor $k$ entero que cumple eso es $\lfloor n\, \mu_A(x) \rfloor$, así que $r_n(x) = \frac{\lfloor n\, \mu_A(x) \rfloor}{n}$.`, porque: 'Es lo que hace la parte entera. Si da 0, ningún bloque cubre a $x$ y la altura es 0.' },
+      { texto: R`Con $t = n\, \mu_A(x)$ en $t - 1 < \lfloor t \rfloor \le t$, y dividiendo por $n$: $\mu_A(x) - \frac{1}{n} < r_n(x) \le \mu_A(x)$.`, porque: 'Dividir por un positivo conserva las desigualdades. Reordenando sale la cota.' },
+    ] },
+    { tipo: 'nota', titulo: 'Por qué importa', texto: 'Se puede trabajar nivel a nivel, con herramientas clásicas, y recomponer el resultado al final. Así funcionarán la aritmética de números difusos y el principio de extensión, en la región 4.' },
   ],
   tecnicas: [
     { titulo: 'Parte el dominio del supremo', texto: 'Para calcular un supremo con una condición, separa los índices en los que la condición se cumple de los que no, y resuelve cada grupo.' },
@@ -101,5 +109,5 @@ export default {
         { texto: R`Si $m > 0$, el conjunto de valores no nulos es $[0, m)$, cuyo supremo es $m$ aunque no se alcance.`, porque: 'El supremo de un intervalo $[0, m)$ es su extremo $m$.' },
       ] },
   ],
-  referencias: ['G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, cap. 2 (teoremas de descomposición).', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga: teorema de representación por cortes.'],
+  referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, cap. 2 (teoremas de descomposición).', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga: teorema de representación por cortes.'],
 };

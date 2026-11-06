@@ -79,24 +79,34 @@ export default {
     },
   },
   manipulacion: '<ul><li>En el último paso, arrastra $x_1$ y $x_2$ sobre el perfil, separando antes las cimas.</li><li>Cambia «nivel α» y encuentra la altura a partir de la que el corte se parte en dos.</li><li>Gira la vista 3D para ver el valle de cerca.</li></ul>',
-  rigor: [
-    { tipo: 'DEF', titulo: 'Conjunto convexo', tex: R`Si $X$ es un espacio vectorial real, $A$ es <em>convexo</em> si para todos $x_1, x_2 \in X$ y $\lambda \in [0, 1]$: $\ \mu_A(\lambda x_1 + (1 - \lambda) x_2) \ge \min(\mu_A(x_1), \mu_A(x_2))$.` },
-    { tipo: 'NOTA', titulo: 'No es una función cóncava', tex: R`El nombre confunde: la condición dice que la función es <em>cuasi-cóncava</em>, no cóncava ni convexa. Una gaussiana es un conjunto convexo, aunque como función tiene tramos convexos.` },
-    { tipo: 'TEO', titulo: 'Convexidad por cortes', tex: R`$A$ es convexo si y solo si cada corte $A_\alpha$, con $\alpha \in (0, 1]$, es un conjunto convexo clásico.`, pasos: [
-      { texto: R`$(\Rightarrow)$ Sean $\alpha \in (0, 1]$, $x_1, x_2 \in A_\alpha$ y $\lambda \in [0, 1]$. Entonces $\mu_A(x_1) \ge \alpha$ y $\mu_A(x_2) \ge \alpha$, luego $\min(\mu_A(x_1), \mu_A(x_2)) \ge \alpha$.`, porque: 'Definición de corte, y desdoblar el mínimo.' },
-      { texto: R`Por ser $A$ convexo, $\mu_A(\lambda x_1 + (1 - \lambda) x_2) \ge \min(\mu_A(x_1), \mu_A(x_2)) \ge \alpha$, es decir, $\lambda x_1 + (1 - \lambda) x_2 \in A_\alpha$.`, porque: 'Definición de convexidad difusa y transitividad.' },
-      { texto: R`$(\Leftarrow)$ Sean $x_1, x_2 \in X$ y $\lambda \in [0, 1]$, y sea $\alpha = \min(\mu_A(x_1), \mu_A(x_2))$. Si $\alpha = 0$, la desigualdad se cumple: todo grado es $\ge 0$.`, porque: 'Caso trivial; hay que tratarlo aparte porque los cortes se toman con $\\alpha > 0$.' },
-      { texto: R`Si $\alpha > 0$, entonces $x_1, x_2 \in A_\alpha$. Como ese corte es convexo, $\lambda x_1 + (1 - \lambda) x_2 \in A_\alpha$, es decir, $\mu_A(\lambda x_1 + (1 - \lambda) x_2) \ge \alpha$.`, porque: 'Elegir $\\alpha$ como el propio mínimo es la clave: es el corte más alto que contiene a los dos puntos.' },
+  entender: [
+    { tipo: 'idea', etiqueta: 'La idea', texto: 'Queremos decir «tiene una sola cima» sin hablar de dibujos. La traducción: si dos cosas pertenecen al conjunto, cualquier cosa <em>entre</em> ellas pertenece al menos tanto como la peor de las dos.' },
+    { tipo: 'ejemplo', texto: 'Con una sola cima, ningún punto queda por debajo de lo que tiene a ambos lados:', tabla: [['x', '1', '2', '3', '4', '5'], ['Grado', '0,2', '0,7', '1', '0,6', '0,1']], cierre: 'Toma 2 y 4: grados 0,7 y 0,6. El peor es 0,6, y el 3, que está en medio, tiene 1. Se cumple.' },
+    { tipo: 'ejemplo', texto: 'Con dos cimas, falla:', tabla: [['x', '1', '2', '3', '4', '5'], ['Grado', '0,2', '0,9', '0,3', '0,9', '0,2']], cierre: 'Toma 2 y 4: los dos con 0,9. El 3, en medio, solo tiene 0,3. Se ha caído al valle.' },
+    { tipo: 'simbolos', intro: 'Para escribirlo hace falta decir «un punto entre dos».', piezas: [
+      { tex: R`x_1,\ x_2`, dice: 'Dos puntos cualesquiera.' },
+      { tex: R`\lambda`, dice: '«Lambda», un número entre 0 y 1. Dice dónde estás entre los dos.' },
+      { tex: R`\lambda x_1 + (1 - \lambda) x_2`, dice: 'Un punto entre $x_1$ y $x_2$. Con $\\lambda = 1$ estás en $x_1$; con $\\lambda = 0$, en $x_2$; con $\\lambda = 0{,}5$, justo en medio.' },
+      { tex: R`\min(\mu_A(x_1),\ \mu_A(x_2))`, dice: 'El peor grado de los dos.' },
+    ], todo: R`\mu_A(\lambda x_1 + (1 - \lambda) x_2) \ge \min(\mu_A(x_1),\ \mu_A(x_2))`, lee: '«El grado de cualquier punto intermedio llega, al menos, al peor de los dos extremos». Es la frase de arriba, sin cambiar nada.' },
+    { tipo: 'formal', titulo: 'Conjunto difuso convexo', tex: R`En un [[espacio vectorial]] $X$, como la recta o el plano, $A$ es convexo si para todos $x_1, x_2 \in X$ y todo $\lambda \in [0, 1]$: $\ \mu_A(\lambda x_1 + (1 - \lambda) x_2) \ge \min(\mu_A(x_1),\ \mu_A(x_2))$.`, lee: 'Se mira la función de pertenencia, no el soporte: la convexidad es una propiedad de toda la forma.' },
+    { tipo: 'nota', titulo: 'Un nombre que confunde', texto: R`Que el conjunto sea convexo no significa que la función lo sea. Una campana es un conjunto convexo, aunque su curva tiene tramos curvados hacia arriba y hacia abajo. En los libros de optimización, esta propiedad de la función se llama [[cuasi-cóncava]].` },
+    { tipo: 'idea', etiqueta: 'Sin islas', texto: 'Recuerda los cortes. Con dos cimas, el listón adecuado deja dos islas; con una, siempre una. Eso es exactamente la convexidad, y se puede demostrar.' },
+    { tipo: 'demo', titulo: 'Convexo si y solo si todos sus cortes lo son', plan: 'Hay que probar los dos sentidos. El truco de la vuelta es elegir bien el listón: exactamente el peor de los dos grados.', tex: R`$A$ es convexo [[si y solo si|implicacion]] cada corte $A_\alpha$, con $\alpha \in (0, 1]$, es un conjunto convexo clásico: contiene el segmento entre dos puntos suyos cualesquiera.`, pasos: [
+      { texto: R`Ida. Sean $\alpha \in (0, 1]$, $x_1, x_2 \in A_\alpha$ y $\lambda \in [0, 1]$. Sus grados son $\ge \alpha$, luego $\min(\mu_A(x_1), \mu_A(x_2)) \ge \alpha$.`, porque: 'Definición de corte. El menor de dos números que llegan a $\\alpha$, también llega.' },
+      { texto: R`Por ser $A$ convexo, $\mu_A(\lambda x_1 + (1 - \lambda) x_2) \ge \min(\mu_A(x_1), \mu_A(x_2)) \ge \alpha$. El punto intermedio está en $A_\alpha$.`, porque: 'Definición de convexidad, y encadenar desigualdades.' },
+      { texto: R`Vuelta. Sean $x_1, x_2 \in X$, $\lambda \in [0, 1]$ y $\alpha = \min(\mu_A(x_1), \mu_A(x_2))$. Si $\alpha = 0$, no hay nada que probar.`, porque: 'Todo grado es $\\ge 0$. Se separa este caso porque los cortes se toman con $\\alpha > 0$.' },
+      { texto: R`Si $\alpha > 0$, los dos puntos están en $A_\alpha$. Ese corte es convexo, así que el punto intermedio también está: su grado es $\ge \alpha$.`, porque: 'Es la clave: $\\alpha$ es el corte más alto que contiene a los dos.' },
     ] },
-    { tipo: 'PROP', titulo: 'La intersección conserva, la unión no', tex: R`Si $A$ y $B$ son convexos, $A \cap B$ también, con $\mu_{A \cap B} = \min(\mu_A, \mu_B)$. Para la unión es falso: basta con dos cimas separadas.`, pasos: [
-      { texto: R`$(A \cap B)_\alpha = A_\alpha \cap B_\alpha$.`, porque: 'Propiedad de los cortes, demostrada en «α-cortes».' },
-      { texto: R`La intersección de dos conjuntos convexos clásicos es convexa, así que cada corte de $A \cap B$ lo es.`, porque: 'Resultado clásico: si dos puntos están en ambos, el segmento también.' },
-      { texto: R`Por el teorema anterior, $A \cap B$ es convexo.`, porque: 'Se aplica el teorema de convexidad por cortes en sentido $(\\Leftarrow)$.' },
+    { tipo: 'demo', titulo: 'La intersección de convexos es convexa', plan: 'Con el teorema anterior, sale casi gratis. Para la unión es falso: dos colinas separadas, cada una convexa, forman un conjunto de dos cimas.', tex: R`Si $A$ y $B$ son convexos, $A \cap B$ también, con $\mu_{A \cap B} = \min(\mu_A, \mu_B)$.`, pasos: [
+      { texto: R`$(A \cap B)_\alpha = A_\alpha \cap B_\alpha$.`, porque: 'Lo demostraste en «α-cortes».' },
+      { texto: R`Los cortes de $A$ y $B$ son convexos, y la intersección de convexos clásicos es convexa.`, porque: 'Por el teorema anterior; y si dos puntos están en ambos, su segmento también.' },
+      { texto: R`Todos los cortes de $A \cap B$ son convexos, luego $A \cap B$ es convexo.`, porque: 'El teorema anterior, en el sentido de vuelta.' },
     ] },
   ],
   tecnicas: [
     { titulo: 'Elige el nivel adecuado', texto: 'En una demostración por cortes, el truco suele ser tomar $\\alpha$ igual a la cantidad que quieres acotar: aquí, el mínimo de los dos grados.' },
-    { titulo: 'Reduce a lo clásico', texto: 'Si una propiedad difusa equivale a la misma propiedad en todos los cortes (se llama «cutworthy»), sus resultados se heredan gratis del caso clásico.' },
+    { titulo: 'Reduce a lo clásico', texto: 'Si una propiedad difusa equivale a la misma propiedad en todos los cortes , sus resultados se heredan gratis del caso clásico.' },
     { titulo: 'Cuida el nivel 0', texto: 'Los cortes se toman con $\\alpha > 0$; cuando el nivel que eliges pueda valer 0, trátalo como caso aparte.' },
   ],
   retos: [
@@ -113,5 +123,5 @@ export default {
         { texto: R`Luego $\lambda x_1 + (1 - \lambda) x_2 \in A_{\alpha^+}$: el corte fuerte es convexo.`, porque: 'Definición de corte fuerte y de convexidad clásica.' },
       ] },
   ],
-  referencias: ['L. A. Zadeh, «Fuzzy sets» (1965): definición de convexidad.', 'G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, cap. 1.', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga.'],
+  referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'L. A. Zadeh, «Fuzzy sets» (1965): definición de convexidad.', 'G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, cap. 1.', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga.'],
 };

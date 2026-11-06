@@ -50,12 +50,21 @@ export default {
   manipulacion: `<ul>
     <li>Arrastra la sonda blanca por la niebla: el grado cambia sin saltos.</li>
     <li>Escribe funciones de <code>x</code>: <code>exp(-(x-5)^2)</code>, <code>1/(1+(x-5)^2)</code>… Si tu expresión se sale de [0, 1], se recorta y se avisa.</li></ul>`,
-  rigor: [
-    { tipo: 'DEF', titulo: 'Conjunto difuso', tex: R`Dado un universo $X$, un conjunto difuso $A$ de $X$ es una función $\mu_A : X \to [0, 1]$. No hay nada más que él: dos conjuntos son iguales si y solo si $\mu_A(x) = \mu_B(x)$ para todo $x \in X$.` },
-    { tipo: 'DEF', titulo: 'Casos particulares', tex: R`El <em>vacío</em> tiene $\mu_\varnothing(x) = 0$ y el <em>universal</em> $\mu_X(x) = 1$ para todo $x$. Un conjunto clásico es un difuso cuyos grados solo valen 0 o 1: los difusos generalizan a los clásicos.` },
-    { tipo: 'DEF', titulo: 'Notación', tex: R`Con $X$ finito, se escribe el conjunto de pares $A = \{(x_1, \mu_1), \dots, (x_n, \mu_n)\}$. En los libros verás también la forma de Zadeh, una suma de cocientes $\sum_i \mu_i \,\div\, x_i$, donde ni la barra divide ni la suma suma: solo enumeran pares. Con $X$ continuo, se da la fórmula de $\mu_A$.` },
-    { tipo: 'EJ', titulo: 'Discreto', tex: R`Si $X = \{1, 2, 3, 4\}$, «un par» podría ser $A = \{(1, 0{,}5),\ (2, 1),\ (3, 0{,}5),\ (4, 0)\}$. Los pares de grado 0 se suelen omitir.` },
-    { tipo: 'NOTA', tex: R`Cada función de $X$ en $[0,1]$ es un conjunto, así que hay muchísimos: en un universo de $n$ elementos los conjuntos clásicos son los $2^n$ vértices del cubo $[0, 1]^n$, y los difusos llenan todo su interior. Kosko popularizó esta imagen.` },
+  entender: [
+    { tipo: 'idea', etiqueta: 'Aviso', texto: 'Antes de nada, una aclaración que hace el propio Zimmermann en su libro: aquí lo difuso es el objeto, no las matemáticas. La teoría de conjuntos difusos es tan exacta como cualquier otra.' },
+    { tipo: 'idea', etiqueta: 'La idea', texto: 'Una agencia quiere describir qué casa es «cómoda para una familia de cuatro». Solo mira cuántos dormitorios tiene. Con cuatro dormitorios, perfecta. Con uno, poco cómoda. Con diez, ni siquiera entra: sobra casa.' },
+    { tipo: 'ejemplo', texto: 'Podría dar estos grados:', tabla: [['Dormitorios', '1', '2', '3', '4', '5', '6'], ['Grado', '0,2', '0,5', '0,8', '1', '0,7', '0,3']], cierre: 'Y a las de 7 o más dormitorios, grado 0: normalmente ni se escriben. Esa tabla <em>es</em> el conjunto difuso. No hay nada más.' },
+    { tipo: 'idea', etiqueta: 'Sin borde', texto: 'Fíjate en la niebla de la escena: es lo mismo en el plano. A cada punto, un número. Un conjunto difuso no es una forma con bordes borrosos: es la regla que reparte grados.' },
+    { tipo: 'simbolos', intro: 'Como se escribe, pieza a pieza.', piezas: [
+      { tex: R`X`, dice: 'El [[universo]]: de todo aquello de lo que hablamos. Aquí, los números de dormitorios del 1 al 10.' },
+      { tex: R`A`, dice: 'El nombre del conjunto: «casa cómoda».' },
+      { tex: R`\mu_A(x)`, dice: 'El [[grado]] de $x$ en $A$. Por ejemplo, $\\mu_A(3) = 0{,}8$.' },
+      { tex: R`(x,\ \mu_A(x))`, dice: 'Una pareja: la cosa y su grado. Por ejemplo, $(3,\ 0{,}8)$.' },
+      { tex: R`\{\ \dots : x \in X\}`, dice: 'El grupo de esas parejas, una para cada cosa del universo. Los dos puntos se leen «para».' },
+    ], todo: R`A = \{(x,\ \mu_A(x)) : x \in X\}`, lee: '«$A$ es la lista de parejas: cada cosa con su grado». Es la tabla de arriba, en una línea.' },
+    { tipo: 'formal', titulo: 'Conjunto difuso', tex: R`Dado un universo $X$, un conjunto difuso $A$ queda dado por su función de pertenencia $\mu_A : X \to [0, 1]$. Dos conjuntos son iguales si y solo si $\mu_A(x) = \mu_B(x)$ para todo $x \in X$.`, lee: 'La [[función|funcion]] es todo el conjunto: para ver que dos son iguales, se compara punto a punto.' },
+    { tipo: 'nota', titulo: 'Casos que ya conoces', texto: R`El conjunto <em>vacío</em> da grado 0 a todo. El <em>universal</em> da grado 1 a todo. Y un conjunto [[clásico|clasico]] es un difuso que solo usa 0 y 1: lo de siempre es un caso particular.` },
+    { tipo: 'nota', titulo: 'Tres formas de escribir lo mismo', texto: R`Verás los conjuntos como lista de parejas, como una fórmula (por ejemplo, «números cerca de 10» es $\mu(x) = \frac{1}{1 + (x - 10)^2}$) o con una notación de Zadeh que parece una suma de fracciones. Ojo con esta última: ni la raya divide ni la suma suma. Solo enumera parejas.` },
   ],
   tecnicas: [
     { titulo: 'Un conjunto difuso es su función', texto: 'Para demostrar que dos conjuntos difusos coinciden, demuestra que sus funciones coinciden en cada punto. Este es el patrón de casi toda demostración del tema.' },
@@ -70,5 +79,5 @@ export default {
     { id: 'discreto-a-tabla', tipo: 'calcular', enunciado: R`Sea $A = \{(1, 0{,}2),\ (2, 0{,}7),\ (3, 1)\}$. ¿Cuánto vale $\mu_A(3) - \mu_A(1)$?`, respuesta: 0.8, tol: 0.001,
       pistas: ['Cada par es (elemento, grado).'], explicacion: R`$1 - 0{,}2 = 0{,}8$.` },
   ],
-  referencias: ['L. A. Zadeh, «Fuzzy sets», <em>Information and Control</em> 8 (1965).', 'B. Kosko, «Fuzziness vs. probability», <em>International Journal of General Systems</em> 17 (1990).'],
+  referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'L. A. Zadeh, «Fuzzy sets», <em>Information and Control</em> 8 (1965).', 'B. Kosko, «Fuzziness vs. probability», <em>International Journal of General Systems</em> 17 (1990).'],
 };

@@ -57,14 +57,27 @@ export default {
     },
   },
   manipulacion: '<ul><li>Mueve el centro y la altura de $A$, y ensancha $B$, hasta lograr que el rojo desaparezca.</li><li>Observa cómo sube el grado $S(A, B)$ mucho antes de que la inclusión estricta se cumpla.</li></ul>',
-  rigor: [
-    { tipo: 'DEF', titulo: 'Inclusión (Zadeh)', tex: R`$A \subseteq B$ si y solo si $\mu_A(x) \le \mu_B(x)$ para todo $x \in X$.` },
-    { tipo: 'DEF', titulo: 'Grado de inclusión (Kosko)', tex: R`En un universo finito y con $A$ no vacío, $S(A, B) = \dfrac{\sum_x \min(\mu_A(x), \mu_B(x))}{\sum_x \mu_A(x)}$. Con $X$ continuo, se usan integrales.` },
-    { tipo: 'DEF', titulo: 'Cardinal sigma', tex: R`En un universo finito, $|A| = \sum_{x \in X} \mu_A(x)$. Si $A$ es clásico, es el número de sus elementos.` },
-    { tipo: 'PROP', titulo: 'Coherencia', tex: R`$S(A, B) = 1$ si y solo si $A \subseteq B$.`, pasos: [
-      { texto: R`Para todo $x$, $\min(\mu_A(x), \mu_B(x)) \le \mu_A(x)$, con igualdad si y solo si $\mu_A(x) \le \mu_B(x)$.`, porque: 'Propiedad del mínimo.' },
-      { texto: R`Sumando, $\sum_x \min(\mu_A(x), \mu_B(x)) \le \sum_x \mu_A(x)$, y las sumas coinciden si y solo si hay igualdad en todos los términos.`, porque: 'Una suma de términos no negativos $\mu_A(x) - \min(\mu_A(x), \mu_B(x))$ vale 0 solo si todos valen 0.' },
-      { texto: R`Por tanto, $S(A, B) = 1$ equivale a $\mu_A(x) \le \mu_B(x)$ para todo $x$, que es $A \subseteq B$.`, porque: 'Se multiplica por $\\sum_x \\mu_A(x) > 0$, y se aplica la definición de inclusión.' },
+  entender: [
+    { tipo: 'idea', etiqueta: 'La idea', texto: 'En el mundo clásico, «$A$ está dentro de $B$» quiere decir que nadie de $A$ falta en $B$. Con grados, la pregunta natural es: ¿alguien pertenece a $A$ <em>más</em> que a $B$? Si nadie lo hace, $A$ está dentro.' },
+    { tipo: 'ejemplo', texto: '«Casa cómoda» frente a «casa utilizable»:', tabla: [['Dormitorios', '2', '3', '4'], ['Cómoda', '0,5', '0,8', '1'], ['Utilizable', '0,7', '1', '1']], cierre: 'En cada columna, cómoda no supera a utilizable: toda casa cómoda es, al menos igual de, utilizable.' },
+    { tipo: 'simbolos', piezas: [
+      { tex: R`A \subseteq B`, dice: '«$A$ está dentro de $B$».' },
+      { tex: R`\iff`, dice: '[[Si y solo si|implicacion]]: las dos cosas van juntas.' },
+      { tex: R`\mu_A(x) \le \mu_B(x)`, dice: 'El grado en $A$ no supera al grado en $B$.' },
+      { tex: R`\forall x`, dice: 'Para todo $x$, sin excepción. La $\\forall$ es una A invertida, de «all».' },
+    ], todo: R`A \subseteq B \iff \mu_A(x) \le \mu_B(x)\ \ \forall x`, lee: 'En la escena: la curva azul nunca se sale por encima de la rosa.' },
+    { tipo: 'formal', titulo: 'Inclusión (Zadeh)', tex: R`$A \subseteq B$ si y solo si $\mu_A(x) \le \mu_B(x)$ para todo $x \in X$.` },
+    { tipo: 'idea', etiqueta: 'Demasiado exigente', texto: 'Esa definición es implacable: un solo punto que se pase por una milésima, y ya no hay inclusión. Muchas veces interesa preguntar otra cosa: ¿<em>qué parte</em> de $A$ cabe en $B$?' },
+    { tipo: 'ejemplo', texto: 'En cada elemento, lo que cabe es el menor de los dos grados:', tabla: [['Elemento', 'x', 'y', 'z', 'suma'], ['A', '0,5', '0,8', '0,2', '1,5'], ['B', '0,4', '1', '0,2', ''], ['Lo que cabe', '0,4', '0,8', '0,2', '1,4']], cierre: 'Cabe 1,4 de 1,5: un 93 % de $A$ cabe en $B$, aunque en el elemento $x$ se pase un poco.' },
+    { tipo: 'formal', titulo: 'Grado de inclusión (Kosko)', tex: R`Con $X$ finito y $A$ no vacío: $S(A, B) = \dfrac{\sum_x \min(\mu_A(x), \mu_B(x))}{\sum_x \mu_A(x)}$.`, lee: 'Es la cuenta de la tabla: lo que cabe, dividido entre el tamaño de $A$.' },
+    { tipo: 'idea', etiqueta: 'El tamaño', texto: '¿Y cuánto mide un conjunto difuso? Basta sumar los grados: cada cosa cuenta lo que pertenece. Quien pertenece a medias, cuenta medio.' },
+    { tipo: 'ejemplo', texto: 'La «casa cómoda», de 1 a 10 dormitorios:', tabla: [['Dormitorios', '1', '2', '3', '4', '5', '6', 'resto'], ['Grado', '0,2', '0,5', '0,8', '1', '0,7', '0,3', '0']], cierre: 'Suma 3,5: es su cardinal. Dividido entre las 10 posibilidades, da 0,35, su cardinal relativo: ojo, depende del universo que elijas.' },
+    { tipo: 'formal', titulo: 'Cardinal', tex: R`Con $X$ finito: $|A| = \sum_{x \in X} \mu_A(x)$, y el cardinal relativo es $\dfrac{|A|}{|X|}$. Si $A$ es clásico, $|A|$ cuenta sus elementos.` },
+    { tipo: 'demo', titulo: 'S(A, B) vale 1 justo cuando A está dentro de B', plan: 'Comprobamos que la medida gradual no contradice a la definición estricta. Es una [[demostración]] de ida y vuelta, y la clave es mirar la diferencia entre las dos sumas.', pasos: [
+      { texto: R`Para cada $x$: $\min(\mu_A(x), \mu_B(x)) \le \mu_A(x)$, con igualdad justo cuando $\mu_A(x) \le \mu_B(x)$.`, porque: 'El mínimo no supera a ninguno de los dos, y coincide con el primero si este es el menor.' },
+      { texto: R`Luego $\sum_x \big(\mu_A(x) - \min(\mu_A(x), \mu_B(x))\big)$ es una suma de números $\ge 0$.`, porque: 'Cada término es no negativo por el paso anterior.' },
+      { texto: R`Esa suma vale 0 si y solo si todos sus términos valen 0.`, porque: 'Sumando cosas no negativas, no hay forma de compensar nada.' },
+      { texto: R`Por tanto, $S(A, B) = 1$ equivale a $\mu_A(x) \le \mu_B(x)$ para todo $x$, que es $A \subseteq B$.`, porque: '$S = 1$ dice que numerador y denominador coinciden, es decir, que la suma anterior vale 0.' },
     ] },
   ],
   tecnicas: [
@@ -83,5 +96,5 @@ export default {
         { texto: R`Por tanto, $\mu_{A \cap B}(x) = \mu_A(x)$ para todo $x$ equivale a $\mu_A(x) \le \mu_B(x)$ para todo $x$, que es $A \subseteq B$.`, porque: 'Se cuantifica sobre todo $x$ en los dos lados de la equivalencia.' },
       ] },
   ],
-  referencias: ['L. A. Zadeh, «Fuzzy sets» (1965).', 'B. Kosko, «Fuzzy entropy and conditioning», <em>Information Sciences</em> 40 (1986).', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga.'],
+  referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'L. A. Zadeh, «Fuzzy sets» (1965).', 'B. Kosko, «Fuzzy entropy and conditioning», <em>Information Sciences</em> 40 (1986).', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga.'],
 };

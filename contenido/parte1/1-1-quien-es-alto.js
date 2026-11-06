@@ -113,5 +113,5 @@ export default {
     { id: 'grado-174', tipo: 'calcular', enunciado: R`Con $w = 5$, ¿cuánto vale $\mu(174) = \dfrac{1}{1 + e^{-(174 - 180) \,\div\, 5}}$? Da dos decimales.`,
       respuesta: 0.2315, tol: 0.006, pistas: [R`El exponente es $-(-6) \div 5 = 1{,}2$.`, R`$e^{1{,}2} \approx 3{,}32$.`], explicacion: R`$\mu(174) = \frac{1}{1 + 3{,}32} \approx 0{,}23$.` },
   ],
-  referencias: ['L. A. Zadeh, «Fuzzy sets», <em>Information and Control</em> 8 (1965), 338–353.'],
+  referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'L. A. Zadeh, «Fuzzy sets», <em>Information and Control</em> 8 (1965), 338–353.'],
 };
