@@ -25,7 +25,7 @@ export default {
     primitivas({ q, paso, e }) {
       const reposo = paso === 3 && q(3) >= 1, m = reposo ? Math.round(e.tipo) : paso < 2 ? 0 : paso === 2 ? ev(q(2), 0, 0.85) : 1;
       const f = (a, b) => mix(MAMDANI(a, b), KLEENE(a, b), m), de = paso === 0 ? 0 : paso === 1 ? ev(q(1), 0, 1) : 1;
-      return paisaje({ f, glsl: GLSL, uniformes: { uM: m }, v: reposo ? e.p[1] : 0.4, xp: reposo ? e.p[0] : 0.62, rev: 1 - de, ba: ev(q(0), 0, 0.3), pA: ev(q(0), 0.2, 0.6), pB: ev(q(0), 0.6, 1), fr: ev(q(1), 0, 0.3), so: ev(q(1), 0.2, 0.5), claveMapa: `re${m.toFixed(3)}`, nombreCorte: m > 0.5 ? R`A \to B` : R`A \wedge B` });
+      return paisaje({ f, glsl: GLSL, uniformes: { uM: m }, v: reposo ? e.p[1] : 0.4, xp: reposo ? e.p[0] : 0.62, rev: 1 - de, ba: ev(q(0), 0, 0.3), pA: ev(q(0), 0.2, 0.6), pB: ev(q(0), 0.6, 1), fr: ev(q(1), 0, 0.3), so: ev(q(1), 0.2, 0.5), claveMapa: `re${m.toFixed(2)}`, nombreCorte: m > 0.5 ? R`A \to B` : R`A \wedge B` });
     },
   },
   manipulacion: '<ul><li>Cambia la lectura de la regla con el deslizador, y mira cómo cambia todo el terreno.</li><li>Arrastra en el mapa hasta una zona donde A sea casi 0, a la izquierda: compara las dos lecturas.</li></ul>',

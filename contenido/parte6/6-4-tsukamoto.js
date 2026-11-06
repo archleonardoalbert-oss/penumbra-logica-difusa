@@ -26,7 +26,7 @@ export default {
     entradas: [{ id: 'x', tipo: 'deslizador', etiqueta: 'humedad de la tierra', min: 0, max: 10, paso: 0.05, valor: 3 }],
     pasos: [
       { dur: 2600, texto: 'Un sistema de riego. Si la tierra está <b style="color:#58c4dd;font-weight:400">seca</b>, riego largo; si está <b style="color:#fc6282;font-weight:400">húmeda</b>, riego corto. Entra una medida: cada regla recibe una fuerza.' },
-      { dur: 3000, texto: 'A la derecha, las conclusiones. Solo cambian en un sentido: «largo» <b>nunca baja</b>, «corto» <b>nunca sube</b>. Por eso, a cada altura le corresponde un solo punto.' },
+      { dur: 3000, texto: 'A la derecha, las conclusiones. Solo cambian en un sentido: «largo» <b>nunca baja</b>, «corto» <b>nunca sube</b>. Por eso, dentro de su tramo inclinado, a cada altura le corresponde un solo punto.' },
       { dur: 3000, texto: 'Lleva cada fuerza a su curva, y baja al eje. Sin figuras: cada regla da <b>un tiempo exacto</b>.' },
       { dur: 2600, texto: 'Y al final, la misma media pesada de Sugeno. <b style="color:#f4d345;font-weight:400">Esa es la orden.</b>' },
     ],
@@ -66,7 +66,7 @@ export default {
       { tex: R`\mu_{C_i}^{-1}`, dice: 'Su inversa: le das una altura, y te devuelve el punto. El $-1$ no es un exponente: significa «hacia atrás».' },
       { tex: R`z_i = \mu_{C_i}^{-1}(w_i)`, dice: 'Lo que dice la regla $i$: el punto de su curva a la altura de su fuerza.' },
     ], todo: R`z = \frac{\sum_i w_i\, \mu_{C_i}^{-1}(w_i)}{\sum_i w_i}`, lee: 'Es la media de Sugeno, con los resultados leídos en las curvas.' },
-    { tipo: 'formal', titulo: 'Sistema de Tsukamoto', tex: R`Con reglas «si $x$ es $A_i$, entonces $z$ es $C_i$», donde cada $\mu_{C_i}$ es estrictamente [[monótona]], la salida es la fórmula anterior, con $w_i = \mu_{A_i}(x)$.`, lee: '«Estrictamente» significa que nunca se queda plana: así, la lectura hacia atrás da siempre un único punto.' },
+    { tipo: 'formal', titulo: 'Sistema de Tsukamoto', tex: R`Con reglas «si $x$ es $A_i$, entonces $z$ es $C_i$», donde cada $\mu_{C_i}$ es estrictamente [[monótona]], la salida es la fórmula anterior, con $w_i = \mu_{A_i}(x)$.`, lee: '«Estrictamente» significa que no se queda plana. Las de la escena tienen tramos planos en los extremos: se lee solo en su tramo inclinado, y entre 0 y 1 ya da un único punto.' },
     { tipo: 'demo', titulo: 'Estricta significa una sola respuesta', plan: 'Por qué se exige que la curva no se quede plana: si dos puntos distintos tuvieran la misma altura, la lectura sería ambigua.', tex: R`Si $\mu$ es estrictamente creciente, a cada altura le corresponde a lo sumo un punto.`, pasos: [
       { texto: R`Supongamos que $z_1 \neq z_2$ tienen la misma altura. Sea, por ejemplo, $z_1 < z_2$.`, porque: 'Se razona por contradicción: se supone lo contrario y se busca un choque.' },
       { texto: R`Por ser estrictamente creciente, $\mu(z_1) < \mu(z_2)$.`, porque: 'Definición: si avanza $z$, sube la altura.' },

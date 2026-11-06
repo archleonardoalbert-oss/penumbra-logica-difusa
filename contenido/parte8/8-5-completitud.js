@@ -1,5 +1,5 @@
 import { AZUL, BLANCO, GRIS2, ORO, ROJO, ROSA } from '../../motor/colores.js';
-import { FORMULAS, LOGICAS, peorValor } from '../../nucleo/logicas.js';
+import { FORMULAS, LOGICAS } from '../../nucleo/logicas.js';
 import { curva, linea, marco, punto, rotulo } from '../../motor/primitivas.js';
 import { ev } from '../../motor/tiempo.js';
 import { matriz } from '../parte4/matriz.js';
@@ -7,7 +7,9 @@ import { matriz } from '../parte4/matriz.js';
 const R = String.raw;
 const coma = (v) => v.toFixed(2).replace('.', '{,}');
 const LISTA = [LOGICAS.lukasiewicz, LOGICAS.godel, LOGICAS.producto], DOM = [0, 1], NOM = ['Łuk.', 'Gödel', 'Prod.'];
-const TABLA = FORMULAS.map((f) => LISTA.map((L) => { const v = peorValor(f, L, 101); return v < 0.02 ? 0 : +v.toFixed(2); }));
+/** Estas fórmulas solo tienen una letra: basta recorrer sus valores. */
+const peor = (f, L) => { let m = 1; for (let i = 0; i <= 100; i++) m = Math.min(m, f.f(L, i / 100, 0, 0)); return m; };
+const TABLA = FORMULAS.map((f) => LISTA.map((L) => { const v = peor(f, L); return v < 0.02 ? 0 : +v.toFixed(2); }));
 const valor = (fi, li, a) => FORMULAS[fi].f(LISTA[li], a, 0, 0);
 
 export default {

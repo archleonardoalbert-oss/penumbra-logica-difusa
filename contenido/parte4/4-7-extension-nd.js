@@ -19,7 +19,7 @@ function mejor(z) {
 export default {
   id: '4-7-extension-nd',
   titulo: 'Extensión con varias entradas',
-  puente: 'Con esto puedes operar con cantidades vagas. La pregunta obvia: ¿y si en vez de reglas sueltas quieres hacer aritmética? «Unos 3 más unos 5» es la última parada de esta región.',
+  puente: 'Con esto puedes operar con cantidades vagas. La pregunta obvia: ¿y si quieres hacer aritmética de verdad con ellas, de forma sencilla? «Unos 2 más unos 5» es la última parada de esta región.',
   pregunta: '«Unos 30 minutos más unos 45». ¿Cuánto da? Hay infinitas parejas que suman lo mismo, y cada una tiene su grado. ¿Cuál cuenta?',
   escena: {
     id: 'extension-nd', formato: '3d', W: 1100, H: 690, render3d: { cx: 365, cy: 372, S: 335 },

@@ -86,10 +86,10 @@ export default {
       return { principal: N, paneles };
     },
   },
-  manipulacion: '<ul><li>Mueve la temperatura: mira qué reglas se encienden y cuáles se apagan.</li><li>Busca un punto en el que dos reglas se repartan el trabajo: la orden cambia sin dar saltos.</li></ul>',
+  manipulacion: '<ul><li>Mueve la temperatura: mira qué reglas se encienden y cuáles se apagan.</li><li>Busca un punto en el que dos reglas se repartan el trabajo: mientras haya alguna encendida, la orden cambia sin dar saltos.</li><li>Prueba 10 °C con 20 % de humedad: ninguna regla se enciende, y el ventilador se para de golpe. Faltan reglas para esa zona.</li></ul>',
   entender: [
     { tipo: 'idea', etiqueta: 'La idea', texto: 'En 1975, Ebrahim Mamdani controló una máquina de vapor escribiendo en reglas lo que hacía un operario, y funcionó mejor que los métodos de la época. La máquina es siempre la misma cadena: <b>convertir los números en grados</b>, <b>combinar</b> la condición, <b>recortar</b> cada conclusión, <b>unir</b> y <b>concretar</b>.' },
-    { tipo: 'ejemplo', texto: 'Con 26 °C y 60 % de humedad:', tabla: [['Regla', 'Temperatura', 'Humedad', 'Fuerza (el menor)', 'Recorta'], ['Templada y seca → lento', '0,40', '0,20', '0,20', 'lento a 0,20'], ['Templada y húmeda → medio', '0,40', '0,60', '0,40', 'medio a 0,40'], ['Calurosa y húmeda → rápido', '0,40', '0,60', '0,40', 'rápido a 0,40']], cierre: 'Las tres reglas opinan a la vez, con distinta fuerza. Por eso el resultado no da saltos: al moverse la temperatura, unas ceden poco a poco ante otras.' },
+    { tipo: 'ejemplo', texto: 'Con 26 °C y 60 % de humedad:', tabla: [['Regla', 'Temperatura', 'Humedad', 'Fuerza (el menor)', 'Recorta'], ['Templada y seca → lento', '0,40', '0,20', '0,20', 'lento a 0,20'], ['Templada y húmeda → medio', '0,40', '0,60', '0,40', 'medio a 0,40'], ['Calurosa y húmeda → rápido', '0,40', '0,60', '0,40', 'rápido a 0,40']], cierre: 'Las tres reglas opinan a la vez, con distinta fuerza. Por eso el resultado cambia con suavidad: al moverse la temperatura, unas ceden poco a poco ante otras. Solo hay un salto si se apagan todas.' },
     { tipo: 'simbolos', intro: 'Para cada regla $i$, y luego todas juntas.', piezas: [
       { tex: R`w_i = \min(\mu_{A_i}(x_0),\ \mu_{B_i}(y_0))`, dice: 'La fuerza de la regla. La $w$ viene de «weight», «peso» en inglés. $x_0$ e $y_0$ son los números que dan los sensores.' },
       { tex: R`\min(w_i,\ \mu_{C_i}(z))`, dice: 'Su conclusión, recortada a esa fuerza.' },

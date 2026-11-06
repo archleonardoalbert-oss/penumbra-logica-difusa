@@ -41,7 +41,7 @@ export default {
       }
       const M = [], pa = ev(q(1), 0.5, 1), [xa, xb] = reposo ? e.p : [0.7, 0.4];
       if (pa > 0) {
-        M.push(mapaCalor(f, { clave: `imp${prev}${cur}${m.toFixed(3)}` }), marco({ x: [0, 1], y: [0, 1] }, { alfa: pa, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'a', y: 'b' } }));
+        M.push(mapaCalor(f, { clave: `imp${prev}${cur}${m.toFixed(2)}` }), marco({ x: [0, 1], y: [0, 1] }, { alfa: pa, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'a', y: 'b' } }));
         M.push(rotulo([0.5, 1], R`\text{Desde arriba}`, { clave: 'tm', dy: -18, tam: 16, color: GRIS2, alfa: pa }), punto([xa, xb], { color: BLANCO, radio: 6, alfa: pa }));
         P.push(linea([xa, xb, 0], [xa, xb, f(xa, xb)], { color: ORO, ancho: 2.2, alfa: pa }), punto([xa, xb, f(xa, xb)], { color: ORO, radio: 7, alfa: pa }));
       }
@@ -66,7 +66,7 @@ export default {
       { texto: R`$I(1, 1) = \max(0, 1) = 1$.`, porque: 'Condición y conclusión ciertas.' },
       { texto: R`$I(1, 0) = \max(0, 0) = 0$.`, porque: 'La única forma de romper la frase.' },
     ] },
-    { tipo: 'nota', titulo: 'Cuál usar', texto: 'Para razonar con rigor, las de la familia R tienen las mejores propiedades matemáticas: es la base de la región 8. En cambio, los controladores suelen usar algo más simple, que no es una implicación verdadera, y que verás en la siguiente parada.' },
+    { tipo: 'nota', titulo: 'Cuál usar', texto: 'Para razonar con rigor, las de la familia R tienen las mejores propiedades matemáticas: es la base de la región 8. En cambio, los controladores suelen usar algo más simple, que no es una implicación verdadera, y que verás en la parada de las reglas.' },
   ],
   tecnicas: [
     { titulo: 'Equivalente en lo clásico no es equivalente aquí', texto: 'Dos fórmulas que coinciden con 0 y 1 pueden separarse con grados. Cada forma clásica es una opción distinta.' },

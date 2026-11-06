@@ -251,7 +251,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   const hallado = id ? buscarConcepto(id, catalogo) : null;
   if (!hallado) return mensajeAmable(raiz, 'Aquí no hay nada', 'No encuentro ese concepto. Quizá el enlace está mal; en el mapa están todos.');
   const { region, concepto: ficha, siguiente } = hallado;
-  if (ficha.estado !== 'listo') return mensajeAmable(raiz, ficha.titulo, `Este concepto de la región «${region.titulo}» aún no está escrito. La región 1 ya se puede recorrer entera.`);
+  if (ficha.estado !== 'listo') return mensajeAmable(raiz, ficha.titulo, `Este concepto de la región «${region.titulo}» aún no está escrito.`);
   const c = (await ficha.carga()).default;
   document.title = `${c.titulo} · Penumbra`;
 

@@ -43,7 +43,7 @@ export default {
       if (sy > 0) P.push(curva((u) => [0, u, sombraY(u)], [0, 1], { hasta: sy, n: 100, color: ROSA, ancho: 3.2, brillo: true }), rotulo([0, 0.2, 0.8], R`\text{proy}_y`, { clave: 'py', tam: 21, color: ROSA, dx: -26, siempre: true }));
       const M = [], C = [], pa = ev(q(1), 0, 0.3);
       if (pa > 0) {
-        M.push(mapaCalor(F, { clave: `pr${m.toFixed(3)}` }), marco({ x: [0, 1], y: [0, 1] }, { alfa: pa, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'x', y: 'y' } }), rotulo([0.5, 1], R`\text{El suelo, desde arriba}`, { clave: 'tm', dy: -18, tam: 16, color: GRIS2, alfa: pa }));
+        M.push(mapaCalor(F, { clave: `pr${m.toFixed(2)}` }), marco({ x: [0, 1], y: [0, 1] }, { alfa: pa, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'x', y: 'y' } }), rotulo([0.5, 1], R`\text{El suelo, desde arriba}`, { clave: 'tm', dy: -18, tam: 16, color: GRIS2, alfa: pa }));
         M.push(linea([0, v], [1, v], { color: TEXTO, ancho: 1.2, alfa: 0.7 * pa, discontinua: true }));
         C.push(marco({ x: [0, 1], y: [0, 1] }, { alfa: pa, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'x' } }), rotulo([0.5, 1], R`\text{El corte, y la sombra}`, { clave: 'tc', dy: -20, tam: 16, color: GRIS2, alfa: pa }));
         C.push(curva((u) => [u, sombraX(u)], [0, 1], { n: 120, color: AZUL, ancho: 2.6, alfa: pa }), curva((u) => [u, Rel(u, v)], [0, 1], { n: 120, color: ORO, ancho: 2.6, alfa: pa }));

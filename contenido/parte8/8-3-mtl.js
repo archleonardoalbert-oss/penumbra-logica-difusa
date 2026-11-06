@@ -1,7 +1,7 @@
 import { AZUL, BLANCO, GRIS2, ORO, ROJO, ROSA } from '../../motor/colores.js';
 import { NILPOTENTE } from '../../nucleo/logicas.js';
 import { curva, linea, mapaCalor, marco, punto, rotulo, terreno } from '../../motor/primitivas.js';
-import { ev, mix, vent } from '../../motor/tiempo.js';
+import { ev, mix } from '../../motor/tiempo.js';
 
 const R = String.raw;
 const coma = (v) => v.toFixed(2).replace('.', '{,}');
@@ -23,10 +23,10 @@ export default {
       { dur: 2400, texto: 'El terreno del mínimo, que ya conoces: suave, sin saltos. Es [[una norma|norma T]] continua, de las que estudia BL.' },
       { dur: 3000, texto: 'Ahora, el <b style="color:#f05a5a;font-weight:400">mínimo nilpotente</b>: si $a + b \\le 1$, vale 0 de golpe. Aparece un acantilado por la diagonal. ¿Sigue siendo [[una norma T|norma T]]? Sí. ¿Tiene implicación?' },
       { dur: 3200, texto: 'Mira un corte, a la derecha. Da un salto, pero el valor del punto del salto pertenece a la parte de abajo. <b style="color:#f4d345;font-weight:400">Existe un mayor $z$ que no se pasa del techo</b>: está justo en el borde.' },
-      { dur: 4000, texto: 'Compara con [[la norma|norma T]] drástica, en <b style="color:#f05a5a;font-weight:400">rojo</b>: el salto está justo al final, y el punto pertenece a la parte de arriba. Te acercas a 1 sin llegar nunca: <b>no hay mayor $z$</b>. Sin residuo, no hay lógica.' },
+      { dur: 4000, texto: 'Compara con [[la norma|norma T]] drástica, en <b style="color:#f05a5a;font-weight:400">rojo</b>: el salto está justo al final, y el punto pertenece a la parte de arriba. Con el techo por debajo de $a$, te acercas a 1 sin llegar nunca: <b>no hay mayor $z$</b>. Sin residuo, no hay lógica.' },
     ],
     primitivas({ q, paso, e }) {
-      const a = e.a, b = e.b, ba = ev(q(0), 0, 0.3), M = paso === 0 ? 0 : ev(q(1), 0, 0.8), corte = ev(q(2), 0, 0.5), dr = paso === 3 ? vent(q(3), 0.02, 0.9, 0.15) : 0;
+      const a = e.a, b = e.b, ba = ev(q(0), 0, 0.3), M = paso === 0 ? 0 : ev(q(1), 0, 0.8), corte = ev(q(2), 0, 0.5), dr = paso === 3 ? ev(q(3), 0.02, 0.2) : 0;
       const F = (x, y) => mix(Math.min(x, y), NILPOTENTE.t(x, y), M);
       const P = [marco({ x: DOM, y: DOM, z: DOM }, { alfa: ba, etiquetas: { x: 'a', y: 'z' } }), terreno(F, { glsl: GLSL, uniformes: { uM: M }, desde: 1 - ev(q(0), 0, 1) })];
       if (M > 0.5) P.push(curva((u) => [u, 1 - u, 0], DOM, { n: 2, color: ROJO, ancho: 2.6, alfa: M }));
@@ -38,8 +38,8 @@ export default {
         C.push(linea([0, b], [1, b], { color: ROSA, ancho: 2, alfa: corte, discontinua: true }), rotulo([0.98, b], R`{\color{#fc6282}b}`, { clave: 'b', ancla: 'r', dy: -12, tam: 18, alfa: corte }));
         C.push(punto([z, NILPOTENTE.t(a, z)], { color: ORO, radio: 8, alfa: corte }), rotulo([0.02, 0.9], R`a \to b = {\color{#f4d345}${coma(z)}}`, { clave: 'z', ancla: 'l', tam: 21, alfa: corte }));
       }
-      if (dr > 0) C.push(curva((u) => [u, 0], [0, 0.995], { n: 2, color: ROJO, ancho: 3, alfa: dr }), punto([1, a], { color: ROJO, radio: 7, alfa: dr }), rotulo([0.98, 0.22], R`{\color{#f05a5a}\text{sin mayor } z}`, { clave: 'dr', ancla: 'r', tam: 18, alfa: dr }));
-      const V = [mapaCalor(F, { clave: `mtl${M.toFixed(3)}` }), marco({ x: DOM, y: DOM }, { alfa: ba, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'a', y: 'z' } }), rotulo([0.5, 1], R`\text{Desde arriba}`, { clave: 'tm', dy: -16, tam: 15, color: GRIS2, alfa: ba })];
+      if (dr > 0) C.push(curva((u) => [u, 0], [0, 0.995], { n: 2, color: ROJO, ancho: 3, alfa: dr }), punto([1, a], { color: ROJO, radio: 7, alfa: dr }), rotulo([0.98, 0.22], R`{\color{#f05a5a}\text{drástica: si } b < a, \text{ sin mayor } z}`, { clave: 'dr', ancla: 'r', tam: 16, alfa: dr }));
+      const V = [mapaCalor(F, { clave: `mtl${M.toFixed(2)}` }), marco({ x: DOM, y: DOM }, { alfa: ba, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'a', y: 'z' } }), rotulo([0.5, 1], R`\text{Desde arriba}`, { clave: 'tm', dy: -16, tam: 15, color: GRIS2, alfa: ba })];
       return { principal: P, paneles: [{ ejes: { x: DOM, y: DOM, caja: { x: 690, y: 44, w: 180, h: 180 } }, prims: V }, { ejes: { x: DOM, y: DOM, caja: { x: 680, y: 310, w: 380, h: 280 } }, prims: C }] };
     },
   },

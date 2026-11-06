@@ -42,10 +42,14 @@ export function crearEntradas(def) {
       const f = (...a) => { const v = c.f(...a); return Number.isFinite(v) ? clamp(v) : 0; };
       avisos[id] = null;
       const [a, b] = d.dominio ?? [0, 1];
+      let finitos = 0;
       for (let i = 0; i <= 200; i++) {
         const v = c.f(a + ((b - a) * i) / 200);
-        if (Number.isFinite(v) && (v < -1e-9 || v > 1 + 1e-9)) { avisos[id] = 'Se ha recortado a [0, 1]: un grado no puede salir de ahí.'; break; }
+        if (!Number.isFinite(v)) continue;
+        finitos++;
+        if (!avisos[id] && (v < -1e-9 || v > 1 + 1e-9)) avisos[id] = 'Se ha recortado a [0, 1]: un grado no puede salir de ahí.';
       }
+      if (finitos === 0) avisos[id] = 'Esta fórmula no da ningún número en este dominio, así que se dibuja 0.';
       e[id] = f;
       e[`${id}_tex`] = c.latex;
       previos[id] = valor;

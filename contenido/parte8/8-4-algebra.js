@@ -52,7 +52,7 @@ export default {
       { tex: R`(A, \odot, 1)`, dice: 'Una operación $\\odot$, asociativa y conmutativa, con el 1 como elemento que no cambia nada.' },
       { tex: R`x \odot z \le y \iff z \le (x \to y)`, dice: 'El corazón: la implicación es el residuo de $\\odot$.' },
       { tex: R`x \wedge y = x \odot (x \to y)`, dice: 'Divisibilidad: el mínimo se obtiene combinando.' },
-    ], todo: R`(x \to y) \vee (y \to x) = 1`, lee: 'Prelinealidad: una de las dos implicaciones siempre es del todo cierta. Es la ley que distingue a BL.' },
+    ], todo: R`(x \to y) \vee (y \to x) = 1`, lee: 'Prelinealidad: el mayor de los dos siempre es 1. En una cadena, además, uno de los dos vale 1. Lo que separa a BL de MTL es la divisibilidad, no esta ley.' },
     { tipo: 'formal', titulo: 'Álgebra de BL', tex: R`Es una estructura $(A, \odot, \to, \wedge, \vee, 0, 1)$ con: un retículo con mínimo 0 y máximo 1; $\odot$ asociativa y conmutativa, con 1 como neutro; el residuo; divisibilidad; y prelinealidad. [[Las normas T|norma T]] continuas dan las álgebras de BL sobre $[0, 1]$.`, lee: 'Si además cumple $\\neg\\neg x = x$, se llama álgebra MV: es la de Łukasiewicz, estudiada por Chang en 1958.' },
     { tipo: 'demo', titulo: 'En una cadena, la prelinealidad es gratis', plan: 'En una [[cadena]], todos los elementos se comparan. Entonces siempre vale una de las dos desigualdades, y una implicación es 1.', tex: R`Si $A$ es una cadena, entonces $(x \to y) \vee (y \to x) = 1$.`, pasos: [
       { texto: R`Por ser cadena, $x \le y$ o $y \le x$.`, porque: 'Es la definición de cadena.' },
@@ -67,7 +67,7 @@ export default {
   retos: [
     { id: 'busca-tabla', tipo: 'manipular', enunciado: R`Con cinco valores, busca $a$ y $b$, los dos distintos de 0, con $a \,\&\, b = 0$.`, precision: (e) => { const n = Math.round(e.n), V = cadena(n), a = V[Math.min(n - 1, Math.round(e.ia))], b = V[Math.min(n - 1, Math.round(e.ib))]; return n === 5 && a > 0 && b > 0 && L.t(a, b) === 0 ? 1 : 0; }, prueba: { n: 5, ia: 1, ib: 2 }, pistas: [R`Vale 0 cuando $a + b \le 1$.`], explicacion: 'Dos frases que son verdad a medias pueden no dejar nada de verdad al combinarse: es lo que hace esta lógica tan distinta.' },
     { id: 'cadena-calc', tipo: 'calcular', enunciado: R`En la cadena de cinco valores, ¿cuánto vale $0{,}75 \,\&\, 0{,}75$?`, respuesta: 0.5, tol: 0.001, pistas: [R`$0{,}75 + 0{,}75 - 1$.`], explicacion: R`Es $0{,}5$.` },
-    { id: 'algebra-elegir', tipo: 'elegir', enunciado: '¿Cuál es la ley que hace que todo se pueda descomponer en cadenas?', opciones: ['La conmutatividad', 'La prelinealidad', 'Que el 1 no cambia nada', 'La divisibilidad'], correcta: 1, explicacion: 'Dice que dos elementos se comportan como si fueran comparables, aunque no lo sean.' },
+    { id: 'algebra-elegir', tipo: 'elegir', enunciado: '¿Cuál es la ley que hace que todo se pueda descomponer en cadenas?', opciones: ['La conmutatividad', 'La prelinealidad', 'Que el 1 no cambia nada', 'La divisibilidad'], correcta: 1, explicacion: 'Dice que dos elementos se comportan como si fueran comparables, aunque no lo sean: por eso cada álgebra se descompone en cadenas.' },
     { id: 'demuestra-prelineal', tipo: 'demostrar', enunciado: R`Demuestra que, en un álgebra de BL, $x \to x = 1$.`, pistas: ['Usa el corazón con $z = 1$.'],
       solucion: [
         { texto: R`Por el corazón: $1 \le (x \to x)$ equivale a $x \odot 1 \le x$.`, porque: 'Se toma $z = 1$ e $y = x$.' },

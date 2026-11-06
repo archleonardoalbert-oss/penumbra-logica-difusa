@@ -6,7 +6,14 @@ const R = String.raw;
 const gA = (x) => Math.exp(-((x - 0.35) ** 2) / 0.03), gB = (y) => Math.exp(-((y - 0.55) ** 2) / 0.03), Regla = (x, y) => Math.min(gA(x), gB(y));
 const dato = (c) => (x) => Math.exp(-((x - c) ** 2) / 0.02);
 const GLSL = 'float a=exp(-((x-.35)*(x-.35))/.03);float b=exp(-((y-.55)*(y-.55))/.03);float r=min(a,b);float d=exp(-((x-uC)*(x-uC))/.02);return mix(r,min(r,d),uM);';
-const salida = (y, c) => { const d = dato(c); let m = 0; for (let i = 0; i <= 200; i++) { const x = i / 200; m = Math.max(m, Math.min(d(x), Regla(x, y))); } return m; };
+const tablas = new Map();
+/** La sombra, calculada una vez por cada c: se pide muchas veces en cada fotograma. */
+const salida = (y, c) => {
+  const k = c.toFixed(2);
+  if (!tablas.has(k)) { const d = dato(c); tablas.set(k, Array.from({ length: 161 }, (_, j) => { let m = 0; for (let i = 0; i <= 200; i++) { const x = i / 200; m = Math.max(m, Math.min(d(x), Regla(x, j / 160))); } return m; })); }
+  const T = tablas.get(k), u = Math.min(159.999, y * 160), i = Math.floor(u);
+  return T[i] + (T[i + 1] - T[i]) * (u - i);
+};
 
 export default {
   id: '5-6-composicional',
@@ -37,13 +44,13 @@ export default {
       const sa = ev(q(3), 0, 0.7);
       if (sa > 0) P.push(curva((y) => [0, y, salida(y, c)], [0, 1], { hasta: Math.max(sa, 1e-3), n: 80, color: ORO, ancho: 3.8, brillo: true }), rotulo([0, 0.55, salida(0.55, c)], R`B'`, { clave: 'Bp', dx: -26, tam: 24, color: ORO, siempre: true }));
       const M = [], C = [], pa = ev(q(0), 0.6, 1);
-      M.push(mapaCalor(F, { clave: `cr${c}${m.toFixed(3)}` }), marco({ x: [0, 1], y: [0, 1] }, { alfa: pa, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'x', y: 'y' } }), rotulo([0.5, 1], R`\text{Desde arriba}`, { clave: 'tm', dy: -18, tam: 16, color: GRIS2, alfa: pa }));
+      M.push(mapaCalor(F, { clave: `cr${c}${m.toFixed(2)}` }), marco({ x: [0, 1], y: [0, 1] }, { alfa: pa, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'x', y: 'y' } }), rotulo([0.5, 1], R`\text{Desde arriba}`, { clave: 'tm', dy: -18, tam: 16, color: GRIS2, alfa: pa }));
       C.push(marco({ x: [0, 1], y: [0, 1] }, { alfa: pa, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: 'y' } }), curva((y) => [y, gB(y)], [0, 1], { n: 100, color: ROSA, ancho: 2.4, alfa: pa }), rotulo([0.5, 1], R`\text{La conclusión}`, { clave: 'tc', dy: -20, tam: 16, color: GRIS2, alfa: pa }));
       if (sa > 0) C.push(curva((y) => [y, salida(y, c)], [0, 1], { hasta: Math.max(sa, 1e-3), n: 80, color: ORO, ancho: 3.2 }));
       return { principal: P, paneles: [{ ejes: { x: [0, 1], y: [0, 1], caja: { x: 810, y: 90, w: 216, h: 216 } }, prims: M }, { ejes: { x: [0, 1], y: [0, 1], caja: { x: 786, y: 400, w: 280, h: 190 } }, prims: C }] };
     },
   },
-  manipulacion: '<ul><li>Mueve lo que sabes: la sombra dorada cambia de altura, pero no de forma.</li><li>Gira la vista 3D, para ver el terreno recortado desde otro lado.</li></ul>',
+  manipulacion: '<ul><li>Mueve lo que sabes: la sombra dorada se recorta a otra altura.</li><li>Gira la vista 3D, para ver el terreno recortado desde otro lado.</li></ul>',
   entender: [
     { tipo: 'idea', etiqueta: 'La idea', texto: 'En la región 4 aprendiste a estirar, a combinar y a proyectar. Juntos, forman la regla composicional de inferencia de Zadeh. Es la receta general para sacar una conclusión de un dato y una regla, sea cual sea esa regla.' },
     { tipo: 'ejemplo', texto: 'Con tablas. Dato $A\' = (0{,}5;\\ 1)$ y la regla $R$, en dos columnas:', tabla: [['', 'y₁', 'y₂'], ['x₁ (0,5)', '0,8', '0,3'], ['x₂ (1)', '0,4', '0,9']], cierre: 'Combinar: fila de $x_1$ con mínimo de 0,5: (0,5; 0,3); fila de $x_2$ con 1: (0,4; 0,9). Proyectar: el mayor por columna: (0,5; 0,9). Esa es la conclusión.' },

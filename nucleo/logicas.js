@@ -22,7 +22,7 @@ export const AXIOMAS_BL = [
 export const EXTRA = {
   lukasiewicz: { id: 'doble', f: (L, a) => L.r(neg(L, neg(L, a)), a) },
   godel: { id: 'contraccion', f: (L, a) => L.r(a, L.t(a, a)) },
-  producto: { id: 'cancelar', f: (L, a, b, c) => L.r(neg(L, neg(L, c)), L.r(L.r(L.t(a, c), L.t(b, c)), L.r(a, b))) },
+  producto: { id: 'cancelar', f: (L, a, b) => sup(L, neg(L, a), L.r(L.r(a, L.t(a, b)), b)) },
 };
 export const FORMULAS = [
   { id: 'identidad', tex: String.raw`\varphi \to \varphi`, nombre: 'Lo que se implica a sí mismo', f: (L, a) => L.r(a, a) },

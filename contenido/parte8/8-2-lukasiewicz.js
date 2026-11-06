@@ -12,7 +12,7 @@ export default {
   id: '8-2-lukasiewicz',
   titulo: 'Las tres grandes',
   puente: 'Las tres grandes son [[normas|norma T]] continuas. ¿Y si [[la norma|norma T]] da un salto? Entonces BL ya no alcanza: hace falta una lógica más amplia.',
-  pregunta: 'Si BL es lo común a [[todas las normas|norma T]], ¿qué hace especial a cada una? Basta con añadir una sola regla, y sale cada lógica.',
+  pregunta: 'Si BL es lo común a [[todas las normas|norma T]] continuas, ¿qué hace especial a cada una? Basta con añadir una sola regla, y sale cada lógica.',
   escena: {
     id: 'tres-grandes', formato: 'plano', W: 1100, H: 540,
     ejes: { x: DOM, y: DOM, caja: { x: X[0], y: 70, w: W, h: 190 } },
@@ -58,7 +58,7 @@ export default {
     { tipo: 'simbolos', intro: 'La regla que se añade a BL para cada una.', piezas: [
       { tex: R`\neg\neg\varphi \to \varphi`, dice: 'Łukasiewicz: negar dos veces deshace.' },
       { tex: R`\varphi \to (\varphi \,\&\, \varphi)`, dice: 'Gödel: repetir no cuesta. Se llama contracción.' },
-      { tex: R`\neg\neg\chi \to \big(((\varphi \,\&\, \chi) \to (\psi \,\&\, \chi)) \to (\varphi \to \psi)\big)`, dice: 'Producto: si $\\chi$ no es del todo falsa, se puede cancelar, como al dividir a los dos lados.' },
+      { tex: R`\neg\varphi \vee \big((\varphi \to (\varphi \,\&\, \psi)) \to \psi\big)`, dice: 'Producto: o $\\varphi$ es del todo falsa, o se puede cancelar, como al dividir: si $\\varphi \\,\\&\\, \\psi$ conserva toda la verdad de $\\varphi$, entonces $\\psi$ es del todo cierta. Hájek lo escribió con dos axiomas; este los resume.' },
     ], todo: R`\text{Ł} = \text{BL} + \neg\neg\varphi \to \varphi`, lee: 'Solo hay que añadir un axioma a los de BL.' },
     { tipo: 'formal', titulo: 'Teorema de Mostert y Shields (1957)', tex: R`Toda [[norma T]] continua es una suma ordinal: hay intervalos $[u_k, v_k]$ que no se solapan más que en los extremos; en cada uno, [[la norma|norma T]] es una copia reescalada de la de Łukasiewicz o de la del producto; y fuera de esos bloques, es el mínimo.`, lee: 'Es decir: las tres grandes son las piezas de todas las demás. Por eso se estudian primero.' },
     { tipo: 'demo', titulo: 'Negar dos veces', plan: 'Se calcula, en cada caso, a partir de la definición de $\\neg a$ como $a \\to 0$.', tex: R`En Łukasiewicz, $\neg\neg a = a$. En Gödel y en el producto, si $a > 0$, entonces $\neg\neg a = 1$.`, pasos: [

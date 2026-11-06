@@ -25,7 +25,7 @@ export default {
       { dur: 2200, texto: 'Quince datos, en forma de mariposa. A simple vista hay dos alas. ¿Y el punto del centro? <b>¿De qué ala es?</b>' },
       { dur: 2800, texto: 'Se ponen dos centros al azar. Cada punto se pinta según lo cerca que esté de cada uno: <b style="color:#58c4dd;font-weight:400">azul</b>, <b style="color:#fc6282;font-weight:400">rosa</b>, o una mezcla de los dos. Es su grado en cada grupo.' },
       { dur: 3600, texto: 'Ahora se repiten dos pasos: cada centro va a <b>la media de los puntos, pesada por sus grados</b>, y se recalculan los grados. Los centros <b style="color:#f4d345;font-weight:400">encuentran las alas solos</b>.' },
-      { dur: 3800, texto: 'El punto del centro queda en 0,5 y 0,5: de los dos por igual. Un agrupamiento clásico lo obligaría a elegir. Con $m$ casi en 1, los demás puntos dejan de mezclarse; con $m$ grande, se mezcla todo.' },
+      { dur: 3800, texto: 'El punto del centro queda en 0,5 y 0,5: de los dos por igual. Un agrupamiento clásico lo obligaría a elegir. Con $m$ casi en 1, los puntos dejan de mezclarse, y hasta el del centro acaba eligiendo un ala; con $m$ grande, se mezcla todo.' },
     ],
     primitivas({ q, paso, e }) {
       const al = ev(q(0), 0, 0.5), vis = ev(q(1), 0, 0.4), bajar = paso === 3 ? ev(q(3), 0, 0.45) * (1 - ev(q(3), 0.55, 1)) : 0;

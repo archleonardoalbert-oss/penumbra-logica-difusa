@@ -66,4 +66,5 @@ export const GLOSARIO = {
   'álgebra': { titulo: 'Álgebra', texto: 'Un conjunto con unas operaciones y unas leyes que cumplen. Estudia la forma de las operaciones, sea lo que sea lo que operan.', ejemplo: 'Los valores 0 y 1, con «y», «o» y «no»: el álgebra de Boole.' },
   'correcta': { titulo: 'Lógica correcta', texto: 'Todo lo que se demuestra con sus reglas es verdad en todas sus interpretaciones: no demuestra nada falso.', ejemplo: 'Si de los axiomas se deduce una fórmula, esa fórmula vale siempre 1.' },
   'completa': { titulo: 'Lógica completa', texto: 'Todo lo que es verdad en todas sus interpretaciones se puede demostrar con sus reglas: no le falta ninguna regla.', ejemplo: 'Si una fórmula vale siempre 1, existe una demostración de ella.' },
+  ESI: { titulo: 'ESI', texto: 'Una escala de cinco niveles usada en urgencias para decidir a quién atender primero (Emergency Severity Index). El 1 es lo más urgente, y el 5, lo que menos.', ejemplo: 'Un paro cardiaco es ESI 1. Una receta es ESI 5.' },
 };

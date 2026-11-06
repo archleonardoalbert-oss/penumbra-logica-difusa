@@ -59,16 +59,22 @@ export const CATALOGO = [
     listo('7-1-c-medias', 'Encontrar los grupos: c-medias difusas', ['alas-difusas', 'pertenencia-calc', 'cmedias-elegir', 'demuestra-centro']), listo('7-2-anfis', 'Reglas que se ajustan solas: ANFIS', ['entrena', 'gradiente-calc', 'anfis-elegir', 'demuestra-derivada']), listo('7-3-tipo-2', 'Dudar de la curva: conjuntos de tipo 2', ['ensancha', 'intervalo-calc', 'tipo2-elegir', 'demuestra-extremos']), listo('7-4-celulas', 'Tu propuesta: Células de Concepto Difusas', ['que-cambia', 'regla-ccd-calc', 'ccd-elegir', 'demuestra-producto']),
   ] },
   { id: 8, titulo: 'Solo para valientes', lema: 'La lógica misma, sin red.', posicion: [0.72, 0.86], conceptos: [
-    listo('8-1-bl', 'BL: la lógica de todas las normas', ['busca-residuo', 'residuo-calc', 'bl-elegir', 'demuestra-uno']), listo('8-2-lukasiewicz', 'Las tres grandes', ['busca-contraccion', 'negacion-calc', 'tres-elegir', 'demuestra-goedel']), listo('8-3-mtl', 'MTL: cuando la norma da un salto', ['cruza-salto', 'nilpotente-calc', 'mtl-elegir', 'demuestra-izquierda']), listo('8-4-algebra', 'El álgebra detrás de la lógica', ['busca-tabla', 'cadena-calc', 'algebra-elegir', 'demuestra-prelineal']), listo('8-5-completitud', 'Completitud: probar y ser verdad', ['encuentra-contra', 'valor-calc', 'completitud-elegir', 'demuestra-correccion']),
+    listo('8-1-bl', 'BL: la lógica de las normas continuas', ['busca-residuo', 'residuo-calc', 'bl-elegir', 'demuestra-uno']), listo('8-2-lukasiewicz', 'Las tres grandes', ['busca-contraccion', 'negacion-calc', 'tres-elegir', 'demuestra-goedel']), listo('8-3-mtl', 'MTL: cuando la norma da un salto', ['cruza-salto', 'nilpotente-calc', 'mtl-elegir', 'demuestra-izquierda']), listo('8-4-algebra', 'El álgebra detrás de la lógica', ['busca-tabla', 'cadena-calc', 'algebra-elegir', 'demuestra-prelineal']), listo('8-5-completitud', 'Completitud: probar y ser verdad', ['encuentra-contra', 'valor-calc', 'completitud-elegir', 'demuestra-correccion']),
   ] },
 ];
 
 export const todosLosConceptos = (cat = CATALOGO) => cat.flatMap((r) => r.conceptos);
 
+/** La parada que viene después en todo el curso, cruzando de región. Tras la última, null. */
+export function siguienteEnCurso(id, cat = CATALOGO) {
+  const L = todosLosConceptos(cat), i = L.findIndex((c) => c.id === id);
+  return L[i + 1] ?? null;
+}
+
 export function buscarConcepto(id, cat = CATALOGO) {
   for (const region of cat) {
     const i = region.conceptos.findIndex((c) => c.id === id);
-    if (i >= 0) return { region, concepto: region.conceptos[i], anterior: region.conceptos[i - 1] ?? null, siguiente: region.conceptos[i + 1] ?? null };
+    if (i >= 0) return { region, concepto: region.conceptos[i], anterior: region.conceptos[i - 1] ?? null, siguiente: siguienteEnCurso(id, cat) };
   }
   return null;
 }

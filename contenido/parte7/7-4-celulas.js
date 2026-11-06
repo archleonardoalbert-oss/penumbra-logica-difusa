@@ -13,7 +13,8 @@ const REGLAS = [
   { txt: 'NO dolor', esi: 4, f: (c) => 1 - c.dolor },
   { txt: 'traumatismo Y NO dolor', esi: 5, f: (c) => c.trauma * (1 - c.dolor) },
 ];
-export const nivelCCD = (c) => sugeno(REGLAS.map((r) => ({ fuerza: r.f(c), z: r.esi })));
+/** El nivel que sale, o null si ninguna regla se enciende: el sistema no tiene nada que decir. */
+export const nivelCCD = (c) => (REGLAS.some((r) => r.f(c) > 1e-9) ? sugeno(REGLAS.map((r) => ({ fuerza: r.f(c), z: r.esi }))) : null);
 const X_ESI = (v) => 800 + ((v - 1) / 4) * 250;
 
 export default {
@@ -34,7 +35,7 @@ export default {
       { dur: 2600, texto: 'Entra una nota de urgencias. Un modelo decisor no escribe nada: responde preguntas cerradas, con un porcentaje. <b style="color:#58c4dd;font-weight:400">Cada pregunta es una célula de concepto</b>, y ese porcentaje, lo fuerte que se enciende.' },
       { dur: 2800, texto: 'Esos porcentajes <b>ya son grados</b>. Entran en reglas que se pueden leer, con un «y» hecho con el producto: $0{,}9 \\cdot 0{,}7 = 0{,}63$.' },
       { dur: 2800, texto: 'Es un sistema de Sugeno: una media pesada de los niveles que piden las reglas. Sale <b style="color:#f4d345;font-weight:400">un nivel de urgencia, y su motivo</b>.' },
-      { dur: 3600, texto: 'Lo mejor: <b>se puede preguntar qué cambiaría la decisión</b>. Si el dolor hubiera salido 0,3, las reglas se reordenan, y el nivel baja. Un médico puede revisar justo eso.' },
+      { dur: 3600, texto: 'Lo mejor: <b>se puede preguntar qué cambiaría la decisión</b>. Si el dolor hubiera salido 0,3, las reglas se reordenan: la urgencia baja, es decir, el número sube. Un médico puede revisar justo eso.' },
     ],
     primitivas({ q, paso, e }) {
       const al = ev(q(0), 0, 0.4), reg = ev(q(1), 0, 0.5), sal = ev(q(2), 0, 0.5), baja = paso === 3 ? ev(q(3), 0, 0.4) * (1 - ev(q(3), 0.65, 1)) : 0;
@@ -55,8 +56,10 @@ export default {
       });
       N.push(rotulo([925, 30], R`\text{El nivel de urgencia}`, { clave: 'te', tam: 18, color: ORO, alfa: sal }));
       for (let n = 1; n <= 5; n++) N.push(punto([X_ESI(n), 200], { color: GRIS2, radio: 5, alfa: sal, halo: 0 }), rotulo([X_ESI(n), 200], String(n), { clave: `e${n}`, dy: 24, tam: 18, color: GRIS2, alfa: sal }));
-      N.push(linea([X_ESI(1), 200], [X_ESI(5), 200], { color: GRIS2, ancho: 1.6, alfa: sal }), punto([X_ESI(nivel), 200], { color: ORO, radio: 11, alfa: sal }));
-      N.push(rotulo([925, 130], R`\text{ESI } {\color{#f4d345}${coma(nivel)}}`, { clave: 'n', tam: 32, alfa: sal }));
+      N.push(linea([X_ESI(1), 200], [X_ESI(5), 200], { color: GRIS2, ancho: 1.6, alfa: sal }));
+      if (nivel !== null) N.push(punto([X_ESI(nivel), 200], { color: ORO, radio: 11, alfa: sal }));
+      N.push(rotulo([X_ESI(1), 200], R`\text{muy urgente}`, { clave: 'e-a', dy: 48, tam: 13, color: GRIS2, alfa: sal }), rotulo([X_ESI(5), 200], R`\text{no urgente}`, { clave: 'e-b', dy: 48, tam: 13, color: GRIS2, alfa: sal }));
+      N.push(rotulo([925, 130], nivel === null ? R`\text{Ninguna regla}` : R`\text{ESI } {\color{#f4d345}${coma(nivel)}}`, { clave: 'n', tam: 32, alfa: sal }));
       N.push(rotulo([925, 300], R`\text{Motivo: si ${REGLAS[mayor].txt}}`, { clave: 'mot', tam: 15, alfa: sal }), rotulo([925, 330], R`\text{con fuerza } ${coma(F[mayor])}`, { clave: 'mot2', tam: 15, color: GRIS2, alfa: sal }));
       N.push(rotulo([550, 530], R`\text{Reglas de ejemplo, escritas a mano para esta animación. No es un resultado clínico.}`, { clave: 'av', tam: 14, color: GRIS2, alfa: reg }));
       return N;
@@ -64,7 +67,7 @@ export default {
   },
   manipulacion: '<ul><li>Baja el dolor torácico: mira qué regla pasa a mandar, y cómo cambia el motivo.</li><li>Sube «le falta el aire»: otra regla toma el relevo, y el nivel se mantiene.</li></ul>',
   entender: [
-    { tipo: 'idea', etiqueta: 'La idea', texto: 'Tu propuesta, Células de Concepto Difusas, junta todo lo de esta región. Un modelo decisor, Jev, contesta preguntas concretas sobre la nota de un paciente. Cada pregunta es una neurona con significado. Y una capa de reglas difusas entrenable, de Sugeno, decide. El resultado se explica: no solo dice el nivel, sino por qué, y qué lo cambiaría.' },
+    { tipo: 'idea', etiqueta: 'La idea', texto: 'Tu propuesta, Células de Concepto Difusas, junta todo lo de esta región. Un modelo decisor, Jev, contesta preguntas concretas sobre la nota de un paciente de urgencias. El resultado es un nivel de la escala [[ESI]], de 1, lo más urgente, a 5. Cada pregunta es una neurona con significado. Y una capa de reglas difusas entrenable, de Sugeno, decide. El resultado se explica: no solo dice el nivel, sino por qué, y qué lo cambiaría.' },
     { tipo: 'ejemplo', texto: 'Con estas reglas de ejemplo, y las respuestas de la animación:', tabla: [['Regla', 'Fuerza', 'Pide'], ['Dolor Y sudor', '0,9 · 0,7 = 0,63', 'ESI 2'], ['Falta aire Y más de 65', '0,2 · 0,85 = 0,17', 'ESI 2'], ['NO dolor', '1 − 0,9 = 0,10', 'ESI 4'], ['Traumatismo Y NO dolor', '0,04 · 0,1 = 0,004', 'ESI 5']], cierre: 'Media pesada: unos 2,23. Nivel 2, con motivo: la primera regla.' },
     { tipo: 'simbolos', piezas: [
       { tex: R`c_k \in [0, 1]`, dice: 'Cuánto se enciende el concepto $k$: la probabilidad calibrada que da Jev, usada como grado.' },
@@ -84,7 +87,7 @@ export default {
     { titulo: 'Pregunta qué cambiaría', texto: 'Una explicación útil no solo dice por qué, también qué habría cambiado la decisión. Se llama explicación contrafactual.' },
   ],
   retos: [
-    { id: 'que-cambia', tipo: 'manipular', enunciado: R`Baja una sola respuesta, la del dolor, hasta que el nivel pase de $3$. ¿Cuánto hace falta?`, precision: (e) => (nivelCCD(e) >= 3 ? 1 : 0), prueba: { dolor: 0.3 }, pendiente: (e) => `Ahora, el nivel es ${nivelCCD(e).toFixed(2).replace('.', ',')}.`, pistas: ['Mira qué regla manda en cada momento.'], explicacion: 'Eso es una explicación contrafactual: «si esto hubiera sido distinto, la decisión también».' },
+    { id: 'que-cambia', tipo: 'manipular', enunciado: R`Baja una sola respuesta, la del dolor, hasta que el número de nivel llegue a $3$: menos urgente. ¿Cuánto hace falta?`, precision: (e) => ((nivelCCD(e) ?? 0) >= 3 ? 1 : 0), prueba: { dolor: 0.3 }, pendiente: (e) => (nivelCCD(e) === null ? 'Ahora no se enciende ninguna regla.' : `Ahora, el nivel es ${nivelCCD(e).toFixed(2).replace('.', ',')}.`), pistas: ['Mira qué regla manda en cada momento.'], explicacion: 'Eso es una explicación contrafactual: «si esto hubiera sido distinto, la decisión también».' },
     { id: 'regla-ccd-calc', tipo: 'calcular', enunciado: R`Una regla pide $a$ Y NO $b$. Si $a = 0{,}8$ y $b = 0{,}25$, ¿con qué fuerza se dispara, con el producto?`, respuesta: 0.6, tol: 0.001, pistas: [R`NO $b$ vale $1 - 0{,}25$.`], explicacion: R`$0{,}8 \cdot 0{,}75 = 0{,}6$.` },
     { id: 'ccd-elegir', tipo: 'elegir', enunciado: 'En esta propuesta, ¿qué parte se entrena?', opciones: ['Jev, el modelo que lee la nota', 'La capa de reglas difusas', 'Las dos a la vez', 'Ninguna: las reglas las escribe un médico'], correcta: 1, explicacion: 'Jev se usa tal cual: lo que se aprende, a partir de ejemplos, son las reglas.' },
     { id: 'demuestra-producto', tipo: 'demostrar', enunciado: R`Demuestra que, en $[0, 1]$, el producto nunca supera al mínimo: $a \cdot b \le \min(a, b)$.`, pistas: ['Como $b \\le 1$, ¿qué pasa al multiplicar $a$ por $b$?'],

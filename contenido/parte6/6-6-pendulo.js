@@ -20,7 +20,7 @@ function vuelo(a, atencion, F, norma, golpe) {
   if (!memo.has(k)) {
     if (memo.size > 200) memo.clear();
     const P = { anchoAngulo: a, anchoVel: atencion > 0 ? 2 / atencion : Infinity, F }, T = T_DE(norma);
-    memo.set(k, simular({ theta: INICIO / GRADOS, omega: 0, x: 0, v: 0 }, { T: TF, dt: DT, parar: true, fuerza: (s, t) => fuerzaPendulo(s.theta, s.omega, P, T) + (golpe && t >= 3 && t < 3.15 ? 40 : 0) }));
+    memo.set(k, simular({ theta: INICIO / GRADOS, omega: 0, x: 0, v: 0 }, { T: TF, dt: DT, parar: true, fuerza: (s, t) => fuerzaPendulo(s.theta, s.omega, P, T) + (golpe && t >= 3 && t < 3.15 ? 20 : 0) }));
   }
   return memo.get(k);
 }
@@ -29,7 +29,7 @@ const seSostiene = (tr) => tr.length === Math.round(TF / DT) + 1 && tr.slice(-10
 export default {
   id: '6-6-pendulo',
   titulo: 'El péndulo se sostiene',
-  puente: 'Tu controlador funciona, pero has tenido que elegir tú las piezas. ¿Y si un sistema pudiera aprenderlas de los datos? Es la siguiente región.',
+  puente: 'Se sostiene, pero el carro se escapa rodando. Falta lo que distingue a un juguete de una máquina real: diseñarlo con cuidado.',
   pregunta: 'Empezaste con un palo que siempre caía, y una pregunta: ¿se puede sostener razonando con palabras? Aquí están tus piezas. Vamos a ver.',
   escena: {
     id: 'pendulo-final', formato: 'plano', W: 1100, H: 620,
@@ -83,7 +83,7 @@ export default {
     { tipo: 'idea', etiqueta: 'La idea', texto: 'Un equilibrista no resuelve ecuaciones: si se inclina y además cae rápido, corrige fuerte; si se inclina pero ya vuelve, casi no hace nada. Eso, escrito en nueve reglas, sostiene el palo. No has hecho ningún modelo matemático del péndulo para escribirlas: bastó con el sentido común.' },
     { tipo: 'ejemplo', texto: 'La tabla entera: en cada casilla, cuánta fuerza pide la regla, como fracción de la máxima $F$.', tabla: [['', 'Gira ←', 'Quieto', 'Gira →'], ['Inclinado a la izq.', '−1', '−0,5', '0'], ['Recto', '−0,5', '0', '0,5'], ['Inclinado a la der.', '0', '0,5', '1']], cierre: 'Fíjate en la casilla de arriba a la derecha: inclinado a la izquierda, pero girando a la derecha. Ya está volviendo solo: no hay que hacer nada.' },
     { tipo: 'simbolos', piezas: [
-      { tex: R`\theta`, dice: 'Ángulo del palo respecto a la vertical. La letra griega «zeta».' },
+      { tex: R`\theta`, dice: 'Ángulo del palo respecto a la vertical. La letra griega «theta».' },
       { tex: R`\omega`, dice: 'A qué velocidad gira. La letra griega «omega».' },
       { tex: R`w_{ij} = T(\mu_i(\theta),\ \nu_j(\omega))`, dice: 'La fuerza de la regla en la fila $i$, columna $j$: combina con tu «y» las dos condiciones.' },
       { tex: R`k_{ij}`, dice: 'El número de esa casilla de la tabla.' },
@@ -94,7 +94,7 @@ export default {
       { texto: R`Con producto: $\sum_{ij} w_{ij} = (\sum_i \mu_i)(\sum_j \nu_j) = 1$, luego no hay que dividir.`, porque: 'La suma de un producto de grados se factoriza.' },
       { texto: R`$F = F_{\max} \sum_{ij} \mu_i \nu_j \dfrac{i + j}{2} = \dfrac{F_{\max}}{2}\left(\sum_i i\mu_i + \sum_j j\nu_j\right) = \dfrac{F_{\max}}{2}(u + v)$.`, porque: 'Se reparte la suma, y se usa que cada lista de grados suma 1.' },
     ] },
-    { tipo: 'nota', titulo: 'Sin engañarte', texto: 'Dos cosas honestas. Fíjate en que el carro sigue rodando: no le pedimos que se quede en su sitio, y en un riel real se saldría; haría falta otra entrada, la posición. Y en este caso, tan simétrico, un controlador clásico iguala al difuso, como acabas de demostrar. Lo difuso destaca cuando no hay un modelo, y cuando hay un experto al que preguntarle.' },
+    { tipo: 'nota', titulo: 'Sin engañarte', texto: 'Dos cosas honestas. Fíjate en que el carro sigue rodando: no le pedimos que se quede en su sitio, y en un riel real se saldría. Lo arreglas en la siguiente parada. Y en este caso, tan simétrico, con producto y dentro de los anchos, un controlador clásico iguala al difuso: es lo que acabas de demostrar. Lo difuso destaca cuando no hay un modelo, y cuando hay un experto al que preguntarle.' },
   ],
   tecnicas: [
     { titulo: 'Abre la caja', texto: 'Ante un sistema que funciona, intenta simplificarlo en un caso cómodo. Suele aparecer algo conocido, y entiendes por qué funciona.' },

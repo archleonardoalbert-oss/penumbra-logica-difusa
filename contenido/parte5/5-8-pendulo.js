@@ -15,6 +15,9 @@ const vuelo = (s) => {
   return memo.get(k);
 };
 
+/** El gráfico solo enseña 1,2 s; el reto comprueba bastante más, para no aprobar lo que se cae luego. */
+const aguanta = (s) => simular({ theta: 5 / GRADOS, omega: 0, x: 0, v: 0 }, { T: 4, dt: 0.005, parar: true, fuerza: (e) => 18 * s * (der(e.theta) - izq(e.theta)) }).every((v) => Math.abs(v.theta) * GRADOS < 45);
+
 export default {
   id: '5-8-pendulo',
   titulo: 'Tu péndulo: su primera regla',
@@ -65,7 +68,7 @@ export default {
     { titulo: 'Prueba el signo', texto: 'En un sistema físico, antes de ajustar magnitudes, comprueba el sentido de cada acción. Un signo mal puesto convierte una corrección en una catástrofe.' },
   ],
   retos: [
-    { id: 'elige-signo', tipo: 'manipular', enunciado: 'Elige el sentido y la fuerza del empuje: el ángulo no debe llegar a 45 grados.', precision: (e) => (vuelo(e.s).every((v) => Math.abs(v.theta) * GRADOS < 45) ? 1 : 0), prueba: { s: 0.8 }, guardar: (e) => ({ signoReglas: Math.sign(e.s), fuerzaMaxima: 18 * Math.abs(e.s) }), pendiente: () => 'El palo se cae. Prueba en el otro sentido, o más fuerte.', pistas: ['Con una escoba en la mano: si se cae hacia un lado, ¿hacia dónde mueves la mano?'], explicacion: 'Hacia donde cae: el carro se pone debajo. Guardado en tu taller.' },
+    { id: 'elige-signo', tipo: 'manipular', enunciado: 'Elige el sentido del empuje, con al menos media potencia: durante 4 segundos, el ángulo no debe llegar a 45 grados.', precision: (e) => (Math.abs(e.s) >= 0.5 && aguanta(e.s) ? 1 : 0), prueba: { s: 0.8 }, guardar: (e) => ({ fuerzaMaxima: 18 * Math.abs(e.s) }), pendiente: () => 'El palo se cae. Prueba en el otro sentido, o más fuerte.', pistas: ['Con una escoba en la mano: si se cae hacia un lado, ¿hacia dónde mueves la mano?'], explicacion: 'Hacia donde cae: el carro se pone debajo. Guardado en tu taller.' },
     { id: 'peso-regla', tipo: 'calcular', enunciado: R`Con $F_{\max} = 18$ y grado $0{,}25$ en «a la derecha», ¿qué fuerza pide la regla?`, respuesta: 4.5, tol: 0.01, pistas: [R`$g \cdot F_{\max}$.`], explicacion: R`$0{,}25 \cdot 18 = 4{,}5$.` },
   ],
   referencias: ['C. W. Anderson, A. G. Barto, R. S. Sutton (1983): el carro y la varilla.', 'H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., 2001, cap. 11.'],

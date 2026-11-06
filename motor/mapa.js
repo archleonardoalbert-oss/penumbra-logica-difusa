@@ -121,7 +121,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     const id = enfocada ?? fijada, r = catalogo.find((x) => x.id === id);
     if (!r) {
       const sig = siguienteConcepto(catalogo, progreso);
-      if (!sig) { rellenar(h('h2', { textContent: 'Has recorrido todo lo escrito' }), h('p', { textContent: 'Tus colinas brillan. Vuelve a cualquier parada, o espera a la siguiente región.' })); return; }
+      if (!sig) { rellenar(h('h2', { textContent: 'Has recorrido todo el curso' }), h('p', { textContent: 'Tus colinas brillan. Vuelve a cualquier parada cuando quieras.' })); return; }
       const ir = h('button', { type: 'button', className: 'boton-seguir', textContent: 'Continuar el camino →' });
       ir.addEventListener('click', () => volarA(sig));
       rellenar(h('p', { className: 'rotulo-etapa', textContent: 'Tu siguiente parada' }), h('h2', { textContent: sig.titulo }), h('p', { className: 'tenue', textContent: `Región ${sig.region.id}: ${sig.region.titulo}` }), ir,

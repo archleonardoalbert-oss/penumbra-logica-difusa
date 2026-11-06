@@ -9,8 +9,8 @@ const LISTA = [LOGICAS.lukasiewicz, LOGICAS.godel, LOGICAS.producto], DOM = [0, 
 
 export default {
   id: '8-1-bl',
-  titulo: 'BL: la lógica de todas las normas',
-  puente: 'BL es lo que tienen en común [[todas las normas|norma T]]. Ahora, añadiendo un solo axioma cada vez, salen las tres lógicas clásicas de los grados.',
+  titulo: 'BL: la lógica de las normas continuas',
+  puente: 'BL es lo que tienen en común [[todas las normas|norma T]] continuas. Ahora, añadiendo un solo axioma cada vez, salen las tres lógicas clásicas de los grados.',
   pregunta: 'Te lo advertimos al principio: lo que tiene grados es la verdad de las frases, no el razonamiento. Las reglas para deducir son tan exactas como las clásicas. ¿Cuáles son?',
   escena: {
     id: 'bl', formato: 'plano', W: 1100, H: 540,
@@ -63,7 +63,8 @@ export default {
       { tex: R`(\varphi \,\&\, (\varphi \to \psi)) \to (\psi \,\&\, (\psi \to \varphi))`, dice: 'El «y débil» también se puede cambiar de orden.' },
     ] },
     { tipo: 'simbolos', etiqueta: 'Los axiomas', intro: 'El corazón, como axioma.', piezas: [
-      { tex: R`(\varphi \to (\psi \to \chi)) \to ((\varphi \,\&\, \psi) \to \chi)`, dice: 'Juntar dos condiciones en una, y al revés: es el corazón escrito como axioma.' },
+      { tex: R`(\varphi \to (\psi \to \chi)) \to ((\varphi \,\&\, \psi) \to \chi)`, dice: 'Juntar dos condiciones en una.' },
+      { tex: R`((\varphi \,\&\, \psi) \to \chi) \to (\varphi \to (\psi \to \chi))`, dice: 'Y al revés: separarlas. Juntos son el corazón, escrito como axioma.' },
     ] },
     { tipo: 'simbolos', etiqueta: 'Los axiomas', intro: 'Y los dos últimos.', piezas: [
       { tex: R`((\varphi \to \psi) \to \chi) \to (((\psi \to \varphi) \to \chi) \to \chi)`, dice: 'Por casos: si $\\chi$ sale tanto suponiendo $\\varphi \\to \\psi$ como $\\psi \\to \\varphi$, sale siempre. Solo tiene sentido porque los grados se comparan todos.' },

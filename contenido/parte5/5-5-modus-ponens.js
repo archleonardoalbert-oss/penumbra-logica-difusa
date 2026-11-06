@@ -66,7 +66,7 @@ export default {
       { texto: R`Como $\mu_B(y)$ es fijo, sale del [[supremo]]: $\min\big(\sup_x \min(\mu_{A'}(x), \mu_A(x)),\ \mu_B(y)\big)$.`, porque: 'Para un número fijo $c$: $\\sup_x \\min(u(x), c) = \\min(\\sup_x u(x), c)$. Vale porque el mínimo con $c$ es continuo y creciente.' },
       { texto: R`Lo que queda dentro es exactamente $h$. Luego $\mu_{B'}(y) = \min(h,\ \mu_B(y))$.`, porque: 'Definición de $h$.' },
     ] },
-    { tipo: 'nota', titulo: 'Y si fuera el producto', texto: 'Si se usa el producto en vez del mínimo, $B$ no se corta, sino que se escala: $h \\cdot \\mu_B(y)$. Conserva la forma de la curva. Es la otra opción habitual.' },
+    { tipo: 'nota', titulo: 'Y si fuera el producto', texto: 'Si se usa el producto en todos los pasos, $h$ pasa a ser $\\sup_x \\mu_{A\'}(x)\\, \\mu_A(x)$, y $B$ no se corta, sino que se escala: $h \\cdot \\mu_B(y)$. Conserva la forma de la curva. Es la otra opción habitual.' },
   ],
   tecnicas: [
     { titulo: 'Saca lo que no depende', texto: 'Dentro de un [[supremo]] en $x$, lo que no depende de $x$ se puede sacar. Es como sacar factor común.' },
