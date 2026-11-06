@@ -47,7 +47,7 @@ export default {
     { tipo: 'nota', titulo: 'Las personas no usan el mínimo', texto: 'Zimmermann y Zysno midieron cómo combina «y» la gente, y no encaja ni con el mínimo ni con el producto. Las personas <em>compensan</em>: si algo es muy bueno en un aspecto, perdonan un poco el otro. Para eso propusieron un operador con botón, entre el «y» y el «o». La mejor regla depende de para qué la quieres.' },
   ],
   tecnicas: [
-    { titulo: 'Atrapa entre dos', texto: 'Para saber a qué tiende algo difícil, busca una cota por abajo y otra por arriba que tiendan al mismo número.' },
+    { titulo: 'Atrapa entre dos', texto: 'Para saber a qué tiende algo difícil, busca un límite por abajo y otro por arriba que tiendan al mismo número.' },
     { titulo: 'Si dudas entre dos, busca la familia', texto: 'Cuando dos opciones parecen razonables, muchas veces son extremos de una misma familia. Un parámetro lo resuelve.' },
   ],
   retos: [
