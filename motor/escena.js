@@ -70,7 +70,7 @@ function leerFijado() {
   } catch { return null; }
 }
 
-export function montarEscena(contenedor, def, { textos = null, controles = null, alCambiar = null } = {}) {
+export function montarEscena(contenedor, def, { textos = null, controles = null, alCambiar = null, teclado: usaTeclado = true } = {}) {
   const usaGL = def.formato !== 'plano';
   const lienzo = crearLienzo(contenedor, { W: def.W, H: def.H, gl: usaGL });
   const entradas = crearEntradas(def), n = def.pasos.length;
@@ -256,7 +256,7 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
     if (ev.key === 'ArrowRight') avanzar();
     if (ev.key === 'ArrowLeft') retroceder();
   };
-  document.addEventListener('keydown', teclado);
+  if (usaTeclado) document.addEventListener('keydown', teclado);
 
   // --- bucle
   lienzo.alTamano(() => { sucio = true; });

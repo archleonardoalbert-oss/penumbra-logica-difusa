@@ -28,7 +28,7 @@ export default {
     primitivas({ q, paso, e }) {
       const a = paso >= 1 ? mix(0.02, e.alfa, ev(q(1), 0, 0.85)) : 0.02, r = radio(a), de = ev(q(0), 0.15, 1);
       const P = [marco({ x: [0, 1], y: [0, 1], z: [0, 1] }, { alfa: ev(q(0), 0, 0.3), paredX: GRIS2, paredY: GRIS2, etiquetas: { x: 'x', y: 'y', z: R`\mu` } })];
-      const abre = paso >= 3 ? 0.5 * ev(q(3), 0, 0.5) : 0;
+      const abre = paso === 3 ? 0.5 * ev(q(3), 0, 0.5) : paso > 3 ? 0.5 * (1 - ev(q(4), 0, 0.5)) : 0;
       if (de > 0) P.push(terreno(f, { glsl: GLSL, desde: Math.max(1 - de, abre) }));
       const pl = ev(q(1), 0, 0.3);
       if (pl > 0) {

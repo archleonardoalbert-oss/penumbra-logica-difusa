@@ -28,8 +28,9 @@ function listaPlana(raiz, catalogo, progreso) {
 export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } = {}) {
   const progreso = crearProgreso(almacen);
   const cabecera = h('header', { className: 'mapa-cabecera' }, tituloDifuso('Penumbra'), h('p', { className: 'lema', textContent: 'Un camino por la lógica difusa: de lo que tiene borde a lo que no.' }));
-  const pagina = h('main', { className: 'pagina portada' }, cabecera);
+  const pagina = h('main', { className: 'portada' });
   raiz.replaceChildren(pagina);
+  pagina.append(cabecera);
   const pie = () => {
     const zona = h('div', { className: 'mapa-pie' });
     const inicio = h('button', { type: 'button', textContent: 'Empezar de cero' });
@@ -51,12 +52,14 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     return null;
   }
 
-  const zonaMapa = h('div', { className: 'mapa-lienzo' }), panel = h('aside', { className: 'mapa-panel' });
+  const zonaMapa = h('div', { className: 'mapa-lienzo' }), panel = h('aside', { className: 'mapa-panel' }), cuerpoPanel = h('div', { className: 'panel-cuerpo' });
   const indice = h('nav', { className: 'mapa-indice', ariaLabel: 'Regiones' });
-  pagina.append(h('div', { className: 'mapa-rejilla' }, zonaMapa, panel), indice, pie());
+  panel.append(cuerpoPanel, indice, pie());
+  pagina.prepend(zonaMapa);
+  pagina.append(panel);
 
   const lienzo = crearLienzo(zonaMapa, { W, H: HH, gl: true });
-  const r3 = crearRender3D(lienzo, { cx: 550, cy: 175, S: 480 });
+  const r3 = crearRender3D(lienzo, { cx: 430, cy: 232, S: 450 });
   const glsl = glslMapa(catalogo);
   let camara = { yaw: -0.62, pitch: 0.92 }, t = matchMedia('(prefers-reduced-motion: reduce)').matches ? 9 : 0;
   let enfocada = null, fijada = null;
@@ -89,42 +92,62 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     catalogo.forEach((r, i) => {
       const p = cima(r, g), activa = enfocada === r.id || fijada === r.id;
       lista.push(punto(p, { radio: activa ? 8 : 5, color: activa ? [255, 255, 255] : [244, 211, 69], alfa: s }));
-      lista.push(rotulo(p, `\\text{${r.titulo}}`, { clave: `r${r.id}`, dy: -24, tam: activa ? 21 : 18, color: activa ? [255, 255, 255] : [232, 228, 216], alfa: s }));
+      lista.push(rotulo(p, `\\text{${r.titulo}}`, { clave: `r${r.id}`, dy: -24, tam: activa ? 19 : 15, color: activa ? [255, 255, 255] : [232, 228, 216], alfa: s }));
     });
     return lista;
   }
 
   let vuelo = null;
-  const pintar = () => { lienzo.aplicar(); r3.dibujar(prims(), vuelo ? { ...camara, ...vuelo.vista(t) } : camara); };
+  const pintar = () => { lienzo.aplicar(); r3.dibujar(prims(), vuelo ? { ...camara, ...vuelo.vista(t) } : { ...camara, ...vista }); };
 
   /** Al continuar, la cámara cae sobre la colina y la página se funde: no es un enlace más, es seguir andando. */
   function volarA(sig) {
     const destino = `concepto.html?c=${sig.id}`;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { location.href = destino; return; }
     const g = grados(), [px, py] = r3.proyectar(cima(sig.region, g)), t0 = t, Z = 3;
-    vuelo = { vista: (tt) => { const k = ev(tt - t0, 0, 0.9), z = mix(1, Z, k); return { S: 480 * z, cx: mix(550, 550 - (px - 550) * Z, k), cy: mix(175, 320 - (py - 175) * Z, k) }; } };
+    vuelo = { vista: (tt) => { const k = ev(tt - t0, 0, 0.9), z = mix(1, Z, k); return { S: vista.S * z, cx: mix(vista.cx, 430 - (px - vista.cx) * Z, k), cy: mix(vista.cy, 320 - (py - vista.cy) * Z, k) }; } };
     pagina.classList.add('fundiendo');
     setTimeout(() => { location.href = destino; }, 880);
   }
 
+  let huella = '';
+  /** Solo se anima el panel si cambia de verdad lo que dice. */
+  function rellenar(...hijos) {
+    const clave = hijos.map((x) => x?.textContent ?? '').join('|');
+    if (clave !== huella) { huella = clave; cuerpoPanel.style.animation = 'none'; void cuerpoPanel.offsetWidth; cuerpoPanel.style.animation = ''; }
+    cuerpoPanel.replaceChildren(...hijos);
+  }
   function pintarPanel() {
     const id = enfocada ?? fijada, r = catalogo.find((x) => x.id === id);
     if (!r) {
       const sig = siguienteConcepto(catalogo, progreso);
-      if (!sig) { panel.replaceChildren(h('h2', { textContent: 'Has recorrido todo lo escrito' }), h('p', { textContent: 'Tus colinas brillan. Vuelve a cualquier parada, o espera a la siguiente región.' })); return; }
+      if (!sig) { rellenar(h('h2', { textContent: 'Has recorrido todo lo escrito' }), h('p', { textContent: 'Tus colinas brillan. Vuelve a cualquier parada, o espera a la siguiente región.' })); return; }
       const ir = h('button', { type: 'button', className: 'boton-seguir', textContent: 'Continuar el camino →' });
       ir.addEventListener('click', () => volarA(sig));
-      panel.replaceChildren(h('p', { className: 'rotulo-etapa', textContent: 'Tu siguiente parada' }), h('h2', { textContent: sig.titulo }), h('p', { className: 'tenue', textContent: `Región ${sig.region.id}: ${sig.region.titulo}` }), ir,
+      rellenar(h('p', { className: 'rotulo-etapa', textContent: 'Tu siguiente parada' }), h('h2', { textContent: sig.titulo }), h('p', { className: 'tenue', textContent: `Región ${sig.region.id}: ${sig.region.titulo}` }), ir,
         h('p', { className: 'tenue', textContent: 'El camino dorado es lo que llevas. Las colinas crecen con lo que demuestras en los retos; mirar no sube nada.' }));
       return;
     }
     const { el } = barraGrado(progreso.gradoRegion(r.id, catalogo));
-    panel.replaceChildren(h('p', { className: 'tenue', textContent: `Región ${r.id}` }), h('h2', { textContent: r.titulo }), h('p', { className: 'lema', textContent: r.lema }), el, fijada === r.id ? listaConceptos(r, progreso) : h('p', { className: 'tenue', textContent: 'Haz clic para ver sus conceptos.' }));
+    const salir = h('button', { type: 'button', className: 'boton-atras', textContent: '← Ver todo el camino' });
+    salir.addEventListener('click', () => abrir(null));
+    rellenar(fijada === r.id ? salir : '', h('p', { className: 'tenue', textContent: `Región ${r.id}` }), h('h2', { textContent: r.titulo }), h('p', { className: 'lema', textContent: r.lema }), el, fijada === r.id ? listaConceptos(r, progreso) : h('p', { className: 'tenue', textContent: 'Haz clic para ver sus conceptos.' }));
   }
 
-  const abrir = (id) => { fijada = id; enfocada = null; pintarPanel(); };
+  /** Abrir una región acerca la cámara a su colina; soltarla vuelve a la vista completa. */
+  let vista = { S: 450, cx: 430, cy: 232 }, objetivo = { ...vista };
+  const VISTA_BASE = { S: 450, cx: 430, cy: 232 };
+  const enfocarRegion = (id) => {
+    if (id === null) { objetivo = { ...VISTA_BASE }; return; }
+    const r = catalogo.find((x) => x.id === id), p = r3.proyectar(cima(r, grados())), Z = 1.45;
+    const sx = vista.S / VISTA_BASE.S, bx = VISTA_BASE.cx + (p[0] - vista.cx) / sx, by = VISTA_BASE.cy + (p[1] - vista.cy) / sx;
+    objetivo = { S: VISTA_BASE.S * Z, cx: 430 - (bx - VISTA_BASE.cx) * Z, cy: 330 - (by - VISTA_BASE.cy) * Z };
+  };
+  const abrir = (id) => { fijada = id; enfocada = null; enfocarRegion(id); indice.querySelectorAll('button').forEach((b) => b.classList.toggle('activa', b.dataset.region === String(id))); pintarPanel(); };
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && fijada !== null) abrir(null); });
   catalogo.forEach((r) => {
     const b = h('button', { type: 'button', textContent: `${r.id}. ${r.titulo}` });
+    b.dataset.region = String(r.id);
     b.addEventListener('click', () => abrir(r.id));
     indice.append(b);
   });
@@ -158,6 +181,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   alCambiar = () => { pintarPanel(); };
   lienzo.animar((dt) => {
     t += dt;
+    for (const k of ['S', 'cx', 'cy']) vista[k] += (objetivo[k] - vista[k]) * Math.min(1, dt * 5);
     pintar();
   });
   pintarPanel();

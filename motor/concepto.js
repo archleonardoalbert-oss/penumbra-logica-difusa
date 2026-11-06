@@ -66,56 +66,72 @@ function instalarGlosario() {
     tarjeta.hidden = false;
     const r = b.getBoundingClientRect(), w = Math.min(360, innerWidth - 24);
     tarjeta.style.width = `${w}px`;
-    tarjeta.style.left = `${Math.max(12, Math.min(innerWidth - w - 12, r.left + scrollX))}px`;
-    tarjeta.style.top = `${r.bottom + scrollY + 8}px`;
+    tarjeta.style.left = `${Math.max(12, Math.min(innerWidth - w - 12, r.left))}px`;
+    const abajo = r.bottom + 8, cabe = abajo + 230 < innerHeight;
+    tarjeta.style.top = cabe ? `${abajo}px` : 'auto';
+    tarjeta.style.bottom = cabe ? 'auto' : `${innerHeight - r.top + 8}px`;
   });
   document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') tarjeta.hidden = true; });
 }
 
-// ---------------------------------------------------------------- entenderlo, poco a poco
+// ---------------------------------------------------------------- entenderlo, un latido cada vez
 const pasoDemo = (p) => h('li', {}, html('div', p.texto, 'texto'), p.porque ? html('div', p.porque, 'porque') : null);
+const ETIQUETA_BLOQUE = { idea: 'La idea', ejemplo: 'Con números', simbolos: 'Pieza a pieza', formal: 'Con rigor', nota: 'Fíjate', demo: 'Demostración' };
 
-/** Convierte los bloques en una secuencia de apariciones: cada «Seguir» añade solo una cosa nueva. */
+/**
+ * Cada latido es lo que se ve de una vez. Un grupo (por ejemplo, una fórmula leída pieza a pieza) se va llenando:
+ * sus latidos añaden al mismo espacio. Al cambiar de grupo, la pantalla se limpia: nunca hay un muro acumulado.
+ * Devuelve { grupos: [{ etiqueta, primero, ultimo }], latidos: [{ grupo, pintar(contenedor) }] }.
+ */
 function secuencia(c) {
-  const s = [];
+  const latidos = [], grupos = [];
+  const grupo = (etiqueta) => { grupos.push({ etiqueta, primero: latidos.length, ultimo: latidos.length }); return grupos.length - 1; };
+  const nuevo = (g, pintar) => { latidos.push({ grupo: g, pintar }); grupos[g].ultimo = latidos.length - 1; };
   const bloques = c.entender ?? c.rigor.map((b) => ({ tipo: b.pasos ? 'demo' : b.tipo === 'NOTA' ? 'nota' : b.tipo === 'EJ' ? 'ejemplo' : 'formal', titulo: b.titulo, tex: b.tex, texto: b.tex, pasos: b.pasos, valiente: b.valiente, cartelas: b.cartelas }));
   for (const b of bloques) {
-    if (b.tipo === 'idea') s.push(() => html('p', b.texto, 'idea'));
+    const g = grupo(b.etiqueta ?? (b.titulo && b.tipo !== 'formal' ? b.titulo : ETIQUETA_BLOQUE[b.tipo]));
+    if (b.tipo === 'idea') nuevo(g, (k) => k.append(html('p', b.texto, 'idea')));
     else if (b.tipo === 'ejemplo') {
-      s.push(() => h('div', { className: 'ejemplo' }, h('p', { className: 'rotulo-etapa', textContent: 'Con números' }), html('p', b.texto),
-        b.tabla ? h('table', { className: 'tabla-ejemplo' }, h('tbody', {}, b.tabla.map((fila) => h('tr', {}, fila.map((v, i) => h(i ? 'td' : 'th', { innerHTML: prosa(v) })))))) : null,
-        b.cierre ? html('p', b.cierre, 'cierre') : null));
+      nuevo(g, (k) => k.append(h('p', { className: 'rotulo-etapa', textContent: 'Con números' }), html('p', b.texto),
+        b.tabla ? h('table', { className: 'tabla-ejemplo' }, h('tbody', {}, b.tabla.map((fila) => h('tr', {}, fila.map((v, i) => h(i ? 'td' : 'th', { innerHTML: prosa(v) })))))) : ''));
+      if (b.cierre) nuevo(g, (k) => k.append(html('p', b.cierre, 'cierre')));
     } else if (b.tipo === 'simbolos') {
-      let lista;
-      s.push(() => {
-        lista = h('dl', { className: 'lectura' });
-        return h('div', { className: 'simbolos' }, h('p', { className: 'rotulo-etapa', textContent: 'Pieza a pieza' }), b.intro ? html('p', b.intro) : null, lista);
-      });
-      b.piezas.forEach((p, i) => {
-        const fila = () => h('div', { className: 'pieza' }, h('dt', { innerHTML: texto(p.tex) }), h('dd', { innerHTML: prosa(p.dice) }));
-        if (i === 0) { const prev = s.pop(); s.push(() => { const r = prev(); lista.append(fila()); return r; }); } else s.push(() => { const f = fila(); lista.append(f); return f; });
-      });
-      if (b.todo) s.push(() => h('div', { className: 'todo-junto' }, h('p', { className: 'rotulo-etapa', textContent: 'Todo junto' }), h('div', { className: 'formula-grande', innerHTML: texto(b.todo, true) }), b.lee ? html('p', b.lee) : null));
+      const lista = (k) => { let l = k.querySelector('.lectura'); if (!l) { k.append(h('p', { className: 'rotulo-etapa', textContent: 'Pieza a pieza' })); if (b.intro) k.append(html('p', b.intro)); l = h('dl', { className: 'lectura' }); k.append(l); } return l; };
+      b.piezas.forEach((p) => nuevo(g, (k) => lista(k).append(h('div', { className: 'pieza' }, h('dt', { innerHTML: texto(p.tex) }), h('dd', { innerHTML: prosa(p.dice) })))));
+      if (b.todo) {
+        const gt = grupo('Todo junto');
+        nuevo(gt, (k) => k.append(h('p', { className: 'rotulo-etapa', textContent: 'Todo junto' }), h('div', { className: 'formula-grande', innerHTML: texto(b.todo, true) }), b.lee ? html('p', b.lee) : ''));
+      }
     } else if (b.tipo === 'formal') {
-      s.push(() => h('div', { className: 'formal' }, h('p', { className: 'rotulo-etapa', textContent: b.titulo ? `Ahora sí, con todo el rigor · ${b.titulo}` : 'Ahora sí, con todo el rigor' }), html('div', b.tex, 'formal-tex'), b.lee ? html('p', b.lee, 'cierre') : null));
+      nuevo(g, (k) => k.append(h('div', { className: 'formal' }, h('p', { className: 'rotulo-etapa', textContent: b.titulo ? `Ahora sí, con todo el rigor · ${b.titulo}` : 'Ahora sí, con todo el rigor' }), html('div', b.tex, 'formal-tex'))));
+      if (b.lee) nuevo(g, (k) => k.append(html('p', b.lee, 'cierre')));
     } else if (b.tipo === 'nota') {
-      s.push(() => h('aside', { className: 'nota' }, b.titulo ? h('b', { textContent: b.titulo }) : null, html('p', b.texto)));
+      nuevo(g, (k) => k.append(b.titulo ? h('b', { className: 'nota-titulo', textContent: b.titulo, style: 'font-weight:400' }) : '', html('p', b.texto, 'idea')));
     } else if (b.tipo === 'demo') {
-      if (b.plan) s.push(() => h('div', { className: 'demo-plan' }, h('p', { className: 'rotulo-etapa', textContent: b.valiente ? 'Un reto mayor' : 'Vamos a demostrarlo' }), h('b', { textContent: b.titulo ?? '' }), html('p', b.plan), b.tex ? html('p', b.tex) : null));
-      else s.push(() => h('div', { className: 'demo-plan' }, h('p', { className: 'rotulo-etapa', textContent: 'Vamos a demostrarlo' }), h('b', { textContent: b.titulo ?? '' }), b.tex ? html('p', b.tex) : null));
+      nuevo(g, (k) => k.append(h('p', { className: 'rotulo-etapa', textContent: b.valiente ? 'Un reto mayor' : 'Vamos a demostrarlo' }), h('b', { textContent: b.titulo ?? '', style: 'font-weight:400;display:block' }), b.plan ? html('p', b.plan) : '', b.tex ? html('p', b.tex) : ''));
       if (b.valiente) {
-        s.push(() => {
+        nuevo(g, (k) => {
           const cuerpo = h('ol', { className: 'razonamiento', hidden: true }, b.pasos.map(pasoDemo));
           const boton = h('button', { type: 'button', className: 'boton-valiente', textContent: '⚔ Demostración solo para valientes' });
-          boton.addEventListener('click', () => reproducirEntrada({ titulo: b.titulo ?? c.titulo, cartelas: b.cartelas, alTerminar: () => { cuerpo.hidden = false; pintarTex(cuerpo); cuerpo.scrollIntoView({ block: 'start' }); } }));
-          return h('div', {}, boton, cuerpo);
+          boton.addEventListener('click', () => reproducirEntrada({ titulo: b.titulo ?? c.titulo, cartelas: b.cartelas, alTerminar: () => { cuerpo.hidden = false; pintarTex(cuerpo); } }));
+          k.append(boton, cuerpo);
         });
-      } else b.pasos.forEach((p, i) => s.push(() => h('ol', { className: 'razonamiento', start: i + 1 }, pasoDemo(p))));
+      } else {
+        const gd = grupo('Paso a paso');
+        b.pasos.forEach((p) => nuevo(gd, (k) => {
+          let ol = k.querySelector('.razonamiento');
+          if (!ol) { ol = h('ol', { className: 'razonamiento' }); k.append(ol); }
+          ol.append(pasoDemo(p));
+        }));
+      }
     }
   }
-  if (c.tecnicas?.length) s.push(() => h('div', { className: 'te-llevas' }, h('p', { className: 'rotulo-etapa', textContent: 'Lo que te llevas' }), h('ul', { className: 'tecnicas' }, c.tecnicas.map((x) => h('li', {}, h('b', { innerHTML: x.titulo }), html('span', x.texto))))));
-  if (c.referencias?.length) s.push(() => h('details', { className: 'de-donde' }, h('summary', { textContent: 'De dónde sale esto' }), h('ul', { className: 'referencias' }, c.referencias.map((r) => h('li', { innerHTML: r })))));
-  return s;
+  if (c.tecnicas?.length) {
+    const g = grupo('Lo que te llevas');
+    nuevo(g, (k) => k.append(h('p', { className: 'rotulo-etapa', textContent: 'Lo que te llevas' }), h('ul', { className: 'tecnicas' }, c.tecnicas.map((x) => h('li', {}, h('b', { innerHTML: x.titulo }), html('span', x.texto)))),
+      c.referencias?.length ? h('details', { className: 'de-donde' }, h('summary', { textContent: 'De dónde sale esto' }), h('ul', { className: 'referencias' }, c.referencias.map((r) => h('li', { innerHTML: r })))) : ''));
+  }
+  return { grupos, latidos };
 }
 
 // ---------------------------------------------------------------- retos
@@ -216,7 +232,15 @@ const ETAPAS = [
 ];
 
 function mensajeAmable(raiz, titulo, t) {
-  raiz.replaceChildren(h('main', { className: 'pagina mensaje' }, tituloDifuso(titulo), h('p', { innerHTML: t }), h('a', { href: 'index.html', className: 'boton-mapa', textContent: 'Volver al mapa' })));
+  raiz.replaceChildren(h('main', { className: 'mensaje' }, tituloDifuso(titulo), h('p', { innerHTML: t }), h('a', { href: 'index.html', className: 'boton-mapa', textContent: 'Volver al mapa' })));
+}
+
+/** Cambia lo que se ve conservando lo que permanece (la escena, el título) y sugiriendo la dirección del avance. */
+function transicion(cambio, dir = 'adelante') {
+  const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!document.startViewTransition || reducido) { cambio(); return; }
+  document.documentElement.dataset.dir = dir;
+  document.startViewTransition(cambio);
 }
 
 export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } = {}) {
@@ -230,96 +254,180 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
 
   const progreso = crearProgreso(almacen === undefined ? tryLocal() : almacen);
   const grado = barraGrado(progreso.gradoConcepto(c.id, c.retos));
-  const titulo = tituloDifuso(c.titulo);
+  const titulo = tituloDifuso(c.titulo, 'h1');
+  titulo.classList.add('titulo-parada');
   const textos = h('div', { className: 'pasos-lista' }), controles = h('div', { className: 'escena-controles' }), zonaEscena = h('div', { className: 'escena-lienzo' });
-  const bloqueEscena = h('div', { className: 'bloque-escena' }, zonaEscena, textos, controles);
+  const bloqueLienzo = h('div', { className: 'bloque-lienzo' }, zonaEscena);
+  bloqueLienzo.style.setProperty('--ratio', String(c.escena.W / c.escena.H));
+  const encaje = h('div', { className: 'encaje' }, bloqueLienzo);
+  encaje.style.setProperty('--ratio', String(c.escena.W / c.escena.H));
 
-  bloqueEscena.style.setProperty('--ratio', String(c.escena.W / c.escena.H));
   const raiel = h('ol', { className: 'etapas' });
   const secciones = {};
-  const huecoMira = h('div', {}), huecoToca = h('div', { className: 'toca-escena' }), huecoRetos = h('div', { className: 'retos-escena' });
-  secciones.pregunta = h('section', { id: 'pregunta' }, html('p', c.pregunta, 'pregunta'));
+  const huecoMira = h('div', { className: 'hueco-mira' }), huecoToca = h('div', { className: 'hueco-escena' }), huecoRetos = h('div', { className: 'hueco-escena' });
+  secciones.pregunta = h('section', { id: 'pregunta', className: 'seccion-pregunta' }, html('p', c.pregunta, 'pregunta'));
   secciones.mira = h('section', { id: 'animacion' }, huecoMira);
-  secciones.toca = h('section', { id: 'manipulacion', className: 'toca' }, huecoToca, h('div', {}, h('h2', { textContent: 'Ahora, tú' }), html('div', c.manipulacion, 'manipulacion')));
-  const lectura = h('div', { className: 'lectura-guiada' });
-  secciones.entiende = h('section', { id: 'rigor' }, lectura);
-  secciones.demuestra = h('section', { id: 'retos', className: 'zona-retos' }, huecoRetos, h('div', { id: 'lista-retos' }));
+  const panelToca = h('div', { className: 'toca-panel' }, h('h2', { textContent: 'Ahora, tú' }), html('div', c.manipulacion, 'manipulacion'));
+  secciones.toca = h('section', { id: 'manipulacion', className: 'toca' }, huecoToca, panelToca);
+
+  const hilo = h('ol', { className: 'hilo' }), latido = h('div', { className: 'latido' }), latidoMarco = h('div', { className: 'latido-marco' }, latido);
+  secciones.entiende = h('section', { id: 'rigor', className: 'lectura-guiada' }, hilo, latidoMarco);
+
+  const pestanas = h('div', { className: 'pestanas-reto' }), listaRetos = h('div', { id: 'lista-retos', className: 'columna-reto' }, pestanas);
+  secciones.demuestra = h('section', { id: 'retos', className: 'zona-retos' }, listaRetos);
   const proxima = siguiente?.estado === 'listo' ? siguiente : null;
   const notaLlegada = h('p', { className: 'tenue' });
   secciones.llegada = h('section', { id: 'llegada', className: 'llegada' },
     h('p', { className: 'rotulo-etapa', textContent: 'Parada terminada' }), html('p', c.puente, 'puente'), notaLlegada,
     proxima ? h('a', { className: 'boton-seguir', href: `concepto.html?c=${proxima.id}`, textContent: `Siguiente parada: ${proxima.titulo} →` }) : h('a', { className: 'boton-seguir', href: 'index.html', textContent: 'Volver al mapa →' }));
 
-  const seguir = h('button', { type: 'button', className: 'boton-seguir' }), atras = h('button', { type: 'button', className: 'boton-atras', textContent: '← Volver' });
-  const pie = h('div', { className: 'pie-etapa' }, atras, seguir);
-  raiz.replaceChildren(h('main', { className: 'pagina concepto' }, rutaRegion(region, ficha, progreso),
-    h('header', { className: 'concepto-cabecera' }, titulo, grado.el), raiel, ...Object.values(secciones), pie));
+  const seguir = h('button', { type: 'button', className: 'boton-seguir' }), atras = h('button', { type: 'button', className: 'boton-atras', textContent: '← Volver' }), centro = h('div', { className: 'pie-centro' });
+  const pie = h('footer', { className: 'pie-etapa' }, atras, centro, seguir);
+  const escenario = h('main', { className: 'escenario' }, ...Object.values(secciones));
+  const app = h('div', { className: 'app' }, h('header', { className: 'barra-alta' }, rutaRegion(region, ficha, progreso), grado.el, titulo, raiel), escenario, pie);
+  raiz.replaceChildren(app);
 
-  const escena = montarEscena(zonaEscena, c.escena, { textos, controles, alCambiar: () => refrescarPie() });
+  const escena = montarEscena(zonaEscena, c.escena, { textos, controles, teclado: false, alCambiar: () => refrescarPie() });
   const escenaDisponible = c.escena.formato === 'plano' || !!escena.lienzo.gl;
-  raiz.querySelector('#lista-retos').append(...c.retos.map((reto) => tarjetaReto(reto, {
-    registrar: (r, nota) => { progreso.registrar(c.id, r, nota); grado.fijar(progreso.gradoConcepto(c.id, c.retos)); },
+  const botonesEscena = controles.querySelector('.escena-botones');
+
+  // --- retos, uno cada vez
+  const tarjetas = c.retos.map((reto) => tarjetaReto(reto, {
+    registrar: (r, nota) => {
+      progreso.registrar(c.id, r, nota);
+      grado.fijar(progreso.gradoConcepto(c.id, c.retos));
+      grado.el.classList.add('sube'); setTimeout(() => grado.el.classList.remove('sube'), 900);
+      pintarPestanas();
+    },
     notaInicial: progreso.notaReto(c.id, reto.id), escena, escenaDisponible,
-  })));
-  const conManipular = c.retos.some((r) => r.tipo === 'manipular');
+  }));
+  let iReto = 0;
+  function pintarPestanas() {
+    pestanas.replaceChildren(...c.retos.map((r, i) => {
+      const b = h('button', { type: 'button', textContent: `Reto ${i + 1}`, className: `${i === iReto ? 'actual' : ''} ${progreso.notaReto(c.id, r.id) > 0 ? 'hecho' : ''}` });
+      b.dataset.reto = r.id;
+      b.addEventListener('click', () => mostrarReto(i));
+      return b;
+    }));
+  }
+  function mostrarReto(i) {
+    iReto = i;
+    tarjetas.forEach((t, k) => { if (k === i) { if (!t.isConnected) listaRetos.append(t); } else t.remove(); });
+    const conEscena = c.retos[i].tipo === 'manipular' && escenaDisponible;
+    secciones.demuestra.classList.toggle('con-escena', conEscena);
+    if (conEscena && etapaId() === 'demuestra') { huecoRetos.replaceChildren(encaje, controles); if (!huecoRetos.isConnected) secciones.demuestra.append(huecoRetos); } else huecoRetos.remove();
+    pintarPestanas(); pintarTex(listaRetos); refrescarPie();
+  }
 
-  const apariciones = secuencia(c);
-  let mostrados = 0;
-  const mostrarSiguiente = () => {
-    const el = apariciones[mostrados++]();
-    if (!el.isConnected) { if (!lectura.contains(el)) lectura.append(el); }
-    pintarTex(lectura);
-    el.classList?.add('recien');
-    el.scrollIntoView?.({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  };
+  // --- lectura por latidos
+  const { grupos, latidos } = secuencia(c);
+  let iLatido = -1;
+  const itemsHilo = grupos.map((g) => {
+    const b = h('button', { type: 'button' }, h('i'), h('span', { textContent: g.etiqueta }));
+    b.addEventListener('click', () => mostrarLatido(g.ultimo));
+    const li = h('li', {}, b);
+    hilo.append(li);
+    return { li, b };
+  });
+  function mostrarLatido(i, animar = true) {
+    const anterior = iLatido;
+    iLatido = i;
+    const g = latidos[i].grupo, primero = grupos[g].primero;
+    const mismoGrupo = anterior >= 0 && latidos[anterior].grupo === g && i === anterior + 1;
+    if (mismoGrupo) {
+      const antes = new Set(latido.querySelectorAll('*'));
+      latidos[i].pintar(latido);
+      latido.querySelectorAll('*').forEach((el) => { if (!antes.has(el) && !antes.has(el.parentElement) && animar) el.classList.add('entra'); });
+    } else {
+      latido.replaceChildren();
+      for (let k = primero; k <= i; k++) latidos[k].pintar(latido);
+      if (animar) { latido.classList.remove('entra'); void latido.offsetWidth; latido.classList.add('entra'); }
+    }
+    pintarTex(latido);
+    latidoMarco.scrollTop = latidoMarco.scrollHeight;
+    itemsHilo.forEach(({ li, b }, k) => {
+      li.className = k < g ? 'hecho' : k === g ? 'actual' : '';
+      b.disabled = grupos[k].primero > Math.max(i, tope);
+    });
+    tope = Math.max(tope, i);
+    itemsHilo[g].li.scrollIntoView?.({ block: 'nearest' });
+    refrescarPie();
+  }
+  let tope = 0;
 
+  // --- etapas
   let etapa = 0;
+  const etapaId = () => ETAPAS[etapa].id;
   ETAPAS.forEach((e, i) => {
     const b = h('button', { type: 'button', textContent: e.nombre });
     b.addEventListener('click', () => irA(i));
     raiel.append(h('li', {}, b));
   });
+  const enMira = () => etapaId() === 'mira' && escenaDisponible;
 
   function refrescarPie() {
-    const e = ETAPAS[etapa];
+    const e = ETAPAS[etapa], ultimoPaso = escena.estado().paso >= c.escena.pasos.length - 1;
     let t = e.seguir;
-    const estadoEscena = escena.estado();
-    if (e.id === 'mira' && escenaDisponible && estadoEscena.paso < c.escena.pasos.length - 1) t = 'Siguiente paso';
-    if (e.id === 'entiende' && mostrados < apariciones.length) t = `Seguir leyendo · ${mostrados} de ${apariciones.length}`;
+    if (enMira() && !ultimoPaso) t = 'Siguiente paso';
+    if (e.id === 'entiende' && iLatido < latidos.length - 1) t = 'Seguir';
+    if (e.id === 'demuestra' && iReto < c.retos.length - 1) t = 'Siguiente reto';
     seguir.textContent = `${t} →`;
     seguir.hidden = !e.seguir;
     atras.hidden = etapa === 0;
+    if (e.id === 'entiende') centro.textContent = `${iLatido + 1} / ${latidos.length}`;
+    centro.className = 'pie-centro escena-contador';
   }
 
-  function irA(i) {
-    etapa = Math.max(0, Math.min(ETAPAS.length - 1, i));
+  function aplicarEtapa() {
     const e = ETAPAS[etapa];
     for (const [k, s] of Object.entries(secciones)) s.hidden = k !== e.id;
     [...raiel.children].forEach((li, k) => { li.className = k < etapa ? 'pasada' : k === etapa ? 'actual' : 'futura'; li.firstChild.setAttribute('aria-current', k === etapa ? 'step' : 'false'); });
     titulo.style.setProperty('--b', String(1 - etapa / (ETAPAS.length - 1)));
-    raiz.querySelector('main').dataset.etapa = e.id;
-    if (e.id === 'mira') huecoMira.append(bloqueEscena);
-    if (e.id === 'toca') { huecoToca.append(bloqueEscena); escena.irA(c.escena.pasos.length - 1); }
-    if (e.id === 'demuestra' && conManipular) huecoRetos.append(bloqueEscena);
-    if (e.id === 'entiende' && mostrados === 0) mostrarSiguiente();
+    app.dataset.etapa = e.id;
+    centro.replaceChildren();
+    if (e.id === 'mira') { huecoMira.replaceChildren(textos, encaje); centro.append(botonesEscena); controles.remove(); }
+    if (e.id === 'toca') { huecoToca.replaceChildren(encaje); panelToca.append(controles); escena.irA(c.escena.pasos.length - 1); }
+    if (e.id === 'demuestra') mostrarReto(iReto);
+    if (e.id === 'entiende' && iLatido < 0) mostrarLatido(0);
     if (e.id === 'llegada') notaLlegada.textContent = `Tu grado aquí: ${coma(progreso.gradoConcepto(c.id, c.retos))}. ${progreso.gradoConcepto(c.id, c.retos) < 0.7 ? 'Puedes seguir, y volver a los retos cuando quieras: nada se bloquea.' : 'Lo tienes.'}`;
     history.replaceState(null, '', `${location.pathname}${location.search}#${e.id}`);
     refrescarPie();
-    scrollTo?.({ top: 0 });
+  }
+  function irA(i) {
+    const j = Math.max(0, Math.min(ETAPAS.length - 1, i));
+    if (j === etapa && app.dataset.etapa) return;
+    const dir = j < etapa ? 'atras' : 'adelante';
+    etapa = j;
+    transicion(aplicarEtapa, dir);
   }
 
-  seguir.addEventListener('click', () => {
+  const adelante = () => {
     const e = ETAPAS[etapa];
-    if (e.id === 'mira' && escenaDisponible && escena.estado().paso < c.escena.pasos.length - 1) { escena.avanzar(); refrescarPie(); return; }
-    if (e.id === 'entiende' && mostrados < apariciones.length) { mostrarSiguiente(); refrescarPie(); return; }
-    irA(etapa + 1);
+    if (enMira() && escena.estado().paso < c.escena.pasos.length - 1) { escena.avanzar(); return; }
+    if (e.id === 'entiende' && iLatido < latidos.length - 1) { mostrarLatido(iLatido + 1); return; }
+    if (e.id === 'demuestra' && iReto < c.retos.length - 1) { mostrarReto(iReto + 1); return; }
+    if (e.seguir) irA(etapa + 1);
+  };
+  const retroceder = () => {
+    const e = ETAPAS[etapa];
+    if (enMira() && escena.estado().paso > 0) { escena.retroceder(); return; }
+    if (e.id === 'entiende' && iLatido > 0) { mostrarLatido(iLatido - 1); return; }
+    if (e.id === 'demuestra' && iReto > 0) { mostrarReto(iReto - 1); return; }
+    irA(etapa - 1);
+  };
+  seguir.addEventListener('click', adelante);
+  atras.addEventListener('click', retroceder);
+  document.addEventListener('keydown', (ev) => {
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName) || document.querySelector('.cine')) return;
+    if (ev.key === 'ArrowRight' || (ev.key === 'Enter' && ev.target.tagName !== 'BUTTON' && ev.target.tagName !== 'A')) { ev.preventDefault(); adelante(); }
+    if (ev.key === 'ArrowLeft') { ev.preventDefault(); retroceder(); }
   });
-  atras.addEventListener('click', () => irA(etapa - 1));
 
   const pedido = location.hash.slice(1), iPedido = ETAPAS.findIndex((e) => e.id === pedido);
-  irA(iPedido >= 0 ? iPedido : new URLSearchParams(location.search).has('paso') ? 1 : 0);
-  pintarTex(raiz);
-  return { escena, progreso, irA, leerTodo: () => { while (mostrados < apariciones.length) mostrarSiguiente(); pintarTex(lectura); refrescarPie(); } };
+  etapa = iPedido >= 0 ? iPedido : new URLSearchParams(location.search).has('paso') ? 1 : 0;
+  aplicarEtapa();
+  pintarTex(app);
+  return { escena, progreso, irA, leerTodo: () => { mostrarLatido(latidos.length - 1, false); } };
 }
 
 export function tryLocal() {
