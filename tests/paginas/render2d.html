@@ -1,0 +1,34 @@
+<!doctype html><meta charset="utf-8"><title>prueba 2D</title>
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<script src="../../vendor/katex/katex.min.js"></script>
+<body style="margin:0;background:#000"><div id="n" style="width:800px"></div><div id="p" style="width:800px"></div>
+<script type="module">
+import { crearLienzo } from '../../motor/lienzo.js';
+import { crearRenderNiebla } from '../../motor/renderNiebla.js';
+import { crearRenderPlano } from '../../motor/renderPlano.js';
+import { curva, linea, marco, punto, poligono, mapaCalor } from '../../motor/primitivas.js';
+
+const ln = crearLienzo(document.getElementById('n'), { W: 800, H: 400, gl: true });
+const niebla = crearRenderNiebla(ln);
+const pintaN = (e = {}) => { ln.aplicar(); niebla.dibujar({ nubes: [{ x: 200, y: 200, r: 100, color: [255, 255, 255] }], k: 1.45, operacion: 'ambos', previa: 'ambos', mezcla: 1, entrada: 1, isolineas: false, ...e }); };
+const leerN = (x, y) => {
+  pintaN();
+  const k = ln.escala(), b = new Uint8Array(4), gl = ln.gl;
+  gl.readPixels(Math.round(x * k), ln.glCanvas.height - Math.round(y * k), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, b);
+  return b[0];
+};
+window.nube = { centro: () => leerN(200, 200), borde: () => leerN(300, 200), lejos: () => leerN(700, 200),
+  escalones: () => { pintaN(); const k = ln.escala(), gl = ln.gl, w = 300, b = new Uint8Array(4 * w);
+    gl.readPixels(Math.round(310 * k), ln.glCanvas.height - Math.round(60 * k), w, 1, gl.RGBA, gl.UNSIGNED_BYTE, b);
+    let m = 0; for (let i = 4; i < 4 * w; i += 4) m = Math.max(m, Math.abs(b[i] - b[i - 4])); return m; } };
+
+const lp = crearLienzo(document.getElementById('p'), { W: 800, H: 400 });
+const pl = crearRenderPlano(lp, { x: [0, 10], y: [0, 1], caja: { x: 100, y: 50, w: 600, h: 300 } });
+lp.aplicar();
+pl.dibujar([ marco({ x: [0, 10], y: [0, 1] }, { etiquetas: { x: 'x', y: '\\mu' } }),
+  mapaCalor((x, y) => x / 10, {}), poligono([[1, 0], [2, 0], [2, 0.2]], { color: [80, 80, 80], alfa: 0.5 }),
+  curva((u) => [u, u / 10], [0, 10], { color: [255, 0, 0], ancho: 4 }),
+  linea([5, 0.5], [5, 0], { color: [0, 255, 0], ancho: 6 }), punto([5, 0.5], { color: [0, 0, 255], radio: 8 }) ]);
+window.plano = { aX: pl.aX, aY: pl.aY, deX: pl.deX, deY: pl.deY,
+  pixel: (x, y) => { const k = lp.escala(); return [...lp.g2d.getImageData(Math.round(x * k), Math.round(y * k), 1, 1).data]; } };
+</script>
