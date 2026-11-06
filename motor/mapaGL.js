@@ -5,22 +5,24 @@ import { ANCHO_CIMA, BASE, OCTAVAS, SIGMA, campoMapa, DOMINIO, DOMINIO_CERCA } f
 
 const ESCZ = 0.46, CAPAS_N = CAPAS.length;
 
+import { LUNA_DAZ, LUNA_KZ, LUNA_L, LUNA_R, hornearLuna } from './lunaGL.js';
+
 const CIELO = `
-uniform float uAlba;
+uniform float uAlba,uConLuna,uHaloLuna;
 vec3 cielo(vec3 v,vec3 sol){
  float e=max(v.z,0.),s=max(dot(v,sol),0.);
  vec3 c=mix(vec3(.0048,.011,.027),vec3(.0008,.0018,.006),smoothstep(0.,.14,e));
  c+=vec3(.10,.17,.27)*exp(-e*30.)*.07;
- float sl=max(dot(v,normalize(vec3(sol.xy,sol.z*.17))),0.);
- c+=vec3(.42,.52,.70)*pow(sl,40.)*.07;
- c+=vec3(.86,.90,1.)*pow(sl,400.)*.3*(1.-uAlba);
+ float sl=max(dot(v,normalize(vec3(mat2(cos(${LUNA_DAZ}),sin(${LUNA_DAZ}),-sin(${LUNA_DAZ}),cos(${LUNA_DAZ}))*sol.xy,sol.z*${LUNA_KZ}))),0.);
+ c+=vec3(.42,.52,.70)*pow(sl,40.)*.07*uConLuna*uHaloLuna;
+ c+=vec3(.62,.72,1.)*(pow(sl,180.)*.1+pow(sl,1100.)*.1)*(1.-uAlba)*uConLuna*uHaloLuna;
  if(uAlba>0.){
   // el sol asoma justo sobre el horizonte; la luz del suelo viene algo más alta, para que haya relieve
   vec3 so=normalize(vec3(sol.xy,sol.z*.36));float sa=max(dot(v,so),0.);
   vec3 d=mix(vec3(.46,.17,.085),vec3(.2,.105,.19),smoothstep(0.,.022,e));
   d=mix(d,vec3(.052,.08,.2),smoothstep(.016,.06,e));d=mix(d,vec3(.008,.02,.07),smoothstep(.05,.2,e));
   d+=vec3(1.,.5,.22)*pow(sa,18.)*.16*exp(-e*5.)+vec3(1.,.66,.36)*pow(sa,220.)*.42+vec3(1.,.86,.62)*pow(sa,2500.)*1.4;
-  d+=vec3(1.,.94,.82)*smoothstep(.99975,.99992,sa)*6.;
+  d+=mix(vec3(1.,.62,.34),vec3(1.,.94,.82),smoothstep(-.02,.1,so.z))*smoothstep(.99968,.99992,sa)*5.;
   d+=vec3(.82,.9,1.)*0.;
   c=mix(c,d,uAlba);
  }
@@ -85,7 +87,7 @@ void main(){
  vec2 w=p*2.1+vec2(uT*.006,-uT*.004);float n1=texture(uRuido,w).r,n2=texture(uRuido,w*2.3-vec2(uT*.009,0.)).g,bruma=smoothstep(.34,.72,n1*.65+n2*.35);
  float valle=smoothstep(.13,.05,hn)*bruma;
  c=mix(c,mix(vec3(.05,.10,.19),vec3(.86,.54,.46),uAlba)*(.3+.7*luz),valle*mix(.5,.62,uAlba));
- vec3 h=mix(cielo(-v,uSol),vec3(.145,.085,.14),uAlba);
+ vec3 h=mix(cielo(-v,uSol),mix(vec3(.34,.16,.13),vec3(.13,.08,.135),smoothstep(-.004,-.11,-v.z)),uAlba);
  float r=length(p-.5),nieb=1.-exp(-pow(max(dist-mix(1.9,2.3,uAlba),0.)*mix(.55,.42,uAlba),1.6));
  nieb=max(nieb,smoothstep(.95,1.28,r))*uMat;
  if(nieb>.992)discard;
@@ -146,7 +148,7 @@ out vec2 u;void main(){vec2 p=vec2(gl_VertexID==1?3.:-1.,gl_VertexID==2?3.:-1.);
 
 const FS_CIELO = `#version 300 es
 precision highp float;
-in vec2 u;uniform mat4 uIVP;uniform vec3 uCam,uSol;uniform sampler2D uRuido;uniform float uT,uCielo;out vec4 o;
+in vec2 u;uniform mat4 uIVP;uniform vec3 uCam,uSol;uniform sampler2D uRuido,uLuna;uniform float uT,uCielo,uNebula;out vec4 o;
 ${CIELO}
 float h21(vec2 p){p=fract(p*vec2(233.34,851.73));p+=dot(p,p+23.45);return fract(p.x*p.y);}
 void main(){
@@ -155,14 +157,32 @@ void main(){
  vec2 g=vec2(atan(v.y,v.x)*92.,v.z*92.),id=floor(g),f=fract(g)-.5;float h=h21(id);
  float e=step(.9,h)*smoothstep(.05+.09*pow(h21(id+3.),3.),.0,length(f+vec2(h21(id+7.),h21(id+9.))*.7-.35));
  c+=vec3(.82,.90,1.)*e*(.6+.3*sin(uT*.5+h*80.))*smoothstep(.015,.2,v.z)*.9*(1.-uAlba);
- // la luna, a medio eclipsar: una penumbra de verdad, de borde suave, que la cruza muy despacio
- vec3 luna=normalize(vec3(uSol.xy,uSol.z*.17));float ang=acos(clamp(dot(v,luna),-1.,1.)),R=.027;
- if(ang<R*1.1&&uAlba<.5){
-  vec3 x=normalize(cross(luna,vec3(0.,0.,1.))),y=cross(x,luna);vec2 q=vec2(dot(v-luna,x),dot(v-luna,y))/R;
-  float lq=length(q),disco=1.-smoothstep(1.-max(fwidth(lq)*1.6,.002),1.,lq),mar=texture(uRuido,q*.11+.3).r*.5+texture(uRuido,q*.31).g*.26+texture(uRuido,q*.97+.1).b*.14+texture(uRuido,q*3.1+.5).r*.1;
-  vec2 cSombra=vec2(.9-.1*sin(uT*.018),.2);float pen=smoothstep(.62,1.5,length(q-cSombra));
-  vec3 lu=vec3(1.,.97,.9)*(.74+1.5*(mar-.5));
-  c=mix(c,lu*(.012+1.25*pen)+vec3(.075,.022,.016)*(1.-pen),disco*(1.-min(1.,uAlba*7.)));
+ // la luna: relieve horneado, con su luz rasante y un eclipse que la cruza muy despacio
+ vec3 luna=normalize(vec3(mat2(cos(${LUNA_DAZ}),sin(${LUNA_DAZ}),-sin(${LUNA_DAZ}),cos(${LUNA_DAZ}))*uSol.xy,uSol.z*${LUNA_KZ}));float R=${LUNA_R};
+ vec3 lx=normalize(cross(luna,vec3(0.,0.,1.))),ly=cross(lx,luna);vec2 qL=vec2(dot(v-luna,lx),dot(v-luna,ly))/R;
+ vec2 qx=dFdx(qL),qy=dFdy(qL);
+ float lq=length(qL);
+ if(lq<1.12&&dot(v,luna)>0.&&uConLuna>.5&&uAlba<.5){
+  vec2 uvL=qL*.5+.5;vec4 tl=textureGrad(uLuna,uvL,qx*.5,qy*.5);
+  float zm=fwidth(lq),disco=1.-smoothstep(1.-max(zm*1.5,.0015),1.,lq),zL=sqrt(max(1.-lq*lq,.0005));
+  vec3 n0=vec3(qL,zL);
+  // al acercarse, aún más grano: el que no cabe en la textura
+  float micro=smoothstep(.0028,.0009,zm);vec2 gm=vec2(0.);
+  if(micro>.001){float am=.2;vec2 pq=qL*14.;for(int i=0;i<5;i++){vec2 ii=floor(pq),ff=fract(pq);ff=ff*ff*(3.-2.*ff);float a0=h21(ii),b0=h21(ii+vec2(1,0)),c0=h21(ii+vec2(0,1)),d0=h21(ii+vec2(1,1));gm+=am*vec2((b0-a0)*(1.-ff.y)+(d0-c0)*ff.y,(c0-a0)*(1.-ff.x)+(d0-b0)*ff.x);pq=mat2(1.7,1.1,-1.1,1.7)*pq+3.1;am*=.72;}}
+  vec2 pendiente=tl.xy*.62+gm*micro;
+  vec3 N=normalize(n0-vec3(pendiente,0.)*(.55+.45*zL));
+  vec3 Ll=vec3(${LUNA_L[0]},${LUNA_L[1]},${LUNA_L[2]});
+  float lam=max(dot(N,Ll),0.),mu=max(N.z,.05),ls=2.*lam/(lam+mu+.001);        // la Luna refleja así: Lommel-Seeliger, de ahí que parezca plana de frente
+  float al=tl.z*(1.+gm.x*.5*micro);
+  float luz=mix(1.,tl.w,.68);
+  vec2 cSombra=vec2(.92-.1*sin(uT*.018),.2);float pen=smoothstep(.56,1.42,length(qL-cSombra));
+  float termina=smoothstep(-.04,.16,dot(n0,Ll));
+  vec3 solar=vec3(1.,.965,.9)*al*ls*luz*1.32;
+  // la cara eclipsada no es negra: recibe la luz roja que cruza la atmósfera de la Tierra
+  vec3 rojo=vec3(.2,.052,.03)*pow(al,.62)*(.42+.8*max(dot(N,normalize(vec3(.1,-.15,1.))),0.));
+  vec3 tenue=vec3(.018,.024,.04)*al*(.5+.5*zL);
+  vec3 cL=mix(rojo+tenue,solar*termina+tenue,pen);
+  c=mix(c,cL,disco*(1.-min(1.,uAlba*7.)));
  }
  if(uAlba>0.&&v.z<.03){
   float az=atan(v.y,v.x);vec3 m=c;
@@ -172,7 +192,13 @@ void main(){
    m=mix(m,col,smoothstep(cima+.0012,cima-.0012,v.z));}
   c=mix(c,m,uAlba);
  }
- o=vec4(c*uCielo,1.);}`;
+ vec3 ne=vec3(0.);
+ if(uNebula>0.){
+  // el fondo del viaje: nebulosas muy tenues, que dan profundidad sin dejar ver dónde estás
+  vec2 w1=v.yz*1.6+v.x*.7,w2=v.xz*1.2+v.y*.9;float n1=texture(uRuido,w1*.13).r*.55+texture(uRuido,w1*.41).g*.3+texture(uRuido,w1*1.13).b*.15,n2=texture(uRuido,w2*.11+.4).g*.6+texture(uRuido,w2*.37).r*.4;
+  ne=(vec3(.02,.038,.1)*smoothstep(.36,.66,n1)+vec3(.075,.022,.07)*smoothstep(.42,.68,n2)*smoothstep(.32,.6,n1))*uNebula;
+ }
+ o=vec4(c*uCielo+ne,1.);}`;
 
 const VS_CAMINO = `#version 300 es
 precision highp float;
@@ -212,32 +238,47 @@ uniform float uOrden,uBaja,uSube2;
 vec3 posRed(vec3 ca,vec3 or,vec3 fi){return mix(mix(ca,or,uOrden),fi,uBaja);}`;
 const VS_NEURONA = `#version 300 es
 precision highp float;
-in vec2 q;in vec3 aC,aO,aF;in vec3 aD;uniform mat4 uVP;uniform vec2 uRes;uniform float uHaz,uLejos;
+in vec2 q;in vec3 aC,aO,aF;in vec3 aD;uniform mat4 uVP,uVPa;uniform vec2 uRes;uniform float uHaz,uLejos,uEstela;
 ${POS_RED}
-out vec2 v;out vec3 d;out float prof;
-void main(){vec4 c=uVP*vec4(posRed(aC,aO,aF),1.);d=aD;v=q;prof=c.w;
- float esP=step(1.5,aD.y),ta=clamp((mix(.024+.012*aD.x+(aD.z>=0.?.014:0.),.012+.016*aD.x,esP))/max(c.w,.02),mix(.0045+.0085*uLejos,.0028,esP),.62);
- c.xy+=q*ta*vec2(uRes.y/uRes.x,1.)*c.w*2.4;c.z=min(c.z,c.w*.999);gl_Position=c;}`;
+out vec2 v;out vec3 d;out float prof,ali,azar;
+void main(){vec3 w=posRed(aC,aO,aF);vec4 c=uVP*vec4(w,1.),pa=uVPa*vec4(w,1.);d=aD;v=q;prof=c.w;azar=fract(sin(float(gl_InstanceID)*12.9898)*43758.5453);
+ float esP=step(1.5,aD.y),ta=clamp(mix(.021+.012*aD.x+(aD.z>=0.?.012:0.),.008+.012*aD.x*(.5+azar),esP)/max(c.w,.02),mix(.0048+.0088*uLejos,.0026,esP),.19),R=ta*2.4;
+ // estela: la luz se alarga en la dirección en que se mueve por la pantalla, como en una exposición de cine
+ vec2 asp=vec2(uRes.y/uRes.x,1.),sd=(c.w>.02&&pa.w>.02)?(c.xy/c.w-pa.xy/pa.w)/asp:vec2(0.);float L=min(length(sd),.2)*uEstela;vec2 dirS=length(sd)>1e-5?normalize(sd):vec2(1.,0.);
+ ali=R/(R+L*.5);
+ vec2 ofs=q*R+dirS*dot(q,dirS)*L*.5;
+ c.xy+=ofs*asp*c.w;c.z=min(c.z,c.w*.999);gl_Position=c;}`;
 const FS_NEURONA = `#version 300 es
 precision highp float;
-in vec2 v;in vec3 d;in float prof;uniform float uT,uOla,uOro,uVuelo,uTotal,uFuerza,uPolvo,uLejos;out vec4 o;
+in vec2 v;in vec3 d;in float prof,ali,azar;uniform float uT,uOla,uOro,uVuelo,uTotal,uFuerza,uPolvo,uLejos;out vec4 o;
+float sg(float x){return 1./(1.+exp(-x));}
 void main(){
  float r=length(v),a=d.x,capa=d.y,ru=d.z;
  float esPolvo=step(1.5,capa);
  // la ola hacia delante: cada capa se enciende al llegarle la señal, con su activación de verdad
- float frente=fract(uT*.42),dx=capa-frente*1.25+.12,ola=exp(-dx*dx*90.)*uOla;
- float brillo=(.2+.8*a)*(1.-.55*uOla)+ola*(.7+1.8*a);
- float visitada=ru>=0.?smoothstep(ru-.04,ru+.02,uVuelo):0.;
- float dispara=ru>=0.?exp(-pow((uVuelo-ru)*3.2,2.)):0.;
- vec3 frio=mix(vec3(.30,.62,.92),vec3(.58,.90,.98),a),oro=vec3(1.,.72,.24);
- vec3 col=mix(frio,oro,max(uOro*step(0.,ru),visitada*.75));
- float nuc=smoothstep(.2,.09,r),hal=exp(-r*r*14.)*(1.-smoothstep(.72,1.,r));
- float an=atan(v.y,v.x),aro=smoothstep(.022,.0,abs(r-.42))*step(fract((an/6.2832+.5)-uT*.05),a)*(ru>=0.?1.:.0);
- vec3 s=col*(nuc*(1.1+1.6*brillo+6.*dispara)+hal*(.1+.42*brillo+1.4*dispara+.35*uOro*step(0.,ru))+aro*(1.2+2.*dispara));
+ float frente=fract(uT*.34),dx=capa-frente*1.3+.15,ola=exp(-dx*dx*70.)*uOla;
+ float brillo=(.22+.78*a)*(1.-.5*uOla)+ola*(.8+2.*a);
+ float visitada=ru>=0.?smoothstep(ru-.05,ru+.05,uVuelo):0.;
+ float dispara=ru>=0.?exp(-pow((uVuelo-ru)*2.6,2.))*(1.-uLejos):0.;
+ vec3 frio=mix(vec3(.32,.56,.95),vec3(.66,.92,1.),a),oro=vec3(1.,.72,.24);
+ // cada estrella tiene su temperatura, como las de verdad
+ frio=mix(frio,mix(vec3(1.,.82,.66),vec3(.72,.82,1.),azar),.35*(1.-uOla));
+ vec3 col=mix(frio,oro,max(uOro*step(0.,ru),visitada*.8));
+ float titila=1.+.13*sin(uT*(1.2+azar*2.3)+azar*40.);
+ float nuc=exp(-r*r*62.),hal=exp(-r*r*11.)*(1.-smoothstep(.74,1.,r));
+ // destellos de difracción, finos y largos, como los de un buen objetivo
+ vec2 w=mat2(.92,.39,-.39,.92)*v;float spike=(exp(-abs(w.y)*90.)*exp(-abs(w.x)*5.)+exp(-abs(w.x)*90.)*exp(-abs(w.y)*5.))*(1.-smoothstep(.8,1.,r));
+ // de cerca, la estrella deja ver lo que es: la curva que calcula, con su valor sobre ella
+ float cerca=(ru>=0.?1.:.6)*smoothstep(.7,.25,prof)*(1.-esPolvo);
+ float curva=0.;
+ if(cerca>.002){float xx=v.x/.44,gy=v.y/.44*.5+.5,yy=sg(xx*6.),ln=exp(-pow((gy-yy)*46.,2.))*smoothstep(1.,.72,abs(xx));float x0=(a*2.-1.)*.7,y0=sg(x0*6.);curva=(ln*.42+exp(-(pow(xx-x0,2.)+pow(gy-y0,2.))*700.)*1.7)*cerca;}
+ float an=atan(v.y,v.x),aro=smoothstep(.016,.0,abs(r-.58))*step(fract((an/6.2832+.5)-uT*.04),a)*(ru>=0.?1.:.0)*smoothstep(1.6,.5,prof);
+ vec3 s=col*(nuc*(1.3+1.7*brillo+3.2*dispara)+hal*(.05+.24*brillo+.55*dispara+.3*uOro*step(0.,ru))+spike*(.14+.34*brillo+.8*dispara)*(.5+.5*smoothstep(1.5,.3,prof))+aro*(.7+1.1*dispara)+curva*(1.+dispara))*titila;
  // en el vuelo, lo lejano se apaga: desde dentro no se puede ver la forma del conjunto
- float lejos=mix(exp(-max(prof-1.8,0.)*.95),1.,uLejos);
- if(esPolvo>.5)s=mix(vec3(.72,.84,1.),vec3(1.,.93,.8),a)*(nuc*(.9+1.6*a)+hal*.14);
- o=vec4(s*uFuerza*mix(lejos,uPolvo*exp(-max(prof-6.,0.)*.1),esPolvo),0.);}`;
+ float lejos=mix(exp(-max(prof-1.5,0.)*.9),1.,uLejos);
+ if(esPolvo>.5)s=mix(vec3(.72,.84,1.),mix(vec3(1.,.93,.8),vec3(1.,.74,.56),azar),a)*(nuc*(.85+1.7*a)+hal*.1+spike*.08*a)*titila;
+ float pegado=smoothstep(.012,.075,prof);
+ o=vec4(s*ali*pegado*uFuerza*mix(lejos,uPolvo*exp(-max(prof-6.,0.)*.09),esPolvo),0.);}`;
 const VS_ARISTA = `#version 300 es
 precision highp float;
 in vec2 q;in vec3 aC0,aO0,aF0,aC1,aO1,aF1;in vec3 aE;uniform mat4 uVP;uniform vec2 uRes;
@@ -248,25 +289,29 @@ void main(){
  e=aE;v=vec2((q.x+1.)*.5,q.y);prof=mix(a.w,b.w,v.x);
  if(a.w<.03||b.w<.03){gl_Position=vec4(2.,2.,2.,1.);return;}
  vec2 pa=a.xy/a.w,pb=b.xy/b.w,dir=normalize((pb-pa)*uRes+1e-5),nor=vec2(-dir.y,dir.x)/uRes*2.;
- float ancho=(1.+1.6*abs(aE.x)+(aE.z>=0.?1.6:0.)+(aE.z<-1.5?1.:0.));
+ float ancho=(1.+1.5*abs(aE.x)+(aE.z>=0.?1.5:0.)+(aE.z<-1.5?1.:0.))*1.9;
  vec4 p=mix(a,b,v.x);p.xy+=nor*q.y*ancho*p.w;gl_Position=p;}`;
 const FS_ARISTA = `#version 300 es
 precision highp float;
 in vec2 v;in vec3 e;in float prof;uniform float uT,uAristas,uOla,uOro,uVuelo,uTotal,uFuerza,uHilos,uLejos;out vec4 o;
 void main(){
  float w=e.x,cap=e.y,ru=e.z,t=v.x,d=abs(v.y);
- if(ru<-1.5){float h=smoothstep(t-.03,t+.03,uHilos*(1.+.0)),c0=exp(-pow((t-uHilos)*16.,2.))*step(uHilos,.999);o=vec4(vec3(1.,.74,.28)*smoothstep(1.,.2,d)*(h*.9+c0*7.)*step(.001,uHilos)*uFuerza,0.);return;}
- float linea=smoothstep(1.,.2,d);
- vec3 c=w>=0.?vec3(.30,.72,.92):vec3(.95,.36,.52);
- float pulso=pow(.5+.5*sin((t-uT*(.5+.3*abs(w))+cap*5.7)*9.42),18.)*(.3+.9*uOla);
- float cerca2=mix(exp(-max(prof-1.1,0.)*1.1),1.,uLejos);
- float a=(.012+.045*abs(w))*uAristas*(1.-.55*uOro)*cerca2+pulso*abs(w)*.8*uAristas*(1.-.4*uOro)*cerca2;
- vec3 s=c*a;
+ float linea=exp(-d*d*5.);
+ if(ru<-1.5){
+  // los hilos bajan uno tras otro, cada uno con su gota de luz, hasta su montaña
+  float pr=clamp(uHilos*1.6-cap*.6,0.,1.);
+  float h=smoothstep(t-.012,t+.012,pr),c0=exp(-pow((t-pr)*22.,2.))*step(.001,pr)*step(pr,.999);
+  o=vec4(vec3(1.,.74,.28)*linea*(h*.75+c0*9.)*uFuerza,0.);return;}
+ vec3 c=w>=0.?vec3(.34,.66,.95):vec3(.86,.42,.62);
+ float frente=(t-uT*(.34+.16*abs(w))+cap*5.7),pulso=pow(.5+.5*sin(frente*9.42),46.)*(.3+.75*uOla);
+ float cerca2=mix(exp(-max(prof-1.,0.)*1.05),1.,uLejos),junto=smoothstep(.05,.42,prof);
+ float a=(.011+.04*abs(w))*uAristas*(1.-.55*uOro)*cerca2*junto;
+ vec3 s=c*a+mix(c,vec3(1.,.9,.72),.3)*pulso*abs(w)*.55*uAristas*(1.-.4*uOro)*cerca2*junto;
  if(ru>=0.){
   float prog=clamp(uVuelo-ru,0.,1.),hecho=smoothstep(t-.02,t+.02,prog);
   float enc=max(hecho,uOro);
-  float viaje=exp(-pow((t-prog)*14.,2.))*step(.001,prog)*step(prog,.999);
-  s+=vec3(1.,.72,.26)*(enc*(.7+1.3*uOro)+viaje*6.);
+  float viaje=exp(-pow((t-prog)*11.,2.))*step(.001,prog)*step(prog,.999);
+  s+=vec3(1.,.72,.26)*(enc*(.55+1.3*uOro)+viaje*7.)*junto;
  }
  o=vec4(s*linea*uFuerza,0.);}`;
 const FS_OSCURO = `#version 300 es
@@ -291,7 +336,7 @@ void main(){vec3 c=vec3(0.);float pesos[5]=float[](.227,.195,.122,.054,.016);
 
 const FS_FINAL = `#version 300 es
 precision highp float;
-in vec2 u;uniform sampler2D uTex,uBri;uniform float uExpo,uT;uniform vec2 uPx;out vec4 o;
+in vec2 u;uniform sampler2D uTex,uBri;uniform float uExpo,uT,uCine;uniform vec2 uPx;out vec4 o;
 vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
 float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
 void main(){
@@ -299,9 +344,9 @@ void main(){
  vec3 c0=texture(uTex,u).rgb,cr=texture(uTex,u+uPx*vec2(1.,0.)).rgb,cl=texture(uTex,u-uPx*vec2(1.,0.)).rgb,cu=texture(uTex,u+uPx*vec2(0.,1.)).rgb,cd=texture(uTex,u-uPx*vec2(0.,1.)).rgb;
  vec3 c=c0+(c0-(cr+cl+cu+cd)*.25)*.85;c=max(c,vec3(0.));
  c+=texture(uBri,u).rgb*.55;
- vec2 q=u-vec2(.46,.5);c*=1.-.62*smoothstep(.34,.95,length(q*vec2(1.,1.15)));
+ vec2 q=u-vec2(mix(.46,.5,uCine),.5);c*=1.-.62*smoothstep(mix(.34,.42,uCine),.95,length(q*vec2(1.,1.15)));
  c=aces(c*1.05*uExpo);c=pow(c,vec3(1./2.2));
- c+=(h(u*vec2(1731.,977.)+fract(uT))-.5)/120.;
+ c+=(h(u*vec2(1731.,977.)+fract(uT))-.5)/mix(120.,70.,uCine);
  o=vec4(c,1.);}`;
 
 // ------------------------------------------------------------------- matrices
@@ -377,7 +422,7 @@ function texturaRuido(gl) {
   return t;
 }
 
-export function crearPaisaje(canvas, { software = false } = {}) {
+export function crearPaisaje(canvas, { software = false, luna = true } = {}) {
   const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, powerPreference: 'high-performance' });
   const hdr = !!gl.getExtension('EXT_color_buffer_float') || !!gl.getExtension('EXT_color_buffer_half_float');
   const pT = programa(gl, VS_TERRENO, FS_TERRENO), pC = programa(gl, VS_PANTALLA, FS_CIELO), pR = programa(gl, VS_CAMINO, FS_CAMINO), pF = programa(gl, VS_FARO, FS_FARO), pB = programa(gl, VS_PANTALLA, FS_BRILLO), pS = programa(gl, VS_PANTALLA, FS_FINAL);
@@ -522,6 +567,8 @@ export function crearPaisaje(canvas, { software = false } = {}) {
     esc = crearDestino(w, h, true); base = crearDestino(w, h, true); b1 = crearDestino(w >> 2 || 1, h >> 2 || 1, false); b2 = crearDestino(w >> 2 || 1, h >> 2 || 1, false);
   }
   const usarAltura = (P) => { t2(P.u.uCerca, 6, usarNace ? texNaceC : texCerca); t2(P.u.uLejos, 7, usarNace && texNaceL ? texNaceL : texLejos); };
+  // Sin HDR no se puede hornear: se dibuja la versión sin relieve (ver FS_CIELO, uConLuna)
+  const texLuna = luna && hdr ? hornearLuna(gl, vacioVAO, { tam: software ? 512 : 2048 }) : null;
   const t2 = (u, unidad, tex) => { gl.activeTexture(gl.TEXTURE0 + unidad); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(u, unidad); };
 
   // --- la red del cruce
@@ -541,7 +588,7 @@ export function crearPaisaje(canvas, { software = false } = {}) {
     atr(pN2, 'aC', 3, 48, 0); atr(pN2, 'aO', 3, 48, 12); atr(pN2, 'aF', 3, 48, 24); atr(pN2, 'aD', 3, 48, 36);
     const vaoA = gl.createVertexArray(); gl.bindVertexArray(vaoA);
     gl.bindBuffer(gl.ARRAY_BUFFER, cuad); { const l = gl.getAttribLocation(pA2.p, 'q'); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, 2, gl.FLOAT, false, 0, 0); }
-    const dA = new Float32Array(red.aristas.flatMap((e) => { const a = red.nodos[e.a], b = red.nodos[e.b], esRuta = a.ruta >= 0 && b.ruta === a.ruta + 1; return [...a.caos, ...a.orden, ...a.fin, ...b.caos, ...b.orden, ...b.fin, e.w, a.capa / L, esRuta ? a.ruta : -1]; }).concat(red.ruta.map((i) => red.nodos[i]).filter((n) => n.cima).flatMap((n) => [...n.orden, ...n.orden, ...n.orden, ...n.cima, ...n.cima, ...n.cima, 1, 0, -2])));
+    const dA = new Float32Array(red.aristas.flatMap((e) => { const a = red.nodos[e.a], b = red.nodos[e.b], esRuta = a.ruta >= 0 && b.ruta === a.ruta + 1; return [...a.caos, ...a.orden, ...a.fin, ...b.caos, ...b.orden, ...b.fin, e.w, a.capa / L, esRuta ? a.ruta : -1]; }).concat(red.ruta.map((i) => red.nodos[i]).filter((n) => n.cima).flatMap((n, k, L0) => [...n.orden, ...n.orden, ...n.orden, ...n.cima, ...n.cima, ...n.cima, 1, k / Math.max(L0.length - 1, 1), -2])));
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, dA, gl.STATIC_DRAW);
     const P = 84; [['aC0', 0], ['aO0', 12], ['aF0', 24], ['aC1', 36], ['aO1', 48], ['aF1', 60], ['aE', 72]].forEach(([n, o]) => atr(pA2, n, 3, P, o));
     redGL = { vaoN, vaoA, nN: red.nodos.length + red.polvo.length, nA: red.aristas.length + red.ruta.filter((i) => red.nodos[i].cima).length, total: L };
@@ -550,7 +597,7 @@ export function crearPaisaje(canvas, { software = false } = {}) {
     const r = e.red, comun = (P) => { gl.useProgram(P.p); gl.uniformMatrix4fv(P.u.uVP, false, vp); gl.uniform2f(P.u.uRes, esc.w, esc.h); gl.uniform1f(P.u.uOrden, r.orden); gl.uniform1f(P.u.uBaja, r.baja); gl.uniform1f(P.u.uT, e.t); gl.uniform1f(P.u.uOla, r.ola); gl.uniform1f(P.u.uOro, r.oro); gl.uniform1f(P.u.uVuelo, r.vuelo); gl.uniform1f(P.u.uTotal, redGL.total); gl.uniform1f(P.u.uFuerza, r.fuerza); gl.uniform1f(P.u.uLejos, r.lejos ?? 1); };
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
     comun(pA2); gl.uniform1f(pA2.u.uAristas, r.aristas); gl.uniform1f(pA2.u.uHilos, r.hilos ?? 0); gl.bindVertexArray(redGL.vaoA); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, redGL.nA);
-    comun(pN2); gl.uniform1f(pN2.u.uHaz, 0); gl.uniform1f(pN2.u.uPolvo, r.polvo ?? 1); gl.bindVertexArray(redGL.vaoN); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, redGL.nN);
+    comun(pN2); gl.uniform1f(pN2.u.uHaz, 0); gl.uniform1f(pN2.u.uPolvo, r.polvo ?? 1); gl.uniformMatrix4fv(pN2.u.uVPa, false, r.vpPrevio ?? vp); gl.uniform1f(pN2.u.uEstela, r.estela ?? 1); gl.bindVertexArray(redGL.vaoN); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, redGL.nN);
   }
 
   /** e: { vp, ojo, sol, sube, t, expo, foco:[x,y,_,fuerza], hecho, aparece, faros:Float32Array(n×6), pasos } */
@@ -563,8 +610,8 @@ export function crearPaisaje(canvas, { software = false } = {}) {
       gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
       gl.depthMask(true); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.disable(gl.DEPTH_TEST); gl.useProgram(pC.p); gl.bindVertexArray(vacioVAO);
-      gl.uniformMatrix4fv(pC.u.uIVP, false, inversa(vp)); gl.uniform3fv(pC.u.uCam, ojo); gl.uniform3fv(pC.u.uSol, sol); gl.uniform1f(pC.u.uT, e.t); gl.uniform1f(pC.u.uCielo, e.nace?.cielo ?? 1); gl.uniform1f(pC.u.uAlba, e.alba ?? 0); t2(pC.u.uRuido, 1, ruido);
-      if ((e.nace?.cielo ?? 1) > 0) gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.uniformMatrix4fv(pC.u.uIVP, false, inversa(vp)); gl.uniform3fv(pC.u.uCam, ojo); gl.uniform3fv(pC.u.uSol, e.solCielo ?? sol); gl.uniform1f(pC.u.uT, e.t); gl.uniform1f(pC.u.uCielo, e.cielo ?? e.nace?.cielo ?? 1); gl.uniform1f(pC.u.uAlba, e.alba ?? 0); gl.uniform1f(pC.u.uNebula, e.nebula ?? 0); gl.uniform1f(pC.u.uConLuna, texLuna ? 1 : 0); gl.uniform1f(pC.u.uHaloLuna, e.haloLuna ?? 1); t2(pC.u.uRuido, 1, ruido); t2(pC.u.uLuna, 4, texLuna ?? ruido);
+      if ((e.nace?.cielo ?? 1) > 0 || e.nebula > 0) gl.drawArrays(gl.TRIANGLES, 0, 3);
       if (e.sinTerreno) { gl.depthMask(true); }
       if (!e.sinTerreno) {
       gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.useProgram(pT.p);
@@ -612,7 +659,7 @@ export function crearPaisaje(canvas, { software = false } = {}) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, b2.fb); t2(pB.u.uTex, 0, b1.t); gl.uniform2f(pB.u.uDir, 0, 2 / b1.h); gl.uniform1f(pB.u.uCorte, 0); gl.drawArrays(gl.TRIANGLES, 0, 3);
     // final
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.useProgram(pS.p); t2(pS.u.uTex, 0, esc.t); t2(pS.u.uBri, 1, b2.t); gl.uniform1f(pS.u.uExpo, e.expo); gl.uniform1f(pS.u.uT, e.t); gl.uniform2f(pS.u.uPx, 1 / canvas.width, 1 / canvas.height);
+    gl.useProgram(pS.p); t2(pS.u.uTex, 0, esc.t); t2(pS.u.uBri, 1, b2.t); gl.uniform1f(pS.u.uExpo, e.expo); gl.uniform1f(pS.u.uCine, e.red ? 1 - (e.alba ?? 0) : 0); gl.uniform1f(pS.u.uT, e.t); gl.uniform2f(pS.u.uPx, 1 / canvas.width, 1 / canvas.height);
     gl.disable(gl.DEPTH_TEST); gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
   return { gl, ajustar, dibujar, fijarCampo, fijarCamino, leerCampo, hornearLuz, avanzarLuz, hornearNace, terminarNace, fijarRed };

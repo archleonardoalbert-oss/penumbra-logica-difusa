@@ -9,7 +9,8 @@ import { buscarConcepto } from '../contenido/catalogo.js';
 import { barraGrado, h, tituloDifuso, tryLocal } from './concepto.js';
 import { soportaGL2 } from './lienzo.js';
 import { camaraLibre, camaraMapa, crearPaisaje, proyectar } from './mapaGL.js';
-import { DURA_CRUCE, crearRed, enVuelo, guionCruce, puntosVuelo, CENTRO_RED } from './mapaRed.js';
+import { LUNA_DAZ, LUNA_KZ, LUNA_R } from './lunaGL.js';
+import { DURA_CRUCE, crearRed, crearVuelo, guionCruce } from './mapaRed.js';
 import { DURA_NACER, DURA_VIAJE, formulaNacer, guionNacer, guionViaje } from './mapaGuion.js';
 import { ev, mix } from './tiempo.js';
 
@@ -18,6 +19,7 @@ const CLAVE_NACIO = 'penumbra-mapa-nacio';
 const haNacido = () => { try { return !!sessionStorage.getItem(CLAVE_NACIO); } catch { return true; } };
 const marcarNacido = () => { try { sessionStorage.setItem(CLAVE_NACIO, '1'); } catch { /* sin almacenamiento */ } };
 const coma = (v) => v.toFixed(2).replace('.', ',');
+const ETAPA_FINAL = 5; // índice de «Lo siguiente»: quien llega a «Lo siguiente» ya terminó esa parada: el mapa propone la próxima
 
 function listaConceptos(region, progreso) {
   const proximo = siguienteConcepto([region], progreso)?.id;
@@ -93,7 +95,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
   if (viaje && reducido) { location.replace(`concepto.html?c=${idViaje}`); return null; }
   // si el navegador dibuja por CPU, no hay GPU que aproveche: menos resolución y nada de movimiento en reposo
   const software = (() => { const c = document.createElement('canvas').getContext('webgl2'), d = c?.getExtension('WEBGL_debug_renderer_info'); return d ? /swiftshader|llvmpipe|software/i.test(c.getParameter(d.UNMASKED_RENDERER_WEBGL)) : false; })();
-  const pais = crearPaisaje(canvas, { software });
+  const pais = crearPaisaje(canvas, { software, luna: !esAlba });
   let modo = viaje ? 'viaje' : esAlba ? (!reducido && parametrosUrl.has('cruce') ? 'cruce' : 'normal') : (!reducido && (parametrosUrl.has('nacer') || !haNacido())) ? 'nace' : 'normal';
   let t = reducido ? 9 : 0, enfocada = null, fijada = null, mapaSucio = true;
   const INICIO = { yaw: -0.22, pitch: 0.39 };
@@ -143,7 +145,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     const W = canvas.clientWidth, H = canvas.clientHeight;
     if (centrosC && vpDeCentros === vpActual && wDeCentros === W) return centrosC;
     const g = grados(); vpDeCentros = vpActual; wDeCentros = W;
-    return (centrosC = catalogo.map((r, i) => { const [x, y] = proyectar(vpActual, modo === 'cruce' ? posNeuronaRuta(i) : cimaDe(r, g)); return [x * W, y * H]; }));
+    return (centrosC = catalogo.map((r, i) => { const [x, y] = proyectar(vpActual, modo === 'cruce' ? posNeuronaRuta(i) : cimaDe(r, g)); return [x * W, y * H + (modo === 'cruce' && t <= 42.6 ? (i % 2 ? -36 : 36) : 0)]; }));
   };
 
   function colocarRotulos() {
@@ -187,7 +189,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     const W = canvas.clientWidth || 1, H = canvas.clientHeight || 1, dpr = devicePixelRatio || 1;
     pais.ajustar(Math.round(W * dpr), Math.round(H * dpr), Math.max(2, Math.round(W * dpr * escala)), Math.max(2, Math.round(H * dpr * escala)));
     if (rehacer) {
-      const { vp, ojo } = modo === 'cruce' ? camaraCruce(W / H) : modo === 'luna' ? camaraLuna(W / H) : camaraMapa({ ...camaraActual(), aspecto: W / H });
+      const { vp, ojo } = modo === 'cruce' ? camaraCruce(W / H, t) : modo === 'luna' ? camaraLuna(W / H) : camaraMapa({ ...camaraActual(), aspecto: W / H });
       vpActual = vp; ojoActual = ojo;
     }
     const vp = vpActual, ojo = ojoActual;
@@ -200,13 +202,14 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
       if (t >= DURA_NACER) terminarNacimiento();
     } else if (modo === 'luna') {
       const u = t - lunaDesde.t;
-      pais.dibujar({ ...comun, rehacer: true, expo: 1 - ev(u, DURA_LUNA - 0.55, DURA_LUNA - 0.05), foco: [0, 0, 0, 0], hecho: hecho(), aparece: 1 - ev(u, 0, 1) });
+      pais.dibujar({ ...comun, rehacer: true, haloLuna: 1 - ev(u, 0.3, 2.6), expo: 1 - ev(u, DURA_LUNA - 0.55, DURA_LUNA - 0.05), foco: [0, 0, 0, 0], hecho: hecho(), aparece: 1 - ev(u, 0, 1) });
       if (u >= DURA_LUNA) { modo = 'saliendo'; location.href = 'index.html?lado=alba&cruce=1'; }
     } else if (modo === 'saliendo') { /* ya está cargando la página siguiente */
     } else if (modo === 'cruce') {
       const gu = guionCruce(t);
       pais.dibujar({ ...comun, rehacer: true, alba: gu.alba, sinTerreno: gu.suelo <= 0, expo: gu.negro, foco: [0, 0, 0, 0], hecho: hecho(), aparece: gu.camino, faros: gu.camino > 0 ? comun.faros : new Float32Array(0),
-        red: { orden: 1, baja: 0, ola: gu.ola, oro: gu.oroRuta, vuelo: gu.uVuelo, aristas: gu.aristas, fondo: gu.suelo, fuerza: gu.fuerza, hilos: gu.hilos, polvo: gu.polvo, lejos: gu.lejos } });
+        cielo: gu.suelo, nebula: gu.nebula, solCielo: solAlba(gu.alba),
+        red: { orden: 1, baja: 0, ola: gu.ola, oro: gu.oroRuta, vuelo: recorrido.en(t).u, aristas: gu.aristas, fondo: gu.suelo, fuerza: gu.fuerza, hilos: gu.hilos, polvo: gu.polvo, lejos: gu.lejos, vpPrevio: camaraCruce(W / H, t - 1 / 60).vp, estela: 1 - gu.retro * 0.85 } });
       pintarCruce(gu);
       if (t >= DURA_CRUCE) terminarCruce();
     } else if (modo === 'viaje') {
@@ -225,23 +228,14 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
   const red = modo === 'cruce' ? crearRed(catalogo.map((r) => cimaDe(r, grados()))) : null;
   if (red) pais.fijarRed(red);
   const mixV = (a, b, k) => a.map((v, i) => mix(v, b[i], k));
-  const posNeuronaRuta = (i) => { const n = red.nodos[red.ruta[i + 1]]; return t > 39.6 ? n.cima : n.orden; };
-  const pv = red ? puntosVuelo(red) : null;
-  const sumaV = (a, b, k = 1) => a.map((v, i) => v + b[i] * k);
-  const normV = (a) => { const l = Math.hypot(...a) || 1; return a.map((v) => v / l); };
-  function camaraCruce(aspecto) {
-    const gu = guionCruce(t), x = gu.x, aqui = enVuelo(pv, x);
-    // la dirección se calcula promediando la curva por delante: gira con la suavidad de un avión, nunca de golpe
-    let mira0 = [0, 0, 0];
-    for (const d of [0.25, 0.45, 0.65, 0.85, 1.05]) mira0 = sumaV(mira0, enVuelo(pv, x + d), 0.2);
-    const tan = normV(sumaV(mira0, aqui, -1)), lat = normV([tan[1], -tan[0], 0.25 * Math.sin(x * 0.9)]);
-    // se pasa junto a cada neurona, no a través: un poco a un lado, que cambia despacio
-    const ojoV = sumaV(sumaV(aqui, lat, 0.075 * Math.cos(x * 1.1)), [0, 0, 1], 0.045 * Math.sin(x * 0.8 + 1));
-    // lejos: nada se mueve; solo te alejas, y al final todo cuadra de lado
-    const ang = -0.07 + 0.04 * Math.sin((t - 30) * 0.12), D = 6.5, ojoL = [CENTRO_RED[0] + D * Math.sin(ang), CENTRO_RED[1] - D * Math.cos(ang), CENTRO_RED[2] + 0.16], miraL = [...CENTRO_RED];
-    const v = vistaGeneral(), general = camaraMapa({ ...INICIO, ...v, aspecto });
-    const r2 = gu.retro, alCentro = ev(t, 21, 27), ojo = mixV(mixV(ojoV, ojoL, r2), general.ojo, gu.giro), mira = mixV(mixV(mira0, miraL, alCentro), v.objetivo, gu.giro);
-    return camaraLibre({ ojo, mira, aspecto, fov: mix(mix(70, 30, r2), 38, gu.giro), alabeo: 0.14 * Math.sin(x * 0.5) * (1 - r2), corrimiento: v.corrimiento * gu.giro, alzado: v.alzado * gu.giro });
+  const posNeuronaRuta = (i) => { const n = red.nodos[red.ruta[i + 1]]; return t > 42.6 ? n.cima : n.orden; };
+  const recorrido = red ? crearVuelo(red) : null;
+  /** El sol sube de verdad durante el cruce: al principio aún está bajo el horizonte. */
+  const solAlba = (k) => { const az = 1.16 + (reducido ? 0 : 0.05 * Math.sin(t / 26)), el = mix(-0.075, 0.115, k), c = Math.cos(el); return [Math.cos(az) * c, Math.sin(az) * c, Math.sin(el)]; };
+  /** Función pura del tiempo: una sola curva de principio a fin, y al final se suelta hacia la vista del mapa. */
+  function camaraCruce(aspecto, T) {
+    const gu = guionCruce(T), f = recorrido.en(T), mira = f.ojo.map((v, i) => v + f.dir[i]), v = vistaGeneral(), general = camaraMapa({ ...INICIO, ...v, aspecto });
+    return camaraLibre({ ojo: mixV(f.ojo, general.ojo, gu.giro), mira: mixV(mira, v.objetivo, gu.giro), aspecto, fov: mix(f.fov, 38, gu.giro), alabeo: f.alabeo * (1 - gu.giro), corrimiento: v.corrimiento * gu.giro, alzado: v.alzado * gu.giro });
   }
   const capaCruce = h('div', { className: 'mapa-cruce' }), lineasCruce = [], tituloCruce = h('div', { className: 'cruce-titulo' }, tituloDifuso('Amanecer', 'h2'), h('p', { textContent: 'La misma lógica, dentro de las redes neuronales.' })), hud = h('div', { className: 'cruce-hud' }), saltaCruce = h('button', { type: 'button', className: 'nace-saltar', textContent: 'Saltar' });
   if (red) guionCruce(0).textos.forEach(([x]) => { const p = h('p', { className: 'cruce-texto', textContent: x }); lineasCruce.push(p); capaCruce.append(p); });
@@ -252,12 +246,12 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     tituloCruce.style.opacity = String(gu.titulo); tituloCruce.style.setProperty('--b', String(1 - gu.titulo));
     pagina.style.setProperty('--ui', String(gu.ui));
     // al pasar junto a una neurona, se lee lo que calcula de verdad
-    const k = Math.round(gu.uVuelo), cerca = Math.abs(gu.uVuelo - k) < 0.3 && gu.retro < 0.01 && gu.x > 2 && k < red.ruta.length;
+    const u = recorrido.en(t).u, k = Math.round(u), cerca = Math.abs(u - k) < 0.3 && gu.retro < 0.01 && k >= 0 && k < red.ruta.length;
     hud.style.opacity = cerca ? '1' : '0';
     if (cerca) {
       const n = red.nodos[red.ruta[k]], [a, b] = proyectar(vpActual, n.orden);
       if (k !== hudActual) { hudActual = k; if (window.katex) window.katex.render(String.raw`\sigma(w \cdot x + b) = ${n.activ.toFixed(2).replace('.', '{,}')}`, hud, { throwOnError: false, strict: false }); }
-      hud.style.transform = `translate(${(a * canvas.clientWidth + 30).toFixed(0)}px, ${(b * canvas.clientHeight - 14).toFixed(0)}px)`;
+      hud.style.transform = `translate(${(a * canvas.clientWidth + 74).toFixed(0)}px, ${(b * canvas.clientHeight - 14).toFixed(0)}px)`;
     }
   }
   function terminarCruce() {
@@ -275,14 +269,13 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
   saltaCruce.addEventListener('click', (ev2) => { ev2.stopPropagation(); terminarCruce(); });
 
   // --- la Luna es la puerta: en su sombra parpadea una luz, y al tocarla la cámara entra en esa sombra
-  const chispa = h('button', { type: 'button', className: 'mapa-chispa', ariaLabel: 'Una luz en la sombra de la Luna' }), R_LUNA = 0.027;
+  const aroLuna = h('span', { className: 'luna-aro' }), pistaLuna = h('span', { className: 'luna-pista', textContent: 'Toca la Luna' }), chispa = h('button', { type: 'button', className: 'mapa-chispa', ariaLabel: 'Toca la Luna: lleva a la ruta del amanecer' }, aroLuna, pistaLuna), R_LUNA = LUNA_R;
   /** La dirección exacta de un punto de la Luna, en su propio plano: el mismo cálculo que el cielo. */
   const dirLuna = (qx, qy) => {
-    const s0 = sol(), l = Math.hypot(s0[0], s0[1], s0[2] * 0.17), luna = [s0[0] / l, s0[1] / l, (s0[2] * 0.17) / l];
+    const s0 = sol(), cd = Math.cos(LUNA_DAZ), sd = Math.sin(LUNA_DAZ), sx = cd * s0[0] - sd * s0[1], sy = sd * s0[0] + cd * s0[1], l = Math.hypot(sx, sy, s0[2] * LUNA_KZ), luna = [sx / l, sy / l, (s0[2] * LUNA_KZ) / l];
     const n = Math.hypot(luna[1], luna[0]), x = [luna[1] / n, -luna[0] / n, 0], y = [x[1] * luna[2], -x[0] * luna[2], x[0] * luna[1] - x[1] * luna[0]];
-    return normV2([0, 1, 2].map((i) => luna[i] + (x[i] * qx + y[i] * qy) * R_LUNA));
+    return [0, 1, 2].map((i) => luna[i] + (x[i] * qx + y[i] * qy) * R_LUNA);
   };
-  function normV2(a) { const l = Math.hypot(...a) || 1; return a.map((v) => v / l); }
   function colocarChispa() {
     if (esAlba || modo === 'cruce' || modo === 'viaje' || modo === 'nace') { chispa.hidden = true; return; }
     const P = (d) => [0, 1, 2].map((i) => ojoActual[i] + d[i] * 12), W = canvas.clientWidth, H = canvas.clientHeight;
@@ -295,12 +288,12 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     chispa.style.transform = `translate(${(a * W).toFixed(1)}px, ${(b * H).toFixed(1)}px)`;
   }
   let lunaDesde = null;
-  const DURA_LUNA = 3.4;
+  const DURA_LUNA = 4.4;
   /** Hacia la Luna: se aparta la mirada del mapa, y se estrecha el campo de visión hasta que la sombra llena toda la pantalla. */
   function camaraLuna(aspecto) {
     const k = ev(t - lunaDesde.t, 0, DURA_LUNA), kg = ev(t - lunaDesde.t, 0, DURA_LUNA * 0.6), d = dirLuna(0.88, 0.2), mira = lunaDesde.ojo.map((v, i) => v + d[i] * 12);
     const inicioMira = lunaDesde.mira, m = inicioMira.map((v, i) => mix(v, mira[i], kg));
-    return camaraLibre({ ojo: lunaDesde.ojo, mira: m, aspecto, fov: 38 * Math.exp(Math.log(0.9 / 38) * k * k), corrimiento: lunaDesde.corr * (1 - kg), alzado: lunaDesde.alz * (1 - kg) });
+    return camaraLibre({ ojo: lunaDesde.ojo, mira: m, aspecto, fov: 38 * Math.exp(Math.log(1.1 / 38) * k * k * (3 - 2 * k)), corrimiento: lunaDesde.corr * (1 - kg), alzado: lunaDesde.alz * (1 - kg) });
   }
   chispa.addEventListener('pointerdown', (ev2) => ev2.stopPropagation());
   chispa.addEventListener('click', (ev2) => {
@@ -424,7 +417,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     if (!r) {
       if (!s && !crearLugar(almacen).ultimoEntre(catalogo.flatMap((x) => x.conceptos.map((c) => c.id)))) { rellenar(h('h2', { textContent: 'Has recorrido todo el curso' }), h('p', { textContent: 'Tus montañas brillan. Vuelve a cualquier parada cuando quieras.' }), tuPendulo(almacen)); return; }
       // lo primero es donde te quedaste; si aún no has empezado nada, tu siguiente parada
-      const l = crearLugar(almacen).ultimoEntre(catalogo.flatMap((x) => x.conceptos.map((c) => c.id))), aqui = l && buscarConcepto(l.c, todas);
+      const l0 = crearLugar(almacen).ultimoEntre(catalogo.flatMap((x) => x.conceptos.map((c) => c.id))), l = l0 && l0.etapa !== ETAPA_FINAL ? l0 : null, aqui = l && buscarConcepto(l.c, todas);
       const destino = aqui ? { ...aqui.concepto, region: aqui.region } : s;
       const ir = h('button', { type: 'button', className: 'boton-seguir', textContent: 'Continuar el camino' });
       ir.addEventListener('click', () => volarA(destino, !!aqui));
@@ -436,7 +429,8 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     const { el } = barraGrado(progreso.gradoRegion(r.id, catalogo));
     const salir = h('button', { type: 'button', className: 'boton-atras', textContent: 'Ver todo el camino' });
     salir.addEventListener('click', () => abrir(null));
-    rellenar(salir, h('p', { className: 'rotulo-etapa', textContent: `Capítulo ${r.id}` }), h('h2', { textContent: r.titulo }), h('p', { className: 'lema', textContent: r.lema }), el, listaConceptos(r, progreso));
+    rellenar(salir, h('p', { className: 'rotulo-etapa', textContent: `Capítulo ${r.id}` }), h('h2', { textContent: r.titulo }), h('p', { className: 'lema', textContent: r.lema }), el, listaConceptos(r, progreso),
+      s ? h('p', { className: 'tenue siguiente-aqui' }, 'Tu siguiente parada: ', h('a', { href: `concepto.html?c=${s.id}`, textContent: s.titulo })) : '');
   }
 
   /** Elegir un capítulo acerca la cámara a su montaña; soltarlo vuelve a la vista completa. */
