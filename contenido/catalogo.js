@@ -71,13 +71,13 @@ export const CATALOGO = [
     listo('10-1-regla-perdida', 'Una regla como función de pérdida', ['apaga-regla', 'perdida-calc', 'regla-elegir', 'demuestra-cumple']), listo('10-2-cuantificadores', '«Para todo» y «existe», suaves', ['casi-min', 'pmedia-calc', 'p-elegir', 'demuestra-rmse']), listo('10-3-pocas-etiquetas', 'Aprender con pocas etiquetas', ['donde-ayuda', 'lambda-calc', 'peso-elegir', 'demuestra-lambda']),
   ] },
   { id: 11, lado: 'alba', titulo: 'Grados en los que confiar', lema: 'Un 80 % tiene que significar algo.', posicion: [0.56, 0.28], conceptos: [
-    pend('11-1-probabilidad', 'Cuándo una probabilidad es un grado'), pend('11-2-calibrar', 'Calibrar: decir la verdad sobre tu duda'), pend('11-3-isotonica', 'Regresión isotónica'), pend('11-4-decisor', 'Un modelo decisor como fuzzificador'), pend('11-5-owa', 'Preguntar de varias formas: OWA'),
+    listo('11-1-probabilidad', 'Cuándo una probabilidad es un grado', ['van-juntas', 'limite-calc', 'prod-elegir', 'demuestra-prop']), listo('11-2-calibrar', 'Calibrar: decir la verdad sobre tu duda', ['baja-ece', 'ece-calc', 'cal-elegir', 'demuestra-t']), listo('11-3-isotonica', 'Regresión isotónica', ['doce-bloques', 'pav-calc', 'iso-elegir', 'demuestra-entre']), listo('11-4-decisor', 'Un modelo decisor como fuzzificador', ['grado-alto', 'decisor-calc', 'decisor-elegir', 'demuestra-sigmoide']), listo('11-5-owa', 'Preguntar de varias formas: OWA', ['optimista', 'owa-calc', 'owa-elegir', 'demuestra-entre-owa']),
   ] },
   { id: 12, lado: 'alba', titulo: 'Conceptos y reglas', lema: 'Entre el texto y la decisión, algo que se pueda leer.', posicion: [0.74, 0.66], conceptos: [
     pend('12-1-cuello', 'El cuello de botella de conceptos'), pend('12-2-fugas', 'Cuando los conceptos filtran'), pend('12-3-literal', 'El literal suave'), pend('12-4-group-lasso', 'Group lasso: quedarse con pocas preguntas'), pend('12-5-extraer', 'De pesos a frases'),
   ] },
   { id: 13, lado: 'alba', titulo: 'Decidir y rendir cuentas', lema: 'Una decisión tiene consecuencias, y hay que probarla.', posicion: [0.88, 0.26], conceptos: [
-    pend('13-1-coste', 'Errores que no pesan igual'), pend('13-2-contrafactual', 'Qué habría cambiado la decisión'), pend('13-3-evaluar', '¿Funciona de verdad?'), pend('13-4-ccd', 'Células de Concepto Difusas, enteras'),
+    listo('13-1-coste', 'Errores que no pesan igual', ['baja-beta', 'umbral-calc', 'dec-elegir', 'demuestra-iguales']), pend('13-2-contrafactual', 'Qué habría cambiado la decisión'), pend('13-3-evaluar', '¿Funciona de verdad?'), pend('13-4-ccd', 'Células de Concepto Difusas, enteras'),
   ] },
 ];
 

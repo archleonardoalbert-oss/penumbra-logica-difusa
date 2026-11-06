@@ -38,7 +38,7 @@ export default {
     ],
     primitivas({ q, paso, e }) {
       const al = ev(q(0), 0, 0.4), f1 = ev(q(1), 0, 0.5), t = paso < 3 ? 'reichenbach' : TIPOS[Math.round(e.tipo)][0], g = grad(t, e.a, e.c);
-      const N = [mapaCalor((a, c) => impl(t, a, c), { clave: `im${t}` }), marco({ x: U, y: U }, { alfa: al, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: R`a\ \ \text{(cuervo)}`, y: R`c\ \ \text{(negro)}` } }), punto([e.a, e.c], { color: BLANCO, radio: 8, alfa: al })];
+      const N = [mapaCalor((a, c) => impl(t, a, c), { clave: `im${t}` }), marco({ x: U, y: U }, { alfa: al, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: R`a\ \text{(cuervo)},\quad c\ \text{(negro)}`, y: 'c' } }), punto([e.a, e.c], { color: BLANCO, radio: 8, alfa: al })];
       N.push(rotulo([0.5, 1], R`\text{${TIPOS.find(([k]) => k === t)[1]}}:\ I(a, c) = ${coma(impl(t, e.a, e.c))}`, { clave: 'v', dy: -20, tam: 20, alfa: al }));
       if (f1 > 0) {
         if (g.mp > 1e-6) N.push(...flecha([e.a, e.c], [0, Math.min(0.42, g.mp * 0.3)], { color: ROSA, alfa: f1, ancho: 3.4 }));

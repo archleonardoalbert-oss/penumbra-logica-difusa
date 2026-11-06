@@ -60,7 +60,11 @@ export function crearRenderPlano(lienzo, { x: [x0, x1], y: [y0, y1], caja, id = 
           const libreAbajo = !tx.some((v) => Math.abs(aX(v) - aX((x0 + x1) / 2)) < 100);
           rotulos.push(libreAbajo ? { clave: `${id}ex`, x: aX((x0 + x1) / 2), y: aY(y0) + 16, tex: et.x, tam: 19, color: GRIS2, alfa: a } : { clave: `${id}ex`, x: aX(x1), y: aY(y0) - 16, tex: et.x, tam: 19, ancla: 'r', color: GRIS2, alfa: a });
         }
-        if (et.y) rotulos.push({ clave: `${id}ey`, x: aX(x0) - 40, y: aY((y0 + y1) / 2), tex: et.y, tam: 26, color: q.colorY ?? TEXTO, alfa: a });
+        if (et.y) {
+          // una letra cabe junto al eje; una palabra no: se pone encima, para que no se corte ni pise los números
+          const largo = et.y.includes('\\text');
+          rotulos.push(largo ? { clave: `${id}ey`, x: aX(x0) + 2, y: aY(y1) - 15, tex: et.y, tam: 17, color: q.colorY ?? GRIS2, ancla: 'l', alfa: a } : { clave: `${id}ey`, x: aX(x0) - 40, y: aY((y0 + y1) / 2), tex: et.y, tam: 26, color: q.colorY ?? TEXTO, alfa: a });
+        }
       } else if (q.tipo === 'poligono') {
         g.fillStyle = rgb(q.color ?? GRIS, q.alfa ?? 1);
         g.beginPath();

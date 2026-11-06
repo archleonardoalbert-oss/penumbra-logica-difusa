@@ -24,7 +24,7 @@ export default {
     pasos: [
       { dur: 3000, texto: 'Se entrena muchas veces, de verdad, con cada vez más etiquetas. En <b style="color:#58c4dd;font-weight:400">azul</b>, solo con ejemplos: con muchos, aprende bien; con pocos, no.' },
       { dur: 3000, texto: 'En <b style="color:#f4d345;font-weight:400">oro</b>, añadiendo la regla. Con pocas etiquetas, <b>la ventaja es enorme</b>. Con muchas, se junta con la azul: la regla ya no aporta tanto.' },
-      { dur: 3200, texto: 'En <b style="color:#f05a5a;font-weight:400">rojo</b>, una regla <b>falsa</b>: dice lo contrario de la verdad. Empeora justo donde más confiabas en ella. Una regla no es gratis: es una apuesta.' },
+      { dur: 3200, texto: 'En <b style="color:#f05a5a;font-weight:400">rojo</b>, una regla <b>falsa</b>: dice lo contrario de la verdad. Queda por debajo de no usar ninguna, y <b>ni con todas las etiquetas se recupera</b>. Una regla no es gratis: es una apuesta.' },
     ],
     primitivas({ q, paso, e }) {
       const al = ev(q(0), 0, 0.4), [t1, t2, t3] = [ev(q(0), 0.1, 1), ev(q(1), 0, 0.85), ev(q(2), 0, 0.85)], peso = paso === 2 && q(2) >= 1 ? e.peso : 1.2;

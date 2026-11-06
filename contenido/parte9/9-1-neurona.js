@@ -36,7 +36,7 @@ export default {
       const P = [];
       if (plano > 0) {
         P.push(mapaCalor(g, { clave: `n${(paso >= 2 ? mix(1.2, e.w, ev(q(2), 0, 0.5)) : w1).toFixed(2)}|${b2.toFixed(2)}` }), marco({ x: U, y: U }, { alfa: plano, ticks: { x: [0, 1], y: [0, 1] }, etiquetas: { x: R`x_1`, y: R`x_2` } }));
-        for (const [x, y] of [[0, 0], [0, 1], [1, 0], [1, 1]]) { P.push(punto([x, y], { color: g(x, y) > 0.5 ? ORO : BLANCO, radio: 7, alfa: plano }), rotulo([x, y], coma(g(x, y)), { clave: `v${x}${y}`, dx: x ? -30 : 30, dy: y ? 16 : -16, tam: 18, alfa: plano })); }
+        for (const [x, y] of [[0, 0], [0, 1], [1, 0], [1, 1]]) { P.push(punto([x, y], { color: g(x, y) > 0.5 ? ORO : BLANCO, radio: 7, alfa: plano }), rotulo([x, y], coma(g(x, y)), { clave: `v${x}${y}`, dx: x ? -30 : 30, dy: y ? 16 : -16, tam: 18, alfa: plano , color: g(x, y) > 0.5 ? '#14141f' : BLANCO })); }
         P.push(rotulo([0.5, 1], R`\sigma(w x_1 + w x_2 + b)`, { clave: 'tp', dy: -18, tam: 18, color: GRIS2, alfa: plano }));
       }
       return { principal: N, paneles: [{ ejes: { x: U, y: U, caja: { x: 640, y: 80, w: 360, h: 360 } }, prims: P }] };

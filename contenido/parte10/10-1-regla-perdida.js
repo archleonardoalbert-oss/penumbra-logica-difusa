@@ -29,11 +29,11 @@ export default {
     ],
     primitivas({ q, paso, e }) {
       const al = ev(q(0), 0, 0.4), usa = paso >= 3 ? 1 : 0, reposo = paso === 3 && q(3) >= 1, h = reposo ? (Math.round(e.conRegla) ? CON : SIN) : usa ? CON : SIN, ep = paso === 0 ? ev(q(0), 0.3, 1) * 0 : paso === 1 ? ev(q(1), 0, 0.85) * E : paso === 2 ? E : reposo ? e.ep : ev(q(3), 0, 0.9) * E, st = estado(h, ep);
-      const P = [mapaCalor((u, v) => predecir(st.w, [mix(-1, 1, u), mix(-1, 1, v)]), { clave: `r${usa}${st.epoca}`, dominio: 'unidad' }), marco({ x: D, y: D }, { alfa: al, ticks: { x: [-1, 0, 1], y: [-1, 0, 1] } })];
+      const P = [mapaCalor((x, y) => predecir(st.w, [x, y]), { clave: `r${h === CON ? 1 : 0}${st.epoca}` }), marco({ x: D, y: D }, { alfa: al, ticks: { x: [-1, 0, 1], y: [-1, 0, 1] } })];
       puntosJuguete.forEach(({ p, y }) => P.push(punto(p, { color: y ? ORO : AZUL, radio: 3.2, alfa: al * 0.85, halo: 0 })));
       ETIQUETADOS.forEach(({ p, y }) => P.push(punto(p, { color: y ? ORO : AZUL, radio: 9, alfa: al }), punto(p, { color: BLANCO, radio: 2.5, alfa: al, halo: 0 })));
       const M = [], reg = ev(q(2), 0, 0.5);
-      if (reg > 0) { M.push(mapaCalor((u, v) => lejos([mix(-1, 1, u), mix(-1, 1, v)]), { clave: 'lejos' }), marco({ x: D, y: D }, { alfa: reg, ticks: { x: [-1, 1], y: [-1, 1] } }), rotulo([0, 1], R`\text{Grado de «está lejos»}`, { clave: 'tl', dy: -16, tam: 16, color: GRIS2, alfa: reg })); }
+      if (reg > 0) { M.push(mapaCalor((x, y) => lejos([x, y]), { clave: 'lejos' }), marco({ x: D, y: D }, { alfa: reg, ticks: { x: [-1, 1], y: [-1, 1] } }), rotulo([0, 1], R`\text{Grado de «está lejos»}`, { clave: 'tl', dy: -16, tam: 16, color: GRIS2, alfa: reg })); }
       const G = [marco({ x: [0, E], y: [0, 1] }, { alfa: ev(q(1), 0, 0.4), ticks: { x: [0, E], y: [0, 0.5, 1] }, etiquetas: { x: R`\text{vueltas}` } })], sub = h.filter((x) => x.epoca <= ep);
       if (sub.length > 1) { G.push(curva((u) => { const j = Math.min(sub.length - 1, Math.round(u * (sub.length - 1))); return [sub[j].epoca, sub[j].exactitud]; }, [0, 1], { n: Math.min(100, sub.length - 1), color: ORO, ancho: 2.8 })); G.push(curva((u) => { const j = Math.min(sub.length - 1, Math.round(u * (sub.length - 1))); return [sub[j].epoca, sub[j].satisfaccion]; }, [0, 1], { n: Math.min(100, sub.length - 1), color: ROSA, ancho: 2.2 })); }
       const t1 = ev(q(1), 0, 0.4);

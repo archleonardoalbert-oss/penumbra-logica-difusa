@@ -52,8 +52,9 @@ export function entrenarConRegla({ conRegla = true, epocas = 300, eta = 0.5, cad
     for (const { p, y } of etiquetados) { const f = rasgos(p), q = predecir(w, p); f.forEach((v, i) => { g[i] += ((q - y) * v) / etiquetados.length; }); }
     if (conRegla) for (const { p } of puntosJuguete) {
       // pérdida de la regla: 1 - I(a, 1 - q), con I = 1 - a + a(1 - q) = 1 - aq; su derivada respecto a q es a
-      const a = reglaMala ? 1 - lejos(p) : lejos(p), f = rasgos(p), q = predecir(w, p);
-      f.forEach((v, i) => { g[i] += (pesoRegla * a * q * (1 - q) * v) / puntosJuguete.length; });
+      // la regla falsa dice lo contrario, «si lejos, entonces sí»: su pérdida es a(1 - q), y empuja al revés
+      const a = lejos(p), f = rasgos(p), q = predecir(w, p), signo = reglaMala ? -1 : 1;
+      f.forEach((v, i) => { g[i] += (signo * pesoRegla * a * q * (1 - q) * v) / puntosJuguete.length; });
     }
     w = w.map((v, i) => v - eta * g[i]);
     if (e % cada === 0 || e === epocas) h.push(estado(e));
