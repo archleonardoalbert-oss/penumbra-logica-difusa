@@ -284,14 +284,18 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   secciones.demuestra = h('section', { id: 'retos', className: 'zona-retos' }, listaRetos);
   const proxima = siguiente?.estado === 'listo' ? siguiente : null;
   const notaLlegada = h('p', { className: 'tenue' });
+  // dentro del capítulo, se sigue andando; al cambiar de capítulo, se viaja por el mapa
+  const cambiaCapitulo = proxima && !region.conceptos.some((x) => x.id === proxima.id), regionSig = cambiaCapitulo ? buscarConcepto(proxima.id, catalogo).region : null;
+  const destinoFinal = !proxima ? 'index.html' : cambiaCapitulo ? `index.html?viaje=${proxima.id}` : `concepto.html?c=${proxima.id}`;
+  const textoFinal = !proxima ? 'Volver al mapa' : cambiaCapitulo ? `Viajar al capítulo ${regionSig.id}: ${regionSig.titulo}` : `Siguiente parada: ${proxima.titulo}`;
   secciones.llegada = h('section', { id: 'llegada', className: 'llegada' },
     h('p', { className: 'rotulo-etapa', textContent: 'Parada terminada' }), html('p', c.puente, 'puente'), notaLlegada,
-    proxima ? h('a', { className: 'boton-seguir', href: `concepto.html?c=${proxima.id}`, textContent: `Siguiente parada: ${proxima.titulo} →` }) : h('a', { className: 'boton-seguir', href: 'index.html', textContent: 'Volver al mapa →' }));
+    h('a', { className: 'boton-seguir', href: destinoFinal, textContent: textoFinal }));
 
   const seguir = h('button', { type: 'button', className: 'boton-seguir' }), atras = h('button', { type: 'button', className: 'boton-atras', textContent: '← Volver' }), centro = h('div', { className: 'pie-centro' });
   const pie = h('footer', { className: 'pie-etapa' }, atras, centro, seguir);
   const escenario = h('main', { className: 'escenario' }, ...Object.values(secciones));
-  const app = h('div', { className: 'app' }, h('header', { className: 'barra-alta' }, rutaRegion(region, ficha, progreso), grado.el, titulo, raiel), escenario, pie);
+  const app = h('div', { className: `app${new URLSearchParams(location.search).has('llegas') ? ' llega' : ''}` }, h('header', { className: 'barra-alta' }, rutaRegion(region, ficha, progreso), grado.el, titulo, raiel), escenario, pie);
   raiz.replaceChildren(app);
 
   const escena = montarEscena(zonaEscena, c.escena, { textos, controles, teclado: false, alCambiar: () => { refrescarPie(); guardarLugar(); } });
@@ -434,7 +438,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
     if (enMira() && escena.estado().paso < c.escena.pasos.length - 1) { escena.avanzar(); return; }
     if (e.id === 'entiende' && iLatido < latidos.length - 1) { mostrarLatido(iLatido + 1); return; }
     if (e.id === 'demuestra' && iReto < c.retos.length - 1) { mostrarReto(iReto + 1); return; }
-    if (e.seguir) irA(etapa + 1);
+    if (e.seguir) irA(etapa + 1); else location.href = destinoFinal;
   };
   const retroceder = () => {
     const e = ETAPAS[etapa];

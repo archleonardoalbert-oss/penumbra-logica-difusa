@@ -40,13 +40,13 @@ test('la textura del terreno da la misma altura que el cálculo', () => {
   const N = 256, g = [0.5, 0], d = campoMapa(POS, g, N), [a, b] = DOMINIO, paso = (b - a) / (N - 1);
   for (const [i, j] of [[80, 90], [120, 140], [10, 200]]) {
     const x = a + i * paso, y = a + j * paso;
-    assert.ok(Math.abs(d[2 * (j * N + i)] - alturaMapa(x, y, g, POS)) < 1e-5);
+    assert.ok(Math.abs(d[4 * (j * N + i)] - alturaMapa(x, y, g, POS)) < 1e-5);
   }
 });
 
 test('el oro del terreno sale solo de lo dominado', () => {
   const N = 128, nada = campoMapa(POS, [0, 0], N), algo = campoMapa(POS, [1, 0], N);
-  let maxN = 0, maxA = 0; for (let k = 1; k < nada.length; k += 2) { maxN = Math.max(maxN, nada[k]); maxA = Math.max(maxA, algo[k]); }
+  let maxN = 0, maxA = 0; for (let k = 1; k < nada.length; k += 4) { maxN = Math.max(maxN, nada[k]); maxA = Math.max(maxA, algo[k]); }
   assert.equal(maxN, 0); assert.ok(maxA > 0.8);
 });
 

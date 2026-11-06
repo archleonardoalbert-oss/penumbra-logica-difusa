@@ -1,73 +1,123 @@
 // El paisaje de la portada, en WebGL2: montañas con sombras de borde suave, niebla en los valles, un camino que fluye y faros en las cimas.
 // El sentido del color es el del curso: azul y turquesa para lo que aún está por explorar, oro solo para lo que dominas.
-const ESCZ = 0.46, MALLA = 460;
+import { ANCHO_CIMA, BASE, OCTAVAS, SIGMA, campoMapa, DOMINIO, DOMINIO_CERCA } from './alturaMapa.js';
+
+const ESCZ = 0.46;
 
 const CIELO = `
 vec3 cielo(vec3 v,vec3 sol){
  float e=max(v.z,0.),s=max(dot(v,sol),0.);
- vec3 c=mix(vec3(.0085,.019,.044),vec3(.0012,.0028,.009),smoothstep(0.,.26,e));
+ vec3 c=mix(vec3(.0048,.011,.027),vec3(.0008,.0018,.006),smoothstep(0.,.14,e));
  c+=vec3(.10,.17,.27)*exp(-e*30.)*.07;
  c+=vec3(.42,.52,.70)*pow(s,40.)*.07;
  c+=vec3(.86,.90,1.)*pow(s,400.)*.3;
  return c;}`;
 
+// La altura, en un solo sitio: en el mapa ya hecho se lee de la textura; mientras nace, se calcula con su fórmula, término a término.
+const ALTURA = `
+uniform sampler2D uCerca,uLejos;uniform float uSube,uNace,uBase,uRoca2,uRoca5,uFondo;uniform vec4 uReg[8];
+vec4 campo(vec2 p){vec2 u=(p+.1)/1.2;if(u.x>.004&&u.y>.004&&u.x<.996&&u.y<.996)return texture(uCerca,u);return texture(uLejos,(p+1.)/3.);}
+float altura(vec2 p){
+ vec4 t=campo(p);
+ if(uNace<.5)return t.r;
+ float m=0.,ce=0.;
+ for(int i=0;i<8;i++){vec2 d=p-uReg[i].xy;float d2=dot(d,d);m+=uReg[i].z*exp(-d2/${(2 * SIGMA * SIGMA).toFixed(6)});ce=max(ce,exp(-d2/${(2 * ANCHO_CIMA * ANCHO_CIMA).toFixed(7)}));}
+ float c=mix(t.b*uRoca2,t.a,uRoca5),r=length(p-.5),l=clamp((r-.7)/.5,0.,1.);l=l*l*(3.-2.*l);
+ return clamp(${BASE.toFixed(3)}*uBase+m+l*(.08+.5*t.a)*uFondo+(1.-ce)*c*(.04+.5*min(1.,m*2.)),0.,1.);
+}
+float alt(vec2 p){return altura(p)*uSube*${ESCZ.toFixed(2)};}`;
+
 const VS_TERRENO = `#version 300 es
-precision highp float;
-in vec2 q;uniform mat4 uVP;uniform sampler2D uAlt;uniform float uSube;
+precision highp float;precision highp sampler2D;
+in vec2 q;uniform mat4 uVP;uniform vec4 uMalla;
+${ALTURA}
 out vec3 vP;
-void main(){float h=texture(uAlt,q).r*uSube*${ESCZ.toFixed(2)};vec2 p=q*3.-1.;vP=vec3(p,h);gl_Position=uVP*vec4(vP,1.);}`;
+void main(){vec2 p=uMalla.xy+q*uMalla.zw;vP=vec3(p,alt(p));gl_Position=uVP*vec4(vP,1.);}`;
 
 const FS_TERRENO = `#version 300 es
 precision highp float;precision highp sampler2D;
-in vec3 vP;uniform sampler2D uAlt,uRuido;uniform vec3 uCam,uSol;uniform float uSube,uT;uniform vec4 uFoco;uniform float uPasos;
+in vec3 vP;uniform sampler2D uRuido;uniform vec3 uCam,uSol;uniform float uT,uPasos,uMat,uCaja,uBarrido,uEsLejos;uniform vec4 uFoco;
 out vec4 o;
+${ALTURA}
 ${CIELO}
-float alt(vec2 p){return texture(uAlt,(p+1.)/3.).r*uSube*${ESCZ.toFixed(2)};}
 float iso(float v,float paso){float x=v/paso,w=max(fwidth(x),1e-4);return 1.-smoothstep(0.,1.4,abs(fract(x-.5)-.5)/w);}
+vec3 escala(float v){vec3 a=vec3(.102,.212,.463),b=vec3(.227,.698,.675),c=vec3(.957,.827,.271);return v<.5?mix(a,b,v*2.):mix(b,c,(v-.5)*2.);}
 void main(){
- vec2 p=vP.xy;float z=vP.z,hn=z/${ESCZ.toFixed(2)}/max(uSube,.02);
- float e=.0055;vec3 n=normalize(vec3(alt(p-vec2(e,0.))-alt(p+vec2(e,0.)),alt(p-vec2(0.,e))-alt(p+vec2(0.,e)),2.*e));
- vec3 grano=texture(uRuido,p*7.).rgb-.5,fino=texture(uRuido,p*31.).rgb-.5;
- vec3 nd=normalize(n+vec3(grano.xy*.16+fino.xy*.12,0.));
- float dom=texture(uAlt,(p+1.)/3.).g;
+ vec2 p=vP.xy;float z=vP.z;
+ // el mapa cercano tapa al lejano; el solape evita rendijas
+ if(uEsLejos>.5&&p.x>-.085&&p.y>-.085&&p.x<1.085&&p.y<1.085)discard;
+ // mientras nace, solo existe el cuadrado de la función
+ float caja=uCaja*1.7;if(p.x<-caja||p.y<-caja||p.x>1.+caja||p.y>1.+caja)discard;
+ if(uMat<.01&&p.y>uBarrido)discard;
+ float hn=z/${ESCZ.toFixed(2)}/max(uSube,.02);
  vec3 v=normalize(uCam-vP);float dist=length(uCam-vP);
- // penumbra: la luz se tapa poco a poco, y cuanto más lejos está lo que tapa, más ancho es el borde
- float luz=1.;{vec3 r=vP+vec3(n.xy*.004,.003);float t=.012;for(int i=0;i<int(uPasos);i++){vec3 s=r+uSol*t;float d=s.z-alt(s.xy);luz=min(luz,7.5*d/t);if(luz<.001)break;t+=clamp(d*.75,.007,.055);if(t>1.1)break;}luz=clamp(luz,0.,1.);luz=luz*luz*(3.-2.*luz);}
- float dif=max(dot(nd,uSol),0.);
- float pendiente=1.-n.z;
- float oc=0.;for(int i=0;i<4;i++){float a=float(i)*1.5708+.6;oc+=max(alt(p+vec2(cos(a),sin(a))*.035)-z,0.);}oc=exp(-oc*6.5);
- vec3 roca=mix(vec3(.022,.052,.105),vec3(.075,.235,.285),smoothstep(.08,.72,hn));
- roca=mix(roca,vec3(.020,.038,.075),smoothstep(.12,.55,pendiente)*.55);
- roca*=.82+.5*grano.b;
+ float e=mix(.0016,.0062,smoothstep(.9,2.6,dist));vec3 n=normalize(vec3(alt(p-vec2(e,0.))-alt(p+vec2(e,0.)),alt(p-vec2(0.,e))-alt(p+vec2(0.,e)),2.*e));
+ // detalle fino: tres escalas de roca, que se apagan con la distancia para no centellear
+ float deta=exp(-dist*.42);
+ vec3 g1=texture(uRuido,p*5.).rgb-.5,g2=texture(uRuido,p*23.).rgb-.5,g3=texture(uRuido,p*97.).rgb-.5;
+ vec3 nd=normalize(n+vec3(g1.xy*.14+g2.xy*.2*deta+g3.xy*.26*deta,0.));
+ float grieta=smoothstep(.0,.09,abs(g2.b))*.55+smoothstep(.0,.05,abs(g3.g))*.45;
+ float dom=campo(p).g;
+ vec3 c;
+ float luz=1.;
+ if(uPasos>.5){vec3 r=vP+vec3(n.xy*.003,.0022);float t=.006;for(int i=0;i<int(uPasos);i++){vec3 s=r+uSol*t;float d=s.z-alt(s.xy);luz=min(luz,7.5*d/t);if(luz<.001)break;t+=clamp(d*.7,.0045,.05);if(t>1.1)break;}luz=clamp(luz,0.,1.);luz=luz*luz*(3.-2.*luz);}
+ float dif=max(dot(nd,uSol),0.),pendiente=1.-n.z;
+ float oc=0.;for(int i=0;i<6;i++){float a=float(i)*1.047+.6;oc+=max(alt(p+vec2(cos(a),sin(a))*.022)-z,0.)+.6*max(alt(p+vec2(cos(a),sin(a))*.06)-z,0.);}oc=exp(-oc*4.2);
+ vec3 roca=mix(vec3(.018,.044,.092),vec3(.085,.25,.30),smoothstep(.08,.72,hn));
+ roca=mix(roca,vec3(.016,.030,.062),smoothstep(.12,.55,pendiente)*.6);
+ roca*=(.74+.62*g1.b+.5*g2.b*deta)*(.62+.5*grieta);
  vec3 oro=vec3(.86,.60,.13);
- roca=mix(roca,oro*(.62+.62*grano.b)*(.75+.5*smoothstep(.25,.75,hn)),dom*.92);
- vec3 lunar=vec3(.72,.88,1.)*2.8,ambiente=vec3(.04,.08,.16)*(.45+.55*nd.z)+vec3(.016,.034,.07)*max(dot(nd,v),0.);
- vec3 c=roca*(lunar*dif*luz+ambiente*oc*1.6+vec3(.16,.10,.024)*dom*(.4+.6*oc));
+ roca=mix(roca,oro*(.62+.62*g1.b)*(.75+.5*smoothstep(.25,.75,hn))*(.7+.4*grieta),dom*.92);
+ vec3 lunar=vec3(.72,.88,1.)*2.9,ambiente=vec3(.04,.08,.16)*(.45+.55*nd.z)+vec3(.016,.034,.07)*max(dot(nd,v),0.);
+ c=roca*(lunar*dif*luz+ambiente*oc*1.7+vec3(.16,.10,.024)*dom*(.4+.6*oc));
  c+=vec3(.26,.40,.62)*pow(1.-max(dot(n,v),0.),4.)*.12*oc;
- // curvas de nivel, como en un mapa: más vivas junto a lo que miras
  float cerca=exp(-dot(p-uFoco.xy,p-uFoco.xy)/.028)*uFoco.w;
  float dentro=smoothstep(-.02,.06,p.x)*smoothstep(1.02,.94,p.x)*smoothstep(-.02,.06,p.y)*smoothstep(1.02,.94,p.y);
  float linea=iso(hn,.07)*smoothstep(.1,.16,hn);
  c+=mix(vec3(.16,.50,.54),vec3(1.,.74,.26),dom)*linea*(.05*dentro+.36*cerca+.1*dom*dentro)*exp(-dist*.5);
  c+=mix(vec3(.05,.16,.22),vec3(.42,.28,.05),dom)*cerca*.55*(.35+dif);
- // bruma de los valles, arrastrada muy despacio
  vec2 w=p*2.1+vec2(uT*.006,-uT*.004);float n1=texture(uRuido,w).r,n2=texture(uRuido,w*2.3-vec2(uT*.009,0.)).g,bruma=smoothstep(.34,.72,n1*.65+n2*.35);
  float valle=smoothstep(.13,.05,hn)*bruma;
- c=mix(c,vec3(.05,.10,.19)*(.3+.7*luz),valle*.55);
- // lo lejano se disuelve en el cielo: el terreno no tiene borde
+ c=mix(c,vec3(.05,.10,.19)*(.3+.7*luz),valle*.5);
  vec3 h=cielo(-v,uSol);
  float r=length(p-.5),nieb=1.-exp(-pow(max(dist-1.9,0.)*.55,1.6));
- nieb=max(nieb,smoothstep(.95,1.28,r));
+ nieb=max(nieb,smoothstep(.95,1.28,r))*uMat;
  if(nieb>.992)discard;
  c=mix(c,h,clamp(nieb,0.,1.));
+ // la función desnuda: su color es su valor, y sobre ella la rejilla de x e y y las curvas de nivel
+ if(uMat<.999){
+  vec2 gr=abs(fract(p*20.+.5)-.5)/max(fwidth(p*20.),vec2(1e-5));float rej=1.-smoothstep(0.,1.1,min(gr.x,gr.y));
+  vec2 gm=abs(fract(p*4.+.5)-.5)/max(fwidth(p*4.),vec2(1e-5));float rejM=1.-smoothstep(0.,1.3,min(gm.x,gm.y));
+  float lum=.32+.8*max(dot(n,normalize(vec3(.45,-.5,.75))),0.);
+  vec3 f=pow(escala(clamp((hn-.04)/.5,0.,1.)),vec3(2.2))*lum*1.5;
+  f=mix(f,vec3(.8),rej*.1+rejM*.26);f=mix(f,vec3(.02,.03,.06),iso(hn,.05)*smoothstep(.07,.1,hn)*.6);
+  float borde=max(max(-p.x,p.x-1.),max(-p.y,p.y-1.));
+  if(uMat<.01&&borde>.0)discard;
+  c=mix(f*(1.-uBarrido*0.+0.),c,uMat);
+ }
  o=vec4(c,1.);}`;
+
+// El terreno se calcula en la GPU, de una vez: es la misma fórmula que alturaMapa.js, píxel a píxel, pero en milésimas en vez de segundos.
+const FS_HORNEAR = `#version 300 es
+precision highp float;precision highp int;
+in vec2 u;uniform vec4 uReg[8];uniform vec4 uDom;out vec4 o;
+float h2(int i,int j){uint h=uint(i)*374761393u+uint(j)*668265263u;h=(h^(h>>13))*1274126177u;h=h^(h>>16);return float(h)/4294967295.;}
+float valor(vec2 p){vec2 f=floor(p),d=p-f;ivec2 q=ivec2(f);d=d*d*(3.-2.*d);float a=h2(q.x,q.y),b=h2(q.x+1,q.y),c=h2(q.x,q.y+1),e=h2(q.x+1,q.y+1);return a+(b-a)*d.x+(c-a)*d.y+(a-b-c+e)*d.x*d.y;}
+void main(){
+ vec2 p=uDom.xy+(u-.5/uDom.z)*uDom.z/(uDom.z-1.)*uDom.w;
+ float s=0.,dos=0.,a=.5,f=7.,peso=1.;vec2 P=p;
+ for(int k=0;k<${OCTAVAS};k++){float n=1.-abs(2.*valor(vec2(P.x*f+11.3*float(k),P.y*f-7.1*float(k)))-1.),v=n*n*peso;s+=v*a;peso=min(1.,v*2.2);a*=.5;f*=2.03;if(k==1)dos=s;P=vec2(P.x*.86-P.y*.5,P.x*.5+P.y*.86);}
+ float m=0.,ce=0.,dom=0.;
+ for(int i=0;i<8;i++){vec2 d=p-uReg[i].xy;float d2=dot(d,d);m+=uReg[i].z*exp(-d2/${(2 * SIGMA * SIGMA).toFixed(6)});ce=max(ce,exp(-d2/${(2 * ANCHO_CIMA * ANCHO_CIMA).toFixed(7)}));dom=max(dom,uReg[i].w*exp(-d2/${(2 * (SIGMA * 1.7) ** 2).toFixed(6)}));}
+ float r=length(p-.5),l=clamp((r-.7)/.5,0.,1.);l=l*l*(3.-2.*l);
+ o=vec4(clamp(${BASE.toFixed(3)}+m+l*(.08+.5*s)+(1.-ce)*s*(.04+.5*min(1.,m*2.)),0.,1.),min(1.,dom),dos,s);}`;
 
 const VS_PANTALLA = `#version 300 es
 out vec2 u;void main(){vec2 p=vec2(gl_VertexID==1?3.:-1.,gl_VertexID==2?3.:-1.);u=p*.5+.5;gl_Position=vec4(p,.9999,1.);}`;
 
 const FS_CIELO = `#version 300 es
 precision highp float;
-in vec2 u;uniform mat4 uIVP;uniform vec3 uCam,uSol;uniform sampler2D uRuido;uniform float uT;out vec4 o;
+in vec2 u;uniform mat4 uIVP;uniform vec3 uCam,uSol;uniform sampler2D uRuido;uniform float uT,uCielo;out vec4 o;
 ${CIELO}
 float h21(vec2 p){p=fract(p*vec2(233.34,851.73));p+=dot(p,p+23.45);return fract(p.x*p.y);}
 void main(){
@@ -82,20 +132,22 @@ void main(){
   vec3 x=normalize(cross(luna,vec3(0.,0.,1.))),y=cross(x,luna);vec2 q=vec2(dot(v-luna,x),dot(v-luna,y))/R;
   float disco=smoothstep(1.,.93,length(q)),mar=texture(uRuido,q*.11+.3).r*.6+texture(uRuido,q*.31).g*.4;
   vec2 cSombra=vec2(.86-.22*sin(uT*.018),.2);float pen=smoothstep(.62,1.5,length(q-cSombra));
-  vec3 lu=vec3(1.,.97,.9)*(.72+2.6*(mar-.5));
+  vec3 lu=vec3(1.,.97,.9)*(.74+1.5*(mar-.5));
   c=mix(c,lu*(.012+1.25*pen)+vec3(.075,.022,.016)*(1.-pen),disco);
  }
- o=vec4(c,1.);}`;
+ o=vec4(c*uCielo,1.);}`;
 
 const VS_CAMINO = `#version 300 es
 precision highp float;
-in vec4 a;uniform mat4 uVP;uniform sampler2D uAlt;uniform float uSube,uAncho,uZ;
+precision highp sampler2D;
+in vec4 a;uniform mat4 uVP;uniform float uZ;
+${ALTURA}
 out vec2 w;
-void main(){vec2 p=a.xy;w=vec2(a.z,a.w);float h=texture(uAlt,(p+1.)/3.).r*uSube*${ESCZ.toFixed(2)};gl_Position=uVP*vec4(p,h+uZ,1.);}`;
+void main(){vec2 p=a.xy;w=vec2(a.z,a.w);gl_Position=uVP*vec4(p,alt(p)+uZ,1.);}`;
 
 const FS_CAMINO = `#version 300 es
 precision highp float;
-in vec2 w;uniform float uT,uHecho,uFuerza,uAparece;out vec4 o;
+in vec2 w;uniform float uT,uHecho,uFuerza,uAparece;uniform vec2 uCometa;out vec4 o;
 void main(){
  float d=abs(w.y),u=w.x,hecho=step(u,uHecho);
  if(u>uAparece)discard;
@@ -104,6 +156,8 @@ void main(){
  vec3 oro=vec3(1.,.74,.24),frio=vec3(.62,.80,.95);
  float trazos=smoothstep(.34,.42,abs(fract(u*46.)-.5));
  vec3 c=mix(frio*(nucleo*1.1*trazos+halo*.07),oro*(nucleo*(1.+1.6*pulso)+halo*(.16+.34*pulso)),hecho);
+ float col=u-uCometa.x,cabeza=exp(-col*col*9000.)*uCometa.y,estela=step(col,0.)*exp(col*26.)*uCometa.y;
+ c+=vec3(1.,.86,.5)*(nucleo*(9.*cabeza+1.6*estela)+halo*(3.4*cabeza+.42*estela));
  o=vec4(c*uFuerza,0.);}`;
 
 const VS_FARO = `#version 300 es
@@ -134,11 +188,14 @@ void main(){vec3 c=vec3(0.);float pesos[5]=float[](.227,.195,.122,.054,.016);
 
 const FS_FINAL = `#version 300 es
 precision highp float;
-in vec2 u;uniform sampler2D uTex,uBri;uniform float uExpo,uT;out vec4 o;
+in vec2 u;uniform sampler2D uTex,uBri;uniform float uExpo,uT;uniform vec2 uPx;out vec4 o;
 vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
 float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
 void main(){
- vec3 c=texture(uTex,u).rgb+texture(uBri,u).rgb*.85;
+ // bajar de resolución con cuatro muestras, y afilar: todo el detalle que cabe en cada píxel de pantalla
+ vec3 c0=texture(uTex,u).rgb,cr=texture(uTex,u+uPx*vec2(1.,0.)).rgb,cl=texture(uTex,u-uPx*vec2(1.,0.)).rgb,cu=texture(uTex,u+uPx*vec2(0.,1.)).rgb,cd=texture(uTex,u-uPx*vec2(0.,1.)).rgb;
+ vec3 c=c0+(c0-(cr+cl+cu+cd)*.25)*.85;c=max(c,vec3(0.));
+ c+=texture(uBri,u).rgb*.55;
  vec2 q=u-vec2(.46,.5);c*=1.-.62*smoothstep(.34,.95,length(q*vec2(1.,1.15)));
  c=aces(c*1.05*uExpo);c=pow(c,vec3(1./2.2));
  c+=(h(u*vec2(1731.,977.)+fract(uT))-.5)/120.;
@@ -211,16 +268,23 @@ export function crearPaisaje(canvas) {
   const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, powerPreference: 'high-performance' });
   const hdr = !!gl.getExtension('EXT_color_buffer_float') || !!gl.getExtension('EXT_color_buffer_half_float');
   const pT = programa(gl, VS_TERRENO, FS_TERRENO), pC = programa(gl, VS_PANTALLA, FS_CIELO), pR = programa(gl, VS_CAMINO, FS_CAMINO), pF = programa(gl, VS_FARO, FS_FARO), pB = programa(gl, VS_PANTALLA, FS_BRILLO), pS = programa(gl, VS_PANTALLA, FS_FINAL);
-  const ruido = texturaRuido(gl), alt = gl.createTexture(), vacioVAO = gl.createVertexArray();
+  const ruido = texturaRuido(gl), texCerca = gl.createTexture(), texLejos = gl.createTexture(), vacioVAO = gl.createVertexArray();
+  const anis = gl.getExtension('EXT_texture_filter_anisotropic');
+  if (anis) { gl.bindTexture(gl.TEXTURE_2D, ruido); gl.texParameterf(gl.TEXTURE_2D, anis.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(anis.MAX_TEXTURE_MAX_ANISOTROPY_EXT))); }
 
-  // la malla del terreno
-  const vaoT = gl.createVertexArray(); gl.bindVertexArray(vaoT);
-  const v = new Float32Array((MALLA + 1) * (MALLA + 1) * 2), idx = new Uint32Array(MALLA * MALLA * 6);
-  for (let j = 0, k = 0; j <= MALLA; j++) for (let i = 0; i <= MALLA; i++) { v[k++] = i / MALLA; v[k++] = j / MALLA; }
-  for (let j = 0, k = 0; j < MALLA; j++) for (let i = 0; i < MALLA; i++) { const a = j * (MALLA + 1) + i, b = a + 1, c = a + MALLA + 1, d = c + 1; idx[k++] = a; idx[k++] = b; idx[k++] = c; idx[k++] = b; idx[k++] = d; idx[k++] = c; }
-  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, v, gl.STATIC_DRAW);
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
-  const qT = gl.getAttribLocation(pT.p, 'q'); gl.enableVertexAttribArray(qT); gl.vertexAttribPointer(qT, 2, gl.FLOAT, false, 0, 0);
+  const qT = gl.getAttribLocation(pT.p, 'q');
+  /** Una malla regular de n×n cuadrados, en [0, 1]². */
+  function crearMalla(n) {
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const v = new Float32Array((n + 1) * (n + 1) * 2), idx = new Uint32Array(n * n * 6);
+    for (let j = 0, k = 0; j <= n; j++) for (let i = 0; i <= n; i++) { v[k++] = i / n; v[k++] = j / n; }
+    for (let j = 0, k = 0; j < n; j++) for (let i = 0; i < n; i++) { const a = j * (n + 1) + i, b = a + 1, c = a + n + 1, d = c + 1; idx[k++] = a; idx[k++] = b; idx[k++] = c; idx[k++] = b; idx[k++] = d; idx[k++] = c; }
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, v, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(qT); gl.vertexAttribPointer(qT, 2, gl.FLOAT, false, 0, 0);
+    return { vao, cuantos: idx.length };
+  }
+  const mallaCerca = crearMalla(740), mallaLejos = crearMalla(320);
 
   // los faros: un cuadrado, repetido en cada cima
   const vaoF = gl.createVertexArray(); gl.bindVertexArray(vaoF);
@@ -244,10 +308,31 @@ export function crearPaisaje(canvas) {
     const a = gl.getAttribLocation(pR.p, 'a'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 4, gl.FLOAT, false, 0, 0);
     nCamino = n * 2;
   }
-  function fijarCampo(datos, N) {
-    gl.bindTexture(gl.TEXTURE_2D, alt);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, N, N, 0, gl.RG, gl.FLOAT, datos);
+  const pH = hdr ? programa(gl, VS_PANTALLA, FS_HORNEAR) : null, fbH = gl.createFramebuffer();
+  const N_CERCA = 1280, N_LEJOS = 512;
+  const prepararTex = (t, N, datos) => {
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, N, N, 0, gl.RGBA, gl.FLOAT, datos);
     for (const [k, w] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, w);
+  };
+  /** `regs`: por región, x, y, altura a y grado. Si la GPU no puede escribir en coma flotante, lo calcula JS, con menos resolución. */
+  function fijarCampo(regs, regiones, grados) {
+    if (!pH) { prepararTex(texCerca, 512, campoMapa(regiones, grados, 512, DOMINIO_CERCA)); prepararTex(texLejos, 256, campoMapa(regiones, grados, 256, DOMINIO)); return; }
+    gl.useProgram(pH.p); gl.bindVertexArray(vacioVAO); gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
+    gl.uniform4fv(pH.u['uReg[0]'], regs);
+    for (const [t, N, [a, b]] of [[texCerca, N_CERCA, DOMINIO_CERCA], [texLejos, N_LEJOS, DOMINIO]]) {
+      prepararTex(t, N, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbH); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      gl.viewport(0, 0, N, N); gl.uniform4f(pH.u.uDom, a, a, N, b - a); gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  /** Lee lo horneado en un punto del mapa cercano: sirve para comprobar que la GPU y JS calculan lo mismo. */
+  function leerCampo(x, y) {
+    const [a, b] = DOMINIO_CERCA, i = Math.round(((x - a) / (b - a)) * (N_CERCA - 1)), j = Math.round(((y - a) / (b - a)) * (N_CERCA - 1)), d = new Float32Array(4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbH); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texCerca, 0);
+    gl.readPixels(i, j, 1, 1, gl.RGBA, gl.FLOAT, d); gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { valor: Array.from(d), x: a + (i * (b - a)) / (N_CERCA - 1), y: a + (j * (b - a)) / (N_CERCA - 1) };
   }
 
   // destinos de dibujo: la escena, en alto rango si se puede, y dos capas a un cuarto para el resplandor
@@ -263,12 +348,19 @@ export function crearPaisaje(canvas) {
     return { t, fb, rb, w, h, borrar() { gl.deleteTexture(t); gl.deleteFramebuffer(fb); if (rb) gl.deleteRenderbuffer(rb); } };
   };
   let esc = null, b1 = null, b2 = null;
-  function ajustar(w, h) {
+  /** El lienzo, a los píxeles de la pantalla; la escena, con más: lo que sobra se convierte en nitidez al bajar. */
+  function ajustar(cw, ch, w, h) {
+    if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
     if (esc && esc.w === w && esc.h === h) return;
-    canvas.width = w; canvas.height = h;
     for (const x of [esc, b1, b2]) x?.borrar();
     esc = crearDestino(w, h, true); b1 = crearDestino(w >> 2 || 1, h >> 2 || 1, false); b2 = crearDestino(w >> 2 || 1, h >> 2 || 1, false);
   }
+  const usarAltura = (P, e) => {
+    t2(P.u.uCerca, 6, texCerca); t2(P.u.uLejos, 7, texLejos);
+    gl.uniform1f(P.u.uSube, e.sube); gl.uniform1f(P.u.uNace, e.nace ? 1 : 0);
+    gl.uniform1f(P.u.uBase, e.nace?.base ?? 1); gl.uniform1f(P.u.uRoca2, e.nace?.roca2 ?? 1); gl.uniform1f(P.u.uRoca5, e.nace?.roca5 ?? 1); gl.uniform1f(P.u.uFondo, e.nace?.caja ?? 1);
+    if (e.regs) gl.uniform4fv(P.u['uReg[0]'], e.regs);
+  };
   const t2 = (u, unidad, tex) => { gl.activeTexture(gl.TEXTURE0 + unidad); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(u, unidad); };
 
   /** e: { vp, ojo, sol, sube, t, expo, foco:[x,y,_,fuerza], hecho, aparece, faros:Float32Array(n×6), pasos } */
@@ -279,18 +371,21 @@ export function crearPaisaje(canvas) {
     gl.depthMask(true); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // cielo
     gl.disable(gl.DEPTH_TEST); gl.useProgram(pC.p); gl.bindVertexArray(vacioVAO);
-    gl.uniformMatrix4fv(pC.u.uIVP, false, inversa(vp)); gl.uniform3fv(pC.u.uCam, ojo); gl.uniform3fv(pC.u.uSol, sol); gl.uniform1f(pC.u.uT, e.t); t2(pC.u.uRuido, 1, ruido);
+    gl.uniformMatrix4fv(pC.u.uIVP, false, inversa(vp)); gl.uniform3fv(pC.u.uCam, ojo); gl.uniform3fv(pC.u.uSol, sol); gl.uniform1f(pC.u.uT, e.t); gl.uniform1f(pC.u.uCielo, e.nace?.cielo ?? 1); t2(pC.u.uRuido, 1, ruido);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     // terreno
-    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.useProgram(pT.p); gl.bindVertexArray(vaoT);
-    gl.uniformMatrix4fv(pT.u.uVP, false, vp); gl.uniform3fv(pT.u.uCam, ojo); gl.uniform3fv(pT.u.uSol, sol); gl.uniform1f(pT.u.uSube, e.sube); gl.uniform1f(pT.u.uT, e.t); gl.uniform4fv(pT.u.uFoco, e.foco); gl.uniform1f(pT.u.uPasos, e.pasos);
-    t2(pT.u.uAlt, 0, alt); t2(pT.u.uRuido, 1, ruido);
-    gl.drawElements(gl.TRIANGLES, idx.length, gl.UNSIGNED_INT, 0);
+    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.useProgram(pT.p);
+    gl.uniformMatrix4fv(pT.u.uVP, false, vp); gl.uniform3fv(pT.u.uCam, ojo); gl.uniform3fv(pT.u.uSol, sol); gl.uniform1f(pT.u.uT, e.t); gl.uniform4fv(pT.u.uFoco, e.foco);
+    const mat = e.nace?.mat ?? 1;
+    gl.uniform1f(pT.u.uPasos, mat > 0.01 ? e.pasos : 0); gl.uniform1f(pT.u.uMat, mat); gl.uniform1f(pT.u.uCaja, e.nace?.caja ?? 1); gl.uniform1f(pT.u.uBarrido, e.nace ? -0.02 + 1.04 * e.nace.plano : 9);
+    t2(pT.u.uRuido, 1, ruido); usarAltura(pT, e);
+    gl.bindVertexArray(mallaCerca.vao); gl.uniform4f(pT.u.uMalla, -0.1, -0.1, 1.2, 1.2); gl.uniform1f(pT.u.uEsLejos, 0); gl.drawElements(gl.TRIANGLES, mallaCerca.cuantos, gl.UNSIGNED_INT, 0);
+    if ((e.nace?.caja ?? 1) > 0) { gl.bindVertexArray(mallaLejos.vao); gl.uniform4f(pT.u.uMalla, -1, -1, 3, 3); gl.uniform1f(pT.u.uEsLejos, 1); gl.drawElements(gl.TRIANGLES, mallaLejos.cuantos, gl.UNSIGNED_INT, 0); }
     // camino: encendido sobre el suelo y, muy tenue, a través de las montañas
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.depthMask(false);
     if (nCamino) {
       gl.useProgram(pR.p); gl.bindVertexArray(vaoR);
-      gl.uniformMatrix4fv(pR.u.uVP, false, vp); gl.uniform1f(pR.u.uSube, e.sube); gl.uniform1f(pR.u.uZ, 0.0085); gl.uniform1f(pR.u.uT, e.t); gl.uniform1f(pR.u.uHecho, e.hecho); gl.uniform1f(pR.u.uAparece, e.aparece); t2(pR.u.uAlt, 0, alt);
+      gl.uniformMatrix4fv(pR.u.uVP, false, vp); gl.uniform1f(pR.u.uZ, 0.0085); gl.uniform1f(pR.u.uT, e.t); gl.uniform1f(pR.u.uHecho, e.hecho); gl.uniform1f(pR.u.uAparece, e.aparece); gl.uniform2fv(pR.u.uCometa, e.cometa ?? [0, 0]); usarAltura(pR, e);
       gl.uniform1f(pR.u.uFuerza, 1); gl.drawArrays(gl.TRIANGLE_STRIP, 0, nCamino);
       gl.disable(gl.DEPTH_TEST); gl.uniform1f(pR.u.uFuerza, 0.1); gl.drawArrays(gl.TRIANGLE_STRIP, 0, nCamino); gl.enable(gl.DEPTH_TEST);
     }
@@ -300,17 +395,19 @@ export function crearPaisaje(canvas) {
     gl.uniformMatrix4fv(pF.u.uVP, false, vp); gl.uniform2f(pF.u.uRes, canvas.clientWidth || esc.w, canvas.clientHeight || esc.h); gl.uniform1f(pF.u.uT, e.t);
     const n = e.faros.length / 6;
     gl.disable(gl.DEPTH_TEST);
-    gl.uniform1f(pF.u.uHaz, 1); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n);
-    gl.uniform1f(pF.u.uHaz, 0); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n);
+    if ((e.nace?.camino ?? 1) > 0) {
+      gl.uniform1f(pF.u.uHaz, 1); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n);
+      gl.uniform1f(pF.u.uHaz, 0); gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n);
+    }
     gl.disable(gl.BLEND); gl.depthMask(true);
     // resplandor
     gl.useProgram(pB.p); gl.bindVertexArray(vacioVAO);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, b1.fb); gl.viewport(0, 0, b1.w, b1.h); t2(pB.u.uTex, 0, esc.t); gl.uniform2f(pB.u.uDir, 2 / b1.w, 0); gl.uniform1f(pB.u.uCorte, hdr ? 0.75 : 0.6); gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, b1.fb); gl.viewport(0, 0, b1.w, b1.h); t2(pB.u.uTex, 0, esc.t); gl.uniform2f(pB.u.uDir, 2 / b1.w, 0); gl.uniform1f(pB.u.uCorte, hdr ? 1.05 : 0.8); gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindFramebuffer(gl.FRAMEBUFFER, b2.fb); t2(pB.u.uTex, 0, b1.t); gl.uniform2f(pB.u.uDir, 0, 2 / b1.h); gl.uniform1f(pB.u.uCorte, 0); gl.drawArrays(gl.TRIANGLES, 0, 3);
     // final
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.useProgram(pS.p); t2(pS.u.uTex, 0, esc.t); t2(pS.u.uBri, 1, b2.t); gl.uniform1f(pS.u.uExpo, e.expo); gl.uniform1f(pS.u.uT, e.t);
+    gl.useProgram(pS.p); t2(pS.u.uTex, 0, esc.t); t2(pS.u.uBri, 1, b2.t); gl.uniform1f(pS.u.uExpo, e.expo); gl.uniform1f(pS.u.uT, e.t); gl.uniform2f(pS.u.uPx, 1 / canvas.width, 1 / canvas.height);
     gl.disable(gl.DEPTH_TEST); gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
-  return { gl, ajustar, dibujar, fijarCampo, fijarCamino };
+  return { gl, ajustar, dibujar, fijarCampo, fijarCamino, leerCampo };
 }

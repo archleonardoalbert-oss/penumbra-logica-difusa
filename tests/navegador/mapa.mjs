@@ -84,3 +84,47 @@ t('mapa: dominado un concepto, la parada pasa a la siguiente', async ({ pg, ir }
   await abrir(ir, pg);
   afirmar((await pg.textContent('.mapa-panel')).includes('La paradoja del montón'), 'no avanzó');
 });
+
+t('mapa: la GPU y JS calculan la misma altura', async ({ pg, ir }) => {
+  await abrir(ir, pg);
+  const { alturaMapa } = await import('../../motor/alturaMapa.js');
+  const { CATALOGO } = await import('../../contenido/catalogo.js');
+  for (const [x, y] of [[0.16, 0.2], [0.33, 0.41], [0.77, 0.63], [0.05, 0.95]]) {
+    const r = await pg.evaluate(([a, b]) => mapa.campo(a, b), [x, y]);
+    const js = alturaMapa(r.x, r.y, Array(8).fill(0), CATALOGO);
+    afirmar(Math.abs(r.valor[0] - js) < 2e-3, `(${x}, ${y}): GPU ${r.valor[0]}, JS ${js}`);
+  }
+});
+t('mapa: la primera vez nace de su fórmula, se puede saltar, y no se repite en la sesión', async ({ pg, ir }) => {
+  await ir('index.html');
+  await pg.waitForFunction(() => window.mapa);
+  afirmar((await pg.evaluate(() => mapa.modo())) === 'nace', 'no nace');
+  await pg.evaluate(() => mapa.fijarT(5));
+  afirmar((await pg.textContent('.nace-formula')).includes('z'), 'sin fórmula');
+  await pg.click('.nace-saltar');
+  afirmar((await pg.evaluate(() => mapa.modo())) === 'normal', 'no saltó');
+  afirmar(await pg.locator('.mapa-nace').count() === 0, 'quedó la capa');
+  await pg.reload();
+  await pg.waitForFunction(() => window.mapa);
+  afirmar((await pg.evaluate(() => mapa.modo())) === 'normal', 'se repitió');
+});
+t('mapa: el viaje lleva a la parada de destino, y se puede saltar', async ({ pg, ir }) => {
+  await ir('index.html?viaje=2-1-parametrizadas');
+  await pg.waitForFunction(() => window.mapa);
+  afirmar((await pg.evaluate(() => mapa.modo())) === 'viaje', 'no viaja');
+  afirmar((await pg.textContent('.viaje-tarjeta')).includes('La forma'), 'sin tarjeta');
+  await pg.keyboard.press('Escape');
+  await pg.waitForURL(/c=2-1-parametrizadas/);
+});
+t('mapa: la última parada de un capítulo viaja; Enter también avanza desde «Lo siguiente»', async ({ pg, ir }) => {
+  await pg.emulateMedia({ reducedMotion: 'reduce' });
+  await ir('concepto.html?c=1-10-convexidad#llegada');
+  await pg.waitForFunction(() => window.pagina);
+  afirmar((await pg.textContent('#llegada .boton-seguir')).includes('La forma'), 'no anuncia el capítulo');
+  afirmar((await pg.getAttribute('#llegada .boton-seguir', 'href')).includes('viaje='), 'no viaja');
+  await pg.goto('about:blank');
+  await ir('concepto.html?c=1-1-quien-es-alto#llegada');
+  await pg.waitForFunction(() => window.pagina);
+  await pg.keyboard.press('ArrowRight');
+  await pg.waitForURL(/c=1-2-monton/);
+});

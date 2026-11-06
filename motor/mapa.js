@@ -2,16 +2,20 @@
 import { CATALOGO } from '../contenido/catalogo.js';
 import { crearProgreso } from '../nucleo/progreso.js';
 import { siguienteConcepto } from '../nucleo/recorrido.js';
-import { alturaMapa, campoMapa, regionEn } from './alturaMapa.js';
+import { alturaMapa, regionEn } from './alturaMapa.js';
 import { crearTaller } from '../nucleo/taller.js';
 import { crearLugar, describirLugar } from '../nucleo/lugar.js';
 import { buscarConcepto } from '../contenido/catalogo.js';
 import { barraGrado, h, tituloDifuso, tryLocal } from './concepto.js';
 import { soportaGL2 } from './lienzo.js';
 import { camaraMapa, crearPaisaje, proyectar } from './mapaGL.js';
+import { DURA_NACER, DURA_VIAJE, formulaNacer, guionNacer, guionViaje } from './mapaGuion.js';
 import { ev, mix } from './tiempo.js';
 
-const ESCZ = 0.46, NCAMPO = 640;
+const ESCZ = 0.46, AMP = (g) => 0.32 + 0.17 * g;
+const CLAVE_NACIO = 'penumbra-mapa-nacio';
+const haNacido = () => { try { return !!sessionStorage.getItem(CLAVE_NACIO); } catch { return true; } };
+const marcarNacido = () => { try { sessionStorage.setItem(CLAVE_NACIO, '1'); } catch { /* sin almacenamiento */ } };
 const coma = (v) => v.toFixed(2).replace('.', ',');
 
 function listaConceptos(region, progreso) {
@@ -51,11 +55,12 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     const inicio = h('button', { type: 'button', textContent: 'Empezar de cero' });
     inicio.addEventListener('click', () => {
       const si = h('button', { type: 'button', className: 'peligro', textContent: 'Sí, borrar todo' }), no = h('button', { type: 'button', textContent: 'Cancelar' });
-      si.addEventListener('click', () => { progreso.reiniciar(); crearLugar(almacen).olvidar(); zona.replaceChildren(inicio); alCambiar(); });
-      no.addEventListener('click', () => zona.replaceChildren(inicio));
+      si.addEventListener('click', () => { progreso.reiniciar(); crearLugar(almacen).olvidar(); zona.replaceChildren(inicio, verNacer); alCambiar(); });
+      no.addEventListener('click', () => zona.replaceChildren(inicio, verNacer));
       zona.replaceChildren(h('span', { textContent: 'Se borrarán todas tus notas. ¿Seguro?' }), si, no);
     });
-    zona.append(inicio);
+    const verNacer = h('a', { href: 'index.html?nacer=1', textContent: 'Ver cómo nace el mapa' });
+    zona.append(inicio, verNacer);
     return zona;
   };
   let alCambiar = () => {};
@@ -78,15 +83,19 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   pagina.prepend(zonaMapa);
   pagina.append(indice, panel);
 
-  const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches, parametrosUrl = new URLSearchParams(location.search);
+  // tres modos: el viaje entre capítulos, el mapa que nace de su fórmula, y el mapa normal
+  const idViaje = parametrosUrl.get('viaje'), viaje = idViaje ? buscarConcepto(idViaje, catalogo) : null;
+  if (viaje && reducido) { location.replace(`concepto.html?c=${idViaje}`); return null; }
   const pais = crearPaisaje(canvas);
+  let modo = viaje ? 'viaje' : (!reducido && (parametrosUrl.has('nacer') || !haNacido())) ? 'nace' : 'normal';
   let t = reducido ? 9 : 0, enfocada = null, fijada = null, mapaSucio = true;
   const INICIO = { yaw: -0.22, pitch: 0.39 };
   let camara = { ...INICIO }, zoom = 1;
   const camaraValida = (c) => ({ yaw: Math.max(-0.95, Math.min(0.55, c.yaw)), pitch: Math.max(0.2, Math.min(1.05, c.pitch)) });
 
   const grados = () => catalogo.map((r) => progreso.gradoRegion(r.id, catalogo));
-  const sube = () => ev(t, 0.15, 2.8);
+  const sube = () => 1;
   const cimaDe = (r, g, s = sube()) => [r.posicion[0], r.posicion[1], alturaMapa(r.posicion[0], r.posicion[1], g, catalogo, s) * ESCZ];
 
   /** El camino: pasa por todas las cimas, en orden, y por donde va el curso se enciende. */
@@ -102,9 +111,11 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     pts.push(pos.at(-1));
     return pts;
   };
-  pais.fijarCamino(puntosCamino(), 0.0075);
+  const todosPuntos = puntosCamino();
+  pais.fijarCamino(todosPuntos, 0.0058);
   let huellaCampo = '';
-  const fijarCampo = () => { const g = grados(), k = g.join(); if (k !== huellaCampo) { huellaCampo = k; pais.fijarCampo(campoMapa(catalogo, g, NCAMPO), NCAMPO); } };
+  const regsDe = (g, cada = () => 1) => new Float32Array(catalogo.flatMap((r, i) => [r.posicion[0], r.posicion[1], AMP(g[i]) * cada(i), g[i]]));
+  const fijarCampo = () => { const g = grados(), k = g.join(); if (k !== huellaCampo) { huellaCampo = k; pais.fijarCampo(regsDe(g), catalogo, g); } };
   fijarCampo();
 
   // --- rótulos: texto de verdad, nítido, y que se puede usar con teclado
@@ -130,7 +141,7 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   const centros = () => { const g = grados(), W = canvas.clientWidth, H = canvas.clientHeight; return catalogo.map((r) => { const [x, y] = proyectar(vpActual, cimaDe(r, g)); return [x * W, y * H]; }); };
 
   function colocarRotulos() {
-    const cs = centros(), aparece = ev(t, 2.2, 3.2), activos = catalogo.map((r) => enfocada === r.id || fijada === r.id), clave = cs.flat().map((v) => v.toFixed(1)).join() + activos.join() + aparece.toFixed(2);
+    const cs = centros(), aparece = modo === 'nace' ? guionNacer(t).rotulos : modo === 'viaje' ? 0 : ev(t, 0.35, 1.1), activos = catalogo.map((r) => enfocada === r.id || fijada === r.id), clave = cs.flat().map((v) => v.toFixed(1)).join() + activos.join() + aparece.toFixed(2);
     if (clave === huellaRotulos) return;
     huellaRotulos = clave;
     rotulos.forEach((b, i) => {
@@ -143,24 +154,133 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
 
   const sig = () => siguienteConcepto(catalogo, progreso);
   function datosFaros() {
-    const g = grados(), s = sig(), d = new Float32Array(catalogo.length * 6), aparece = ev(t, 1.6, 3);
-    catalogo.forEach((r, i) => d.set([...cimaDe(r, g), g[i], ((enfocada === r.id || fijada === r.id) ? 1 : 0) * aparece, (s?.region.id === r.id ? 1 : 0) * aparece], i * 6));
+    const g = grados(), s = sig(), d = new Float32Array(catalogo.length * 6), aparece = modo === 'nace' ? guionNacer(t).camino : 1, llegaA = modo === 'viaje' ? guionViaje(t).llega : 0;
+    catalogo.forEach((r, i) => d.set([...cimaDe(r, g), g[i], (modo === 'viaje' ? (r.id === viaje.region.id ? llegaA * 1.6 : 0) : ((enfocada === r.id || fijada === r.id) ? 1 : 0) * aparece), (modo === 'viaje' ? 0 : s?.region.id === r.id ? 1 : 0) * aparece], i * 6));
     return d;
   }
   /** Hasta dónde se ha andado: la fracción del camino hasta la región de tu siguiente parada. */
   const hecho = () => { const s = sig(), i = s ? catalogo.findIndex((r) => r.id === s.region.id) : catalogo.length - 1; return i / (catalogo.length - 1); };
 
-  let escala = Math.min(devicePixelRatio || 1, 1.5), pasos = 22;
+  // nitidez: la escena se dibuja con muchos más píxeles que la pantalla, hasta donde la máquina aguante
+  let pasos = 26, escala = Math.max(1, Math.min(2, Math.sqrt(5.2e6 / Math.max(1, innerWidth * innerHeight * (devicePixelRatio || 1) ** 2))));
+  const CAM_PLANO = { yaw: -0.72, pitch: 0.78, dist: 2.25, objetivo: [0.5, 0.5, 0.06], corrimiento: 0, alzado: 0 };
+  const mezclaCam = (a, b, k) => ({ yaw: mix(a.yaw, b.yaw, k), pitch: mix(a.pitch, b.pitch, k), dist: mix(a.dist, b.dist, k), objetivo: a.objetivo.map((v, i) => mix(v, b.objetivo[i], k)), corrimiento: mix(a.corrimiento, b.corrimiento, k), alzado: mix(a.alzado, b.alzado, k) });
+  function camaraActual() {
+    if (modo === 'nace') {
+      const g = guionNacer(t), fin = { ...camaraValida(camara), ...vistaGeneral() };
+      return mezclaCam({ ...CAM_PLANO, yaw: CAM_PLANO.yaw + Math.min(t, 11) * 0.016 }, fin, g.giro);
+    }
+    if (modo === 'viaje') return camaraViaje();
+    return { ...camaraValida(camara), ...(vuelo ? vuelo(t) : vista) };
+  }
+  /** La luz de la luna: se mueve tan despacio que la penumbra respira. */
+  const sol = () => { const az = 1.1 + (reducido ? 0 : 0.05 * Math.sin(t / 26)), el = 0.26, c = Math.cos(el); return [Math.cos(az) * c, Math.sin(az) * c, Math.sin(el)]; };
   function pintar() {
-    const W = canvas.clientWidth || 1, H = canvas.clientHeight || 1;
-    pais.ajustar(Math.max(2, Math.round(W * escala)), Math.max(2, Math.round(H * escala)));
-    calcularCamara();
-    // una penumbra que se desplaza muy despacio: la luz nunca está del todo quieta
-    const az = 1.1 + (reducido ? 0 : 0.05 * Math.sin(t / 26)), el = 0.06 + 0.2 * ev(t, 0, 3.2), sol = [Math.cos(az) * Math.cos(el), Math.sin(az) * Math.cos(el), Math.sin(el)];
-    const foco = enfocada ?? fijada, rf = catalogo.find((r) => r.id === foco);
-    pais.dibujar({ vp: vpActual, ojo: ojoActual, sol, sube: Math.max(0.001, sube()), t, expo: ev(t, 0, 1.6) * (vuelo ? 1 - 0.8 * ev(t - t0Vuelo, 0.4, 0.9) : 1), foco: rf ? [rf.posicion[0], rf.posicion[1], 0, 1] : [0, 0, 0, 0], hecho: hecho(), aparece: ev(t, 1.2, 3.4), faros: datosFaros(), pasos });
+    const W = canvas.clientWidth || 1, H = canvas.clientHeight || 1, dpr = devicePixelRatio || 1;
+    pais.ajustar(Math.round(W * dpr), Math.round(H * dpr), Math.max(2, Math.round(W * dpr * escala)), Math.max(2, Math.round(H * dpr * escala)));
+    const { vp, ojo } = camaraMapa({ ...camaraActual(), aspecto: W / H });
+    vpActual = vp; ojoActual = ojo;
+    const foco = enfocada ?? fijada, rf = catalogo.find((r) => r.id === foco), g = grados(), comun = { vp, ojo, sol: sol(), sube: 1, t, pasos, faros: datosFaros() };
+    if (modo === 'nace') {
+      const gu = guionNacer(t);
+      pais.dibujar({ ...comun, expo: 1, foco: [0, 0, 0, 0], hecho: hecho(), aparece: gu.camino, nace: gu, regs: regsDe(g, (i) => gu.s[i]) });
+      pintarNacimiento(gu);
+      if (t >= DURA_NACER) terminarNacimiento();
+    } else if (modo === 'viaje') {
+      const gu = guionViaje(t), u = uDeViaje(gu);
+      pais.dibujar({ ...comun, expo: gu.expo, foco: [0, 0, 0, 0], hecho: u, aparece: 1, cometa: [u, 1 - gu.tarjeta * 0.7] });
+      pintarViaje(gu);
+      if (t >= DURA_VIAJE) salirDeViaje();
+    } else {
+      pais.dibujar({ ...comun, expo: ev(t, 0, 0.8) * (vuelo ? 1 - 0.8 * ev(t - t0Vuelo, 0.4, 0.9) : 1), foco: rf ? [rf.posicion[0], rf.posicion[1], 0, 1] : [0, 0, 0, 0], hecho: hecho(), aparece: 1 });
+    }
     colocarRotulos();
   }
+
+  // --- el nacimiento: el mapa sale de su fórmula, término a término
+  const capaNacer = h('div', { className: 'mapa-nace' }), formulaEl = h('div', { className: 'nace-formula' }), textoEl = h('p', { className: 'nace-texto' }), saltar = h('button', { type: 'button', className: 'nace-saltar', textContent: 'Saltar' });
+  const trazos = document.createElement('canvas');
+  trazos.className = 'nace-trazos';
+  capaNacer.append(trazos, formulaEl, textoEl, saltar);
+  let texAnterior = null, textoAnterior = null;
+  /** Ejes, marcas y centros, en un lienzo encima: líneas finas y texto nítido, a la resolución de la pantalla. */
+  function pintarTrazos(gu) {
+    const W = canvas.clientWidth, H = canvas.clientHeight, dpr = devicePixelRatio || 1;
+    if (trazos.width !== Math.round(W * dpr)) { trazos.width = Math.round(W * dpr); trazos.height = Math.round(H * dpr); }
+    const c = trazos.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
+    const al = gu.trazos; if (al <= 0.001) { trazos.style.display = 'none'; return; }
+    trazos.style.display = '';
+    const P = (x, y, z) => { const [a, b] = proyectar(vpActual, [x, y, z]); return [a * W, b * H]; };
+    c.lineCap = 'round'; c.font = 'italic 19px Lectura, Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    const eje = (fin, nombre) => {
+      const k = gu.ejes, o = P(0, 0, 0), a = P(fin[0] * 1.14 * k, fin[1] * 1.14 * k, fin[2] * 0.56 * k);
+      c.globalAlpha = al * Math.min(1, k * 3); c.strokeStyle = '#d7dee6'; c.fillStyle = '#e9eef2'; c.lineWidth = 1.5;
+      c.beginPath(); c.moveTo(...o); c.lineTo(...a); c.stroke();
+      const ang = Math.atan2(a[1] - o[1], a[0] - o[0]);
+      c.beginPath(); c.moveTo(...a); c.lineTo(a[0] - 11 * Math.cos(ang - 0.32), a[1] - 11 * Math.sin(ang - 0.32)); c.lineTo(a[0] - 11 * Math.cos(ang + 0.32), a[1] - 11 * Math.sin(ang + 0.32)); c.closePath(); c.fill();
+      if (k > 0.9) c.fillText(nombre, a[0] + 16 * Math.cos(ang), a[1] + 16 * Math.sin(ang));
+      for (let m = 0.25; m <= 1 && k * 1.14 > m && fin[2] === 0; m += 0.25) {
+        const q = P(fin[0] * m, fin[1] * m, 0), nx = -Math.sin(ang), ny = Math.cos(ang);
+        c.beginPath(); c.moveTo(q[0] - nx * 5, q[1] - ny * 5); c.lineTo(q[0] + nx * 5, q[1] + ny * 5); c.stroke();
+      }
+    };
+    eje([1, 0, 0], 'x'); eje([0, 1, 0], 'y'); eje([0, 0, 1], 'z');
+    const g = grados();
+    catalogo.forEach((r, i) => {
+      const s = gu.s[i]; if (s <= 0) return;
+      const altoK = AMP(g[i]) * s + 0.05, base = P(r.posicion[0], r.posicion[1], 0), cima = P(r.posicion[0], r.posicion[1], altoK * ESCZ);
+      const brote = Math.min(1, s * 2);
+      c.globalAlpha = al * brote * 0.9; c.setLineDash([3, 5]); c.lineWidth = 1; c.strokeStyle = '#e9eef2';
+      c.beginPath(); c.moveTo(...base); c.lineTo(...cima); c.stroke(); c.setLineDash([]);
+      c.fillStyle = '#58c4dd'; c.beginPath(); c.arc(cima[0], cima[1], 3.2, 0, 7); c.fill();
+      c.fillStyle = '#f0f4f7'; c.font = 'italic 16px Lectura, Georgia, serif'; c.fillText(`c${'₁₂₃₄₅₆₇₈'[i]}`, cima[0], cima[1] - 16);
+      c.font = '14px Lectura, Georgia, serif'; c.fillStyle = '#b9c5ce'; c.fillText(r.titulo, cima[0], cima[1] - 34);
+      c.font = 'italic 19px Lectura, Georgia, serif';
+    });
+    c.globalAlpha = 1;
+  }
+  function pintarNacimiento(gu) {
+    const f = formulaNacer(t);
+    if (f.tex !== texAnterior) { texAnterior = f.tex; if (f.tex && window.katex) window.katex.render(f.tex, formulaEl, { displayMode: true, throwOnError: false, strict: false }); else formulaEl.textContent = f.tex; }
+    if (f.texto !== textoAnterior) { textoAnterior = f.texto; textoEl.innerHTML = f.texto; window.renderMathInElement?.(textoEl, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false, strict: false }); }
+    formulaEl.style.opacity = String(gu.formula); textoEl.style.opacity = String(gu.formula);
+    saltar.style.opacity = String((1 - gu.ui) * 0.8);
+    pagina.style.setProperty('--ui', String(gu.ui));
+    pintarTrazos(gu);
+  }
+  function terminarNacimiento() {
+    marcarNacido();
+    modo = 'normal';
+    t = Math.max(t, 2);
+    capaNacer.remove();
+    pagina.classList.remove('naciendo');
+    pagina.style.removeProperty('--ui');
+    mapaSucio = true;
+    pintar();
+  }
+  saltar.addEventListener('click', (ev2) => { ev2.stopPropagation(); terminarNacimiento(); });
+
+  // --- el viaje entre capítulos: sales de donde estabas y recorres el camino hasta el siguiente
+  const iDest = viaje ? catalogo.findIndex((r) => r.id === viaje.region.id) : 0, iOrig = Math.max(0, iDest - 1), nTramos = catalogo.length - 1;
+  const uDeViaje = (gu) => mix(iOrig / nTramos, iDest / nTramos, gu.recorrido);
+  const tarjetaViaje = h('div', { className: 'viaje-tarjeta' }), dejaEl = h('p', { className: 'viaje-deja' });
+  function camaraViaje() {
+    const gu = guionViaje(t), a = catalogo[iOrig].posicion, b = catalogo[iDest].posicion, g = grados(), r = gu.recorrido;
+    const pts = todosPuntos, idx = Math.min(pts.length - 1, Math.round(uDeViaje(gu) * (pts.length - 1))), pos = pts[idx];
+    const zA = cimaDe(catalogo[iOrig], g)[2], zB = cimaDe(catalogo[iDest], g)[2];
+    const dx = b[0] - a[0], dy = b[1] - a[1], yawVuelo = Math.atan2(-dx, dy);
+    let dY = yawVuelo - INICIO.yaw; dY = Math.atan2(Math.sin(dY), Math.cos(dY));
+    const yaw = INICIO.yaw + dY * gu.chase * 0.82 + 0.1 * Math.sin(t * 0.4);
+    return { yaw, pitch: 0.44 + 0.12 * gu.altura - 0.1 * gu.zambulle, dist: mix(0.86 + 0.5 * gu.altura, 0.26, gu.zambulle), objetivo: [pos[0], pos[1], mix(zA, zB, r) * 0.8], corrimiento: 0, alzado: mix(-0.18, 0, gu.zambulle) };
+  }
+  function pintarViaje(gu) {
+    tarjetaViaje.style.opacity = String(gu.tarjeta * (1 - gu.zambulle));
+    tarjetaViaje.style.setProperty('--b', String(1 - gu.tarjeta));
+    dejaEl.style.opacity = String(gu.deja);
+  }
+  let saliendo = false;
+  function salirDeViaje() { if (saliendo) return; saliendo = true; location.replace(`concepto.html?c=${idViaje}&llegas=1`); }
 
   /** Al continuar, la cámara cae sobre la montaña y la página se funde: no es un enlace más, es seguir andando. */
   let t0Vuelo = 0;
@@ -252,12 +372,12 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
   alCambiar = () => { fijarCampo(); pintarPanel(); mapaSucio = true; };
 
   // --- el bucle: a 30 cuadros la luz se mueve; si la máquina no da para más, baja la resolución antes que la fluidez
-  let ult = performance.now(), ultCuadro = 0, activo = true, lentos = 0;
+  let ult = performance.now(), ultCuadro = 0, activo = true, lentos = 0, congelado = false;
   const io = new IntersectionObserver((e2) => { activo = e2[0].isIntersecting; });
   io.observe(pagina);
   const cuadro = (ms) => {
     requestAnimationFrame(cuadro);
-    if (!activo || document.hidden) { ult = ms; return; }
+    if (!activo || document.hidden || congelado) { ult = ms; return; }
     const dt = Math.min(0.25, (ms - ult) / 1000);
     ult = ms;
     t += dt;
@@ -266,24 +386,43 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     vista.dist += (a.dist - vista.dist) * k; vista.corrimiento += (a.corrimiento - vista.corrimiento) * k; vista.alzado += (a.alzado - vista.alzado) * k;
     vista.objetivo = vista.objetivo.map((v, i) => { const d = a.objetivo[i] - v; if (Math.abs(d) > 2e-4) mueve = true; return v + d * k; });
     if (Math.abs(a.dist - vista.dist) > 1e-3) mueve = true;
-    const animando = t < 3.4 || vuelo || mueve;
+    const animando = t < 1.2 || vuelo || mueve || modo !== 'normal';
     if (reducido && !animando && !mapaSucio) return;
     if (!animando && !mapaSucio && ms - ultCuadro < 32) return;
     if (ultCuadro && !reducido) {
       const gasto = ms - ultCuadro;
       if (gasto > 48) lentos++; else lentos = Math.max(0, lentos - 1);
-      if (lentos > 12) { lentos = 0; if (escala > 0.7) escala *= 0.82; else pasos = Math.max(10, pasos - 4); }
+      if (lentos > 10) { lentos = 0; if (escala > 1) escala = Math.max(1, escala * 0.84); else if (pasos > 12) pasos -= 4; else escala = Math.max(0.65, escala * 0.86); }
     }
     ultCuadro = ms;
     mapaSucio = false;
     pintar();
   };
   pintarPanel();
+  if (modo === 'nace') {
+    pagina.classList.add('naciendo');
+    pagina.append(capaNacer);
+    addEventListener('keydown', (ev2) => { if (modo === 'nace' && ev2.key === 'Escape') terminarNacimiento(); });
+  }
+  if (modo === 'viaje') {
+    const o = catalogo[iOrig], titulo = tituloDifuso(viaje.region.titulo, 'h2');
+    pagina.classList.add('viajando');
+    dejaEl.textContent = `Dejas atrás ${o.titulo}`;
+    tarjetaViaje.append(h('p', { className: 'viaje-num', textContent: `Capítulo ${viaje.region.id}` }), titulo, h('p', { className: 'viaje-lema', textContent: viaje.region.lema }));
+    const salto = h('button', { type: 'button', className: 'nace-saltar', textContent: 'Saltar' });
+    salto.addEventListener('click', salirDeViaje);
+    pagina.append(dejaEl, tarjetaViaje, salto);
+    addEventListener('keydown', (ev2) => { if (['Escape', ' ', 'Enter'].includes(ev2.key)) { ev2.preventDefault(); salirDeViaje(); } });
+  }
   pintar();
   requestAnimationFrame(cuadro);
 
   return {
     camara: () => camaraValida(camara),
+    modo: () => modo,
+    /** Para comprobar y capturar un instante exacto de los guiones. */
+    fijarT(v, e = escala) { congelado = true; t = v; escala = e; pintar(); },
+    campo: (x, y) => pais.leerCampo(x, y),
     aPantalla(id) {
       const i = catalogo.findIndex((r) => r.id === id), [x, y] = centros()[i], b = canvas.getBoundingClientRect();
       return [b.left + x, b.top + y];

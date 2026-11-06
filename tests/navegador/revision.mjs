@@ -152,7 +152,7 @@ t('final: desde el mapa se llega a tu péndulo, con tus piezas', async ({ pg, ir
 });
 t('final: al acabar una región, el botón lleva a la siguiente; solo la última vuelve al mapa', async ({ pg, ir }) => {
   await abrir(pg, ir, 'concepto.html?c=2-4-pendulo#llegada');
-  afirmar((await pg.textContent('#llegada .boton-seguir')).includes('Siguiente parada'), 'de la 2 a la 3');
+  afirmar((await pg.textContent('#llegada .boton-seguir')).includes('Viajar al capítulo 3'), 'de la 2 a la 3');
   await pg.goto('about:blank');
   await abrir(pg, ir, 'concepto.html?c=8-5-completitud#llegada');
   afirmar((await pg.textContent('#llegada .boton-seguir')).includes('mapa'), 'la última vuelve al mapa');
