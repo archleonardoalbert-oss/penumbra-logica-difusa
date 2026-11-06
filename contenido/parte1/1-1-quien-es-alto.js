@@ -4,7 +4,7 @@ import { ev, mix, mixc } from '../../motor/tiempo.js';
 
 const R = String.raw;
 const GENTE = [150, 158, 165, 172, 179, 181, 188, 196, 205];
-const ancho = (b) => Math.max(0.04, b * 8);
+const ancho = (b) => Math.max(0.04, b);
 const mu = (x, b) => 1 / (1 + Math.exp(Math.max(-40, Math.min(40, -(x - 180) / ancho(b)))));
 const coma = (v) => v.toFixed(2).replace('.', '{,}');
 const color = (v) => mixc(AZUL, ORO, v);
@@ -27,7 +27,7 @@ export default {
     id: 'quien-es-alto', formato: 'plano', W: 1100, H: 560,
     ejes: { x: [140, 210], y: [0, 1], caja: { x: 130, y: 90, w: 840, h: 250 } },
     entradas: [
-      { id: 'borrosidad', tipo: 'deslizador', etiqueta: 'borrosidad', min: 0, max: 1, paso: 0.01, valor: 0.35 },
+      { id: 'borrosidad', tipo: 'deslizador', etiqueta: 'borrosidad, w', min: 0, max: 8, paso: 0.1, valor: 2.8 },
       { id: 'altura', tipo: 'arrastre', eje: 'x', valor: [172, 0.5], region: { x: [140, 210], y: [0, 1] } },
     ],
     pasos: [
@@ -77,7 +77,7 @@ export default {
   },
   manipulacion: `<ul>
     <li>Mueve «borrosidad» hasta 0: vuelves al mundo clásico y el salto reaparece.</li>
-    <li>En el último paso, arrastra la línea vertical y lee el grado de cada altura.</li>
+    <li>Arrastra la línea vertical y lee el grado de cada altura.</li>
     <li>Busca el punto donde dos personas vecinas ya no se distinguen.</li></ul>`,
   entender: [
     { tipo: 'idea', texto: 'Acabas de ver el salto de la mente clásica a la difusa. Vamos a decirlo despacio, sin prisa, desde cero.' },
@@ -97,7 +97,7 @@ export default {
     { tipo: 'nota', titulo: 'Una duda razonable', texto: '¿Por qué 0,41 y no 0,42? Da igual: el número exacto importa poco. Importa que suba de forma gradual. Elegir la curva es modelar, y depende del contexto: «alto» no significa lo mismo entre jugadores de baloncesto.' },
     { tipo: 'simbolos', intro: 'Una última cosa, para el reto. La curva de la escena tiene esta fórmula. Parece fea, pero solo tiene dos ideas.', piezas: [
       { tex: R`x - 180`, dice: 'Cuánto te pasas de 180. Negativo si no llegas.' },
-      { tex: R`w`, dice: 'La borrosidad: cuanto más grande, más suave la curva.' },
+      { tex: R`w`, dice: 'La borrosidad, el deslizador de la escena: cuanto más grande, más suave la curva. La tabla de antes usa $w = 2{,}8$.' },
       { tex: R`e`, dice: 'Un número fijo: $e \\approx 2{,}718$. Elevado a algo muy negativo da casi 0; a algo muy positivo, algo enorme.' },
     ], todo: R`\mu(x) = \dfrac{1}{1 + e^{-(x - 180) \,\div\, w}}`, lee: 'Muy por encima de 180, $e^{\\cdots}$ es casi 0 y queda $\\frac{1}{1} = 1$. Muy por debajo, es enorme y queda casi 0.' },
   ],
@@ -107,8 +107,9 @@ export default {
   ],
   retos: [
     { id: 'borrosidad', tipo: 'manipular', enunciado: R`Sube la borrosidad hasta que 179 cm y 181 cm difieran en menos de $0{,}1$ de grado.`,
-      precision: (e) => (Math.abs(mu(181, e.borrosidad) - mu(179, e.borrosidad)) < 0.1 ? 1 : 0.5 * (1 - Math.min(1, Math.abs(mu(181, e.borrosidad) - mu(179, e.borrosidad))))),
-      prueba: { borrosidad: 0.9 }, pistas: ['Las dos están en la zona más empinada de la curva: mira la pendiente en 180.'],
+      precision: (e) => (Math.abs(mu(181, e.borrosidad) - mu(179, e.borrosidad)) < 0.1 ? 1 : 0),
+      pendiente: (e) => `Ahora difieren en ${Math.abs(mu(181, e.borrosidad) - mu(179, e.borrosidad)).toFixed(2).replace('.', ',')}. Hace falta menos de 0,1.`,
+      prueba: { borrosidad: 7 }, pistas: ['Las dos están en la zona más empinada de la curva: mira la pendiente en 180.'],
       explicacion: 'Cuanto más suave es la curva, menos importa un centímetro.' },
     { id: 'grado-174', tipo: 'calcular', enunciado: R`Con $w = 5$, ¿cuánto vale $\mu(174) = \dfrac{1}{1 + e^{-(174 - 180) \,\div\, 5}}$? Da dos decimales.`,
       respuesta: 0.2315, tol: 0.006, pistas: [R`El exponente es $-(-6) \div 5 = 1{,}2$.`, R`$e^{1{,}2} \approx 3{,}32$.`], explicacion: R`$\mu(174) = \frac{1}{1 + 3{,}32} \approx 0{,}23$.` },

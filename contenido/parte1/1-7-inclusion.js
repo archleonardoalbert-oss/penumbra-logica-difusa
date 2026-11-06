@@ -93,7 +93,7 @@ export default {
       solucion: [
         { texto: R`Fijemos $x \in X$ y escribamos $a = \mu_A(x)$, $b = \mu_B(x)$.`, porque: 'Dos conjuntos difusos son iguales cuando sus funciones coinciden en cada punto.' },
         { texto: R`Para números reales, $\min(a, b) = a \iff a \le b$.`, porque: 'Si $a \\le b$, el mínimo es $a$. Y si $\\min(a, b) = a$, por ser mínimo, $a \\le b$.' },
-        { texto: R`Por tanto, $\mu_{A \cap B}(x) = \mu_A(x)$ para todo $x$ equivale a $\mu_A(x) \le \mu_B(x)$ para todo $x$, que es $A \subseteq B$.`, porque: 'Se cuantifica sobre todo $x$ en los dos lados de la equivalencia.' },
+        { texto: R`Por tanto, $\mu_{A \cap B}(x) = \mu_A(x)$ para todo $x$ equivale a $\mu_A(x) \le \mu_B(x)$ para todo $x$, que es $A \subseteq B$.`, porque: 'Vale para cada $x$, así que vale en los dos lados a la vez.' },
       ] },
   ],
   referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'L. A. Zadeh, «Fuzzy sets» (1965).', 'B. Kosko, «Fuzzy entropy and conditioning», <em>Information Sciences</em> 40 (1986).', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga.'],

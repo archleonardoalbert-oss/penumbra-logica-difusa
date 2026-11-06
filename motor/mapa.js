@@ -131,7 +131,8 @@ export function montarMapa(raiz, { catalogo = CATALOGO, almacen = tryLocal() } =
     const { el } = barraGrado(progreso.gradoRegion(r.id, catalogo));
     const salir = h('button', { type: 'button', className: 'boton-atras', textContent: '← Ver todo el camino' });
     salir.addEventListener('click', () => abrir(null));
-    rellenar(fijada === r.id ? salir : '', h('p', { className: 'tenue', textContent: `Región ${r.id}` }), h('h2', { textContent: r.titulo }), h('p', { className: 'lema', textContent: r.lema }), el, fijada === r.id ? listaConceptos(r, progreso) : h('p', { className: 'tenue', textContent: 'Haz clic para ver sus conceptos.' }));
+    const sigAqui = siguienteConcepto(catalogo, progreso);
+    rellenar(sigAqui ? h('a', { className: 'siguiente-compacta', href: `concepto.html?c=${sigAqui.id}`, textContent: `Tu siguiente parada: ${sigAqui.titulo} →` }) : '', fijada === r.id ? salir : '', h('p', { className: 'tenue', textContent: `Región ${r.id}` }), h('h2', { textContent: r.titulo }), h('p', { className: 'lema', textContent: r.lema }), el, fijada === r.id ? listaConceptos(r, progreso) : h('p', { className: 'tenue', textContent: 'Haz clic para ver sus conceptos.' }));
   }
 
   /** Abrir una región acerca la cámara a su colina; soltarla vuelve a la vista completa. */

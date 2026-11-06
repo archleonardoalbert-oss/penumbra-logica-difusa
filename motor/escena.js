@@ -151,16 +151,18 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
     nombre.textContent = d.etiqueta ?? d.id;
     const inp = document.createElement('input');
     inp.dataset.entrada = d.id;
-    const aviso = document.createElement('small');
-    if (d.tipo === 'deslizador') { inp.type = 'range'; inp.min = d.min; inp.max = d.max; inp.step = d.paso ?? 0.01; inp.value = d.valor; }
+    const aviso = document.createElement('small'), lectura = document.createElement('output');
+    const leer = () => { lectura.textContent = String(+(+inp.value).toFixed(3)).replace('.', ','); };
+    if (d.tipo === 'deslizador') { inp.type = 'range'; inp.min = d.min; inp.max = d.max; inp.step = d.paso ?? 0.01; inp.value = d.valor; leer(); }
     else { inp.type = 'text'; inp.value = d.valor; inp.spellcheck = false; }
     inp.addEventListener('input', () => {
       entradas.actualizar(d.id, inp.value);
       aviso.textContent = entradas.avisos[d.id] ?? '';
+      if (d.tipo === 'deslizador') leer();
       sucio = true;
       notificar();
     });
-    fila.append(nombre, inp, aviso);
+    fila.append(nombre, inp, ...(d.tipo === 'deslizador' ? [lectura] : []), aviso);
     destinoCtl.append(fila);
   }
 
@@ -214,16 +216,26 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
   raiz.addEventListener('pointerdown', (ev) => {
     const px = lienzo.pos(ev);
     let mejor = null, md = 30;
+    // el asa de un eje se dibuja como una línea: se agarra a cualquier altura, por su distancia en ese eje
+    const distancia = (d) => {
+      const l = aLogico(d, entradas.e[d.id]);
+      if (d.eje === 'x') return Math.abs(l[0] - px[0]);
+      if (d.eje === 'y') return Math.abs(l[1] - px[1]);
+      return Math.hypot(l[0] - px[0], l[1] - px[1]);
+    };
+    const dentroDePanel = (d) => {
+      if (d.panel === undefined) return true;
+      const c = normalizar(actual()).paneles[d.panel].ejes.caja;
+      return px[0] >= c.x && px[0] <= c.x + c.w && px[1] >= c.y - 24 && px[1] <= c.y + c.h + 44;
+    };
     for (const d of arrastres) {
-      const l = aLogico(d, entradas.e[d.id]), dist = Math.hypot(l[0] - px[0], l[1] - px[1]);
+      if (!dentroDePanel(d)) continue;
+      const dist = distancia(d);
       if (dist < md) { md = dist; mejor = d; }
     }
     if (!mejor && r3) {
-      for (const d of arrastres) {
-        if (d.panel === undefined) continue;
-        const c = normalizar(actual()).paneles[d.panel].ejes.caja;
-        if (px[0] >= c.x && px[0] <= c.x + c.w && px[1] >= c.y && px[1] <= c.y + c.h) mejor = d;
-      }
+      let menor = Infinity;
+      for (const d of arrastres) if (d.panel !== undefined && dentroDePanel(d) && distancia(d) < menor) { menor = distancia(d); mejor = d; }
     }
     if (mejor) agarre = mejor;
     else if (r3) giro = px;
@@ -271,6 +283,8 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
 
   const api = {
     avanzar, retroceder, repetir, irA, lienzo, entradas,
+    /** El estado final de la escena, sin animar: lo que necesita quien la va a manipular. */
+    reposo() { if (paso !== n - 1 || p !== 1) { paso = n - 1; p = 1; sucio = true; refrescarUI(); } },
     estado: () => ({ paso, p, e: entradas.e }),
     instantanea: () => JSON.parse(JSON.stringify(normalizar(actual()).grupos)),
     aPantalla(m, d = arrastres[0]) {

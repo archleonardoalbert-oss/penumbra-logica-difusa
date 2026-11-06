@@ -110,17 +110,18 @@ function secuencia(c) {
     } else if (b.tipo === 'demo') {
       nuevo(g, (k) => k.append(h('p', { className: 'rotulo-etapa', textContent: b.valiente ? 'Un reto mayor' : 'Vamos a demostrarlo' }), h('b', { textContent: b.titulo ?? '', style: 'font-weight:400;display:block' }), b.plan ? html('p', b.plan) : '', b.tex ? html('p', b.tex) : ''));
       if (b.valiente) {
+        let revelada = false;
         nuevo(g, (k) => {
-          const cuerpo = h('ol', { className: 'razonamiento', hidden: true }, b.pasos.map(pasoDemo));
+          const cuerpo = h('ol', { className: 'razonamiento', hidden: !revelada }, b.pasos.map(pasoDemo));
           const boton = h('button', { type: 'button', className: 'boton-valiente', textContent: '⚔ Demostración solo para valientes' });
-          boton.addEventListener('click', () => reproducirEntrada({ titulo: b.titulo ?? c.titulo, cartelas: b.cartelas, alTerminar: () => { cuerpo.hidden = false; pintarTex(cuerpo); } }));
+          boton.addEventListener('click', () => reproducirEntrada({ titulo: b.titulo ?? c.titulo, cartelas: b.cartelas, alTerminar: () => { revelada = true; cuerpo.hidden = false; pintarTex(cuerpo); } }));
           k.append(boton, cuerpo);
         });
       } else {
         const gd = grupo('Paso a paso');
         b.pasos.forEach((p) => nuevo(gd, (k) => {
           let ol = k.querySelector('.razonamiento');
-          if (!ol) { ol = h('ol', { className: 'razonamiento' }); k.append(ol); }
+          if (!ol) { if (b.tex) k.append(html('p', b.tex, 'cierre')); ol = h('ol', { className: 'razonamiento' }); k.append(ol); }
           ol.append(pasoDemo(p));
         }));
       }
@@ -315,7 +316,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
     tarjetas.forEach((t, k) => { if (k === i) { if (!t.isConnected) listaRetos.append(t); } else t.remove(); });
     const conEscena = c.retos[i].tipo === 'manipular' && escenaDisponible;
     secciones.demuestra.classList.toggle('con-escena', conEscena);
-    if (conEscena && etapaId() === 'demuestra') { huecoRetos.replaceChildren(encaje, controles); if (!huecoRetos.isConnected) secciones.demuestra.append(huecoRetos); } else huecoRetos.remove();
+    if (conEscena && etapaId() === 'demuestra') { escena.reposo(); huecoRetos.replaceChildren(encaje, controles); if (!huecoRetos.isConnected) secciones.demuestra.append(huecoRetos); } else huecoRetos.remove();
     pintarPestanas(); pintarTex(listaRetos); refrescarPie();
   }
 
@@ -363,7 +364,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
     b.addEventListener('click', () => irA(i));
     raiel.append(h('li', {}, b));
   });
-  const enMira = () => etapaId() === 'mira' && escenaDisponible;
+  const enMira = () => etapaId() === 'mira';
 
   function refrescarPie() {
     const e = ETAPAS[etapa], ultimoPaso = escena.estado().paso >= c.escena.pasos.length - 1;
@@ -386,7 +387,7 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
     app.dataset.etapa = e.id;
     centro.replaceChildren();
     if (e.id === 'mira') { huecoMira.replaceChildren(textos, encaje); centro.append(botonesEscena); controles.remove(); }
-    if (e.id === 'toca') { huecoToca.replaceChildren(encaje); panelToca.append(controles); escena.irA(c.escena.pasos.length - 1); }
+    if (e.id === 'toca') { huecoToca.replaceChildren(encaje); panelToca.append(controles); escena.reposo(); }
     if (e.id === 'demuestra') mostrarReto(iReto);
     if (e.id === 'entiende' && iLatido < 0) mostrarLatido(0);
     if (e.id === 'llegada') notaLlegada.textContent = `Tu grado aquí: ${coma(progreso.gradoConcepto(c.id, c.retos))}. ${progreso.gradoConcepto(c.id, c.retos) < 0.7 ? 'Puedes seguir, y volver a los retos cuando quieras: nada se bloquea.' : 'Lo tienes.'}`;
@@ -418,8 +419,9 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   seguir.addEventListener('click', adelante);
   atras.addEventListener('click', retroceder);
   document.addEventListener('keydown', (ev) => {
-    if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName) || document.querySelector('.cine')) return;
-    if (ev.key === 'ArrowRight' || (ev.key === 'Enter' && ev.target.tagName !== 'BUTTON' && ev.target.tagName !== 'A')) { ev.preventDefault(); adelante(); }
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName) || document.querySelector('.cine') || ev.altKey || ev.ctrlKey || ev.metaKey) return;
+    if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') { if (tarjeta) tarjeta.hidden = true; }
+    if (ev.key === 'ArrowRight' || (ev.key === 'Enter' && !/^(BUTTON|A|SUMMARY)$/.test(ev.target.tagName))) { ev.preventDefault(); adelante(); }
     if (ev.key === 'ArrowLeft') { ev.preventDefault(); retroceder(); }
   });
 
@@ -430,6 +432,15 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   return { escena, progreso, irA, leerTodo: () => { mostrarLatido(latidos.length - 1, false); } };
 }
 
+/** El mejor sitio disponible para las notas: localStorage; si no, sessionStorage; si no, window.name, que dura en la pestaña. */
 export function tryLocal() {
-  try { return window.localStorage; } catch { return { getItem() { throw new Error('bloqueado'); }, setItem() { throw new Error('bloqueado'); }, removeItem() { throw new Error('bloqueado'); } }; }
+  for (const k of ['localStorage', 'sessionStorage']) {
+    try { const a = window[k]; a.setItem('penumbra-prueba', '1'); a.removeItem('penumbra-prueba'); return a; } catch { /* bloqueado: se prueba el siguiente */ }
+  }
+  const leer = () => { try { return JSON.parse(window.name) || {}; } catch { return {}; } };
+  return {
+    getItem: (c) => leer()[c] ?? null,
+    setItem: (c, v) => { const d = leer(); d[c] = String(v); window.name = JSON.stringify(d); },
+    removeItem: (c) => { const d = leer(); delete d[c]; window.name = JSON.stringify(d); },
+  };
 }

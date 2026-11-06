@@ -34,7 +34,7 @@ export default {
       { dur: 1800, texto: 'Este es un conjunto difuso con forma de trapecio. Vamos a sacarle sus piezas, una a una.' },
       { dur: 2200, texto: 'El <b style="color:#58c4dd;font-weight:400">soporte</b> son los puntos con grado mayor que 0: los que pertenecen aunque sea un poco.' },
       { dur: 2200, texto: 'El <b style="color:#f4d345;font-weight:400">núcleo</b> son los puntos con grado exactamente 1: los que pertenecen del todo.' },
-      { dur: 2200, texto: 'La <b style="color:#fc6282;font-weight:400">altura</b> es el mayor grado alcanzado. Si vale 1, el conjunto es <em>normal</em>. Baja el deslizador «altura» y verás que el núcleo desaparece.' },
+      { dur: 2200, texto: 'La <b style="color:#fc6282;font-weight:400">altura</b> es el mayor grado alcanzado. Si vale 1, el conjunto es <em>normal</em>. Si nadie llega tan alto, el núcleo desaparece: enseguida lo probarás tú.' },
       { dur: 1800, texto: 'Los <em>puntos de cruce</em> tienen grado $0{,}5$: justo donde es igual de cierto que pertenecen y que no.' },
     ],
     primitivas({ q, e }) {
@@ -90,11 +90,11 @@ export default {
       { texto: R`Toma cualquier $x$ del núcleo. Por lo que significa «núcleo», $\mu_A(x) = 1$.`, porque: 'Solo se ha aplicado la definición de núcleo.' },
       { texto: R`Como $1 > 0$, se cumple $\mu_A(x) > 0$. Eso es justo lo que pide el soporte, así que $x$ está en el soporte.`, porque: 'Definición de soporte. Como $x$ era cualquiera, vale para todo el núcleo.' },
     ] },
-    { tipo: 'nota', titulo: 'Para curiosos: por qué «supremo» y no «máximo»', texto: 'Imagina los números entre 0 y 1, sin incluir el 1, con grado igual a sí mismos: 0,9; 0,99; 0,999… Los grados se acercan a 1 todo lo que quieras, y nadie lo alcanza. No hay un mayor grado, pero sí un techo: el 1. Por eso la altura es 1, aunque el conjunto no sea normal. Con un número finito de cosas, esto no pasa. Ojo al leer libros: Zimmermann llama normal a tener altura 1; otros autores exigen que algún punto llegue a 1. Solo se diferencian en casos como este.' },
+    { tipo: 'nota', titulo: 'Para curiosos: por qué «supremo» y no «máximo»', texto: 'Imagina los números entre 0 y 1, sin incluir el 1, con grado igual a sí mismos: 0,9; 0,99; 0,999… Los grados se acercan a 1 todo lo que quieras, y nadie lo alcanza. No hay un mayor grado, pero sí un techo: el 1. La altura es 1, y el núcleo está vacío. Aquí llamamos normal a tener altura 1, como Zimmermann. Otros libros exigen además que algún punto llegue a 1, y para ellos este conjunto no lo sería. Con un número finito de cosas, las dos definiciones coinciden.' },
   ],
   tecnicas: [
-    { titulo: 'Supremo frente a máximo', texto: 'Antes de escribir «el máximo», pregúntate si se alcanza. Un contraejemplo en un intervalo abierto suele resolver la duda.' },
-    { titulo: 'Busca el contraejemplo en un intervalo abierto', texto: 'Para refutar el recíproco de algo que involucra un [[supremo]], prueba con una función creciente en un intervalo abierto.' },
+    { titulo: 'Supremo frente a máximo', texto: 'Antes de escribir «el máximo», pregúntate si se alcanza. Un contraejemplo en un [[intervalo]] sin sus extremos suele resolver la duda.' },
+    { titulo: 'Busca el contraejemplo donde no se llega', texto: 'Si algo depende de un [[supremo]], y quieres ver que no basta, prueba con una función creciente en un [[intervalo]] sin su extremo: se acerca sin llegar.' },
   ],
   retos: [
     { id: 'moldear-trapecio', tipo: 'manipular', enunciado: R`Moldea el trapecio para que el soporte sea $(2, 8)$ y el núcleo $[4, 6]$, con error menor que $0{,}25$.`,

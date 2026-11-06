@@ -15,7 +15,7 @@ t('mapa: clic abre sus conceptos, con enlace y grado', async ({ pg, ir }) => {
   await abrir(ir, pg);
   const [x, y] = await moverA(pg, 1);
   await pg.mouse.click(x, y);
-  afirmar(await pg.locator('.mapa-panel a[href="concepto.html?c=1-1-quien-es-alto"]').count() === 1, 'sin enlace al concepto');
+  afirmar(await pg.locator('.mapa-conceptos a[href="concepto.html?c=1-1-quien-es-alto"]').count() === 1, 'sin enlace al concepto');
   afirmar(await pg.locator('.mapa-panel li').count() === 10, 'no están los 10');
 });
 

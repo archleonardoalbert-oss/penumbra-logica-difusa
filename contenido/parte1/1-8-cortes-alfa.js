@@ -23,7 +23,7 @@ export default {
       { dur: 2400, texto: 'Levanta un plano horizontal hasta la altura $\\alpha$. Corta el terreno, y lo que queda por encima forma una isla.' },
       { dur: 2600, texto: 'El borde de la isla es una curva de nivel. Bájala al suelo por estas líneas.' },
       { dur: 2400, texto: 'Retiramos la mitad del terreno para verlo: en el suelo queda una región nítida, el <b style="color:#f4d345;font-weight:400">α-corte</b>, un conjunto clásico: todos los puntos con grado al menos $\\alpha$.' },
-      { dur: 2200, texto: 'Mueve $\\alpha$. Cuanto más alto, más pequeño. Mira el perfil abajo a la derecha: los cortes se anidan, cada uno dentro del anterior.' },
+      { dur: 2200, texto: 'Cuanto más alto el listón $\\alpha$, más pequeño el corte. Mira el perfil abajo a la derecha: los cortes se anidan, cada uno dentro del anterior.' },
     ],
     primitivas({ q, paso, e }) {
       const a = paso >= 1 ? mix(0.02, e.alfa, ev(q(1), 0, 0.85)) : 0.02, r = radio(a), de = ev(q(0), 0.15, 1);
@@ -113,7 +113,7 @@ export default {
   retos: [
     { id: 'corte-triangulo', tipo: 'calcular', enunciado: R`Sea $\mu$ triangular, con pies en $0$ y $10$ y pico en $5$. ¿Cuánto mide el intervalo $A_{0{,}6}$?`, respuesta: 4, tol: 0.05,
       pistas: [R`A la izquierda, $\mu(x) = x \div 5$.`, R`Resuelve $x \div 5 = 0{,}6$: da $x = 3$; por simetría, el otro extremo es $7$.`], explicacion: R`$A_{0{,}6} = [3, 7]$, de longitud $4$.` },
-    { id: 'propiedad-monotonia', tipo: 'elegir', enunciado: R`Como $0{,}3 \le 0{,}7$, ¿qué relación hay siempre entre $A_{0{,}3}$ y $A_{0{,}7}$?`, opciones: [R`$A_{0{,}3} \subseteq A_{0{,}7}$`, R`$A_{0{,}7} \subseteq A_{0{,}3}$`, 'Son disjuntos', 'Depende de la forma de $A$'], correcta: 1,
+    { id: 'propiedad-monotonia', tipo: 'elegir', enunciado: R`Como $0{,}3 \le 0{,}7$, ¿qué relación hay siempre entre $A_{0{,}3}$ y $A_{0{,}7}$?`, opciones: [R`$A_{0{,}3} \subseteq A_{0{,}7}$`, R`$A_{0{,}7} \subseteq A_{0{,}3}$`, 'No tienen nada en común', 'Depende de la forma de $A$'], correcta: 1,
       explicacion: 'Pedir grado al menos 0,7 es más exigente: quien lo cumple, también cumple grado al menos 0,3.' },
   ],
   referencias: ['H.-J. Zimmermann, <em>Fuzzy Set Theory and Its Applications</em>, 4.ª ed., Kluwer, 2001, caps. 1–2.', 'G. J. Klir, B. Yuan, <em>Fuzzy Sets and Fuzzy Logic</em>, cap. 1–2.', 'M. Navara, temario del curso <em>Fuzzy Logic</em>, CTU Praga: cortes, propiedades «cutworthy».'],

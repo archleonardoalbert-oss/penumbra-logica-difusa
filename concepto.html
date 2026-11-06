@@ -5,5 +5,5 @@
 <body><div id="raiz"></div>
 <script type="module">
 import { montarConcepto } from './motor/concepto.js';
-montarConcepto(document.getElementById('raiz'), new URLSearchParams(location.search).get('c'));
+window.pagina = await montarConcepto(document.getElementById('raiz'), new URLSearchParams(location.search).get('c'));
 </script>

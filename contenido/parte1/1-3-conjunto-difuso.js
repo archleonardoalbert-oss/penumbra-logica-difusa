@@ -22,7 +22,7 @@ export default {
       { dur: 2000, texto: 'Un conjunto clásico es una región con borde. Cada punto está dentro o fuera, sin matices.' },
       { dur: 3000, texto: 'Ahora el borde se vuelve niebla. Cada punto tiene una densidad entre 0 y 1: eso es su grado de pertenencia. Las líneas marcan los grados 0,25, 0,5 y 0,75.' },
       { dur: 1800, texto: 'Con esto basta para definirlo: un conjunto difuso <em>es</em> la función que da a cada punto su grado. Mueve la sonda y léelo.' },
-      { dur: 2000, texto: 'La misma idea en una dimensión es una curva. Escribe tu propia función a la derecha: «cerca de 5» es una forma de decir qué grado le toca a cada número.' },
+      { dur: 2000, texto: 'La misma idea en una dimensión es una curva. «Cerca de 5» es una forma de decir qué grado le toca a cada número. Enseguida escribirás tu propia función.' },
     ],
     primitivas({ q, paso, e }) {
       const bl = ev(q(1), 0, 0.85), k = mix(60, 1.45, bl), ent = ev(q(0), 0, 0.5);
@@ -72,7 +72,7 @@ export default {
   ],
   retos: [
     { id: 'cerca-de-5', tipo: 'manipular', enunciado: R`Escribe una $\mu$ para «cerca de 5» con $\mu(5) = 1$, con $\mu(4)$ entre $0{,}3$ y $0{,}8$, y con $\mu(8) \le 0{,}1$.`,
-      precision: (e) => [e.f(5) > 0.99, e.f(4) >= 0.3 && e.f(4) <= 0.8, e.f(8) <= 0.1001].filter(Boolean).length / 3,
+      precision: (e) => (e.f(5) > 0.99 ? [true, e.f(4) >= 0.3 && e.f(4) <= 0.8, e.f(8) <= 0.1001].filter(Boolean).length / 3 : 0),
       prueba: { f: '1 / (1 + (x - 5)^2)' }, pistas: [R`Una forma con su pico en 5 depende de $x - 5$ al cuadrado.`, R`Prueba con $1 \div (1 + (x - 5)^2)$, que en $x = 4$ da $0{,}5$.`],
       pendiente: (e) => `Te falta: ${[e.f(5) > 0.99 ? '' : 'μ(5) = 1', e.f(4) >= 0.3 && e.f(4) <= 0.8 ? '' : 'μ(4) entre 0,3 y 0,8', e.f(8) <= 0.1001 ? '' : 'μ(8) ≤ 0,1'].filter(Boolean).join(' · ')}.`,
       explicacion: 'Hay infinitas soluciones: modelar es elegir una.' },

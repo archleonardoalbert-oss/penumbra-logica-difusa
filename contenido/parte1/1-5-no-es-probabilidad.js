@@ -53,7 +53,7 @@ export default {
       return { principal: N, paneles: [{ ejes: { x: [0, 5], y: [0, 1], caja: { x: 740, y: 130, w: 320, h: 300 } }, prims: P }] };
     },
   },
-  manipulacion: '<ul><li>Cambia el número de las etiquetas: por muy alto que sea, A y B siguen significando cosas distintas. En B, un número alto solo reduce la frecuencia del desastre.</li><li>Pulsa ↻ en el tercer paso y mira qué ocurre con cada número al abrirlas.</li></ul>',
+  manipulacion: '<ul><li>Cambia el número de las etiquetas: por muy alto que sea, A y B siguen significando cosas distintas. En B, un número alto solo reduce la frecuencia del desastre.</li><li>Fíjate: el 0,91 de A sigue ahí, y el de B ya colapsó.</li></ul>',
   entender: [
     { tipo: 'idea', etiqueta: 'La duda', texto: 'Es la primera objeción que todo el mundo hace, y es buena: si ya existe la probabilidad, ¿para qué otro número de 0 a 1? Porque responden a preguntas distintas.' },
     { tipo: 'ejemplo', texto: 'Mira qué pasa con cada botella al saberlo todo sobre ella:', tabla: [['', 'Antes de abrir', 'Tras analizarla'], ['A, grado en «potable»', '0,91', '0,91'], ['B, probabilidad de ser potable', '0,91', '0 o 1']], cierre: 'En A no había nada oculto: el 0,91 describía cómo es. En B había un hecho oculto, y al conocerlo el número desaparece.' },
@@ -71,7 +71,7 @@ export default {
   ],
   tecnicas: [
     { titulo: 'La prueba de la observación', texto: 'Para clasificar un número entre 0 y 1, pregúntate: si lo supiera todo sobre este caso, ¿seguiría teniendo sentido? Si sí, es un grado. Si colapsa a 0 o 1, es una probabilidad.' },
-    { titulo: 'La prueba de la suma', texto: 'Si los números deben sumar 1 sobre alternativas excluyentes, es una distribución. Si cada uno se puede fijar sin mirar a los demás, no lo es.' },
+    { titulo: 'La prueba de la suma', texto: 'Si los números deben sumar 1 sobre alternativas excluyentes, es un reparto de probabilidades. Si cada uno se puede fijar sin mirar a los demás, no lo es.' },
   ],
   retos: [
     { id: 'grado-o-azar', tipo: 'elegir', enunciado: '¿Cuál de estas frases expresa un <em>grado</em>, y no una probabilidad?',

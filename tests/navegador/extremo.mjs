@@ -11,8 +11,8 @@ t('extremo a extremo: del mapa a la parada, los retos suben la colina, y el prog
   await pg.waitForSelector('#pregunta');
   for (const e of ['mira', 'toca', 'entiende']) { await pg.evaluate((n) => [...document.querySelectorAll('.etapas button')].find((b) => b.textContent === n).click(), { mira: 'Míralo', toca: 'Tócalo', entiende: 'Entiéndelo' }[e]); }
   await pg.click('.etapas >> text=Demuéstralo');
-  await pg.fill('#manipulacion input[data-entrada=borrosidad], input[data-entrada=borrosidad]', '0.9').catch(() => {});
-  await pg.evaluate(() => { const i = document.querySelector('input[data-entrada=borrosidad]'); i.value = 0.9; i.dispatchEvent(new Event('input', { bubbles: true })); });
+  await pg.fill('#manipulacion input[data-entrada=borrosidad], input[data-entrada=borrosidad]', '7').catch(() => {});
+  await pg.evaluate(() => { const i = document.querySelector('input[data-entrada=borrosidad]'); i.value = 7; i.dispatchEvent(new Event('input', { bubbles: true })); });
   await pg.click('#reto-borrosidad >> text=Comprobar');
   await pg.click('.pie-etapa .boton-seguir');
   await pg.fill('#reto-grado-174 input', '0,23');
