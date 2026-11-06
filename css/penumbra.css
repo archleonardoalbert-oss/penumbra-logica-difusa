@@ -324,14 +324,17 @@ a.estacion:hover { transform: scale(1.5); border-color: var(--texto); }
 .mapa-pie a:hover { color: var(--texto); }
 
 /* ============ la luz en la sombra de la luna ============ */
-.mapa-chispa { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; z-index: 2; pointer-events: auto; will-change: transform; }
+.mapa-chispa { position: absolute; left: 0; top: 0; width: 0; height: 0; padding: 0; border: 0; background: none; cursor: pointer; z-index: 2; pointer-events: none; will-change: transform; }
 .mapa-chispa:hover:not(:disabled) { background: none; }
-.mapa-chispa::before { content: ''; position: absolute; left: 50%; top: 50%; width: 3px; height: 3px; margin: -1.5px; border-radius: 50%; background: #fff6da; box-shadow: 0 0 6px 2px #ffdf96, 0 0 14px 4px #ffb46a88; animation: parpadeo 2.6s ease-in-out infinite; }
-.mapa-chispa:hover::before, .mapa-chispa:focus-visible::before { width: 5px; height: 5px; margin: -2.5px; animation-duration: .9s; }
-.mapa-chispa:focus-visible { outline: 1px solid #ffdf9688; }
+/* toda la Luna responde; la luz es lo único que se ve */
+.mapa-chispa::after { content: ''; position: absolute; left: calc(var(--cx, 0px) - var(--r, 20px)); top: calc(var(--cy, 0px) - var(--r, 20px)); width: calc(2 * var(--r, 20px)); height: calc(2 * var(--r, 20px)); border-radius: 50%; pointer-events: auto; cursor: pointer; }
+.mapa-chispa::before { content: ''; position: absolute; left: -1.5px; top: -1.5px; width: 3px; height: 3px; border-radius: 50%; background: #fff6da; box-shadow: 0 0 6px 2px #ffdf96, 0 0 14px 4px #ffb46a88; animation: parpadeo 2.6s ease-in-out infinite; pointer-events: none; }
+.mapa-chispa:hover::before, .mapa-chispa:focus-visible::before { width: 5px; height: 5px; left: -2.5px; top: -2.5px; animation-duration: .9s; }
+.mapa-chispa:focus-visible { outline: none; }
 @keyframes parpadeo { 0%, 100% { opacity: .18; } 8% { opacity: 1; } 14% { opacity: .35; } 21% { opacity: .95; } 46% { opacity: .55; } }
-.chispa-fogonazo { position: fixed; z-index: 20; width: 8px; height: 8px; margin: -4px; border-radius: 50%; background: radial-gradient(circle, #fff 0, #ffe9b8 18%, #58c4dd55 45%, transparent 70%); animation: fogonazo 1.05s cubic-bezier(.7, 0, .84, 0) both; pointer-events: none; }
-@keyframes fogonazo { to { transform: scale(620); } }
+.a-la-luna .mapa-cabecera, .a-la-luna .mapa-panel, .a-la-luna .mapa-indice, .a-la-luna .mapa-rotulos { opacity: 0; transition: opacity .7s; pointer-events: none; }
+.a-la-luna .panel-cuerpo, .a-la-luna .mapa-pie { pointer-events: none; }
+.a-la-luna .mapa-chispa::before { animation: none; opacity: 1; }
 /* ============ el cruce a la red ============ */
 .cruzando .mapa-cabecera, .cruzando .mapa-panel, .cruzando .mapa-indice { opacity: var(--ui, 0); }
 .cruzando .mapa-panel, .cruzando .mapa-indice, .cruzando .panel-cuerpo, .cruzando .mapa-pie { pointer-events: none; }

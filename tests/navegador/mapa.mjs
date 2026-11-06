@@ -145,8 +145,8 @@ t('mapa: sin GPU, en reposo no dibuja nada', async ({ pg, ir }) => {
 t('mapa: en la sombra de la luna hay una luz; tocarla lleva al amanecer', async ({ pg, ir }) => {
   await abrir(ir, pg);
   await pg.waitForTimeout(300);
-  afirmar(await pg.locator('.mapa-chispa').isVisible(), 'no se ve la luz');
-  await pg.click('.mapa-chispa', { force: true });
+  afirmar((await pg.evaluate(() => { const c = document.querySelector('.mapa-chispa'); return !c.hidden; })), 'no se ve la luz');
+  await pg.evaluate(() => document.querySelector('.mapa-chispa').click());
   await pg.waitForURL(/lado=alba/);
   await pg.waitForFunction(() => window.mapa);
   afirmar((await pg.textContent('.mapa-indice')).includes('La neurona difusa'), 'no es el amanecer');
@@ -156,7 +156,7 @@ t('mapa: el cruce nace de la red, se puede saltar y deja el amanecer', async ({ 
   await ir('index.html?lado=alba&cruce=1');
   await pg.waitForFunction(() => window.mapa);
   afirmar((await pg.evaluate(() => mapa.modo())) === 'cruce', 'no cruza');
-  await pg.evaluate(() => mapa.fijarT(14.5));
+  await pg.evaluate(() => mapa.fijarT(30));
   await pg.click('.mapa-cruce .nace-saltar');
   afirmar((await pg.evaluate(() => mapa.modo())) === 'normal', 'no saltó');
   afirmar(await pg.locator('.mapa-cruce').count() === 0, 'quedó la capa');

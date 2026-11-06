@@ -65,7 +65,7 @@ export const CATALOGO = [
   ] },
   // --- el otro lado del mapa: el amanecer. La misma lógica, dentro de las redes.
   { id: 9, lado: 'alba', titulo: 'La neurona difusa', lema: 'Cada neurona calcula un grado.', posicion: [0.14, 0.34], conceptos: [
-    pend('9-1-neurona', 'Una neurona es una curva de pertenencia'), pend('9-2-softmax', 'Softmax: quién decide'), pend('9-3-gradientes', 'Operadores que dejan pasar el gradiente'), pend('9-4-implicacion', 'La implicación y sus gradientes'),
+    listo('9-1-neurona', 'Una neurona es una curva de pertenencia', ['haz-un-y', 'sigmoide-calc', 'centro-calc', 'demuestra-pendiente']), listo('9-2-softmax', 'Softmax: quién decide', ['enfria', 'softmax-calc', 'softmax-elegir', 'demuestra-dos']), listo('9-3-gradientes', 'Operadores que dejan pasar el gradiente', ['zona-muda', 'producto-calc', 'gradiente-elegir', 'demuestra-producto-grad']), listo('9-4-implicacion', 'La implicación y sus gradientes', ['equilibra', 'mt-calc', 'godel-elegir', 'demuestra-cuervos']),
   ] },
   { id: 10, lado: 'alba', titulo: 'Reglas que enseñan', lema: 'Una regla también puede ser una pérdida.', posicion: [0.38, 0.72], conceptos: [
     pend('10-1-regla-perdida', 'Una regla como función de pérdida'), pend('10-2-cuantificadores', '«Para todo» y «existe», suaves'), pend('10-3-pocas-etiquetas', 'Aprender con pocas etiquetas'),

@@ -68,4 +68,8 @@ export const GLOSARIO = {
   'completa': { titulo: 'Lógica completa', texto: 'Todo lo que es verdad en todas sus interpretaciones se puede demostrar con sus reglas: no le falta ninguna regla.', ejemplo: 'Si una fórmula vale siempre 1, existe una demostración de ella.' },
   ESI: { titulo: 'ESI', texto: 'Una escala de cinco niveles usada en urgencias para decidir a quién atender primero (Emergency Severity Index). El 1 es lo más urgente, y el 5, lo que menos.', ejemplo: 'Un paro cardiaco es ESI 1. Una receta es ESI 5.' },
   'grado de dominio': { titulo: 'Tu grado de dominio', texto: 'Sale solo de los retos: mirar no sube nada. Cada reto da una nota de 0 a 1, y baja si pides pistas. El grado de una parada es la media de sus retos, y el de una región, la media de sus paradas. Nada queda «completado»: dominar algo también es cuestión de grado.', ejemplo: 'con notas 1, 0,5 y 0 en tres retos, tu grado aquí es 0,5.' },
+  neurona: { titulo: 'Neurona artificial', texto: 'Una pieza de una red: suma sus entradas, cada una por un peso, y aplasta el resultado con una curva.', ejemplo: 'σ(2x₁ − x₂ + 0,5) es una neurona con dos entradas.' },
+  sigmoide: { titulo: 'Sigmoide', texto: 'La curva σ(u) = 1 / (1 + e^(−u)): lleva cualquier número a un valor entre 0 y 1, en forma de S.', ejemplo: 'σ(0) = 0,5, σ(2) ≈ 0,88 y σ(−2) ≈ 0,12.' },
+  softmax: { titulo: 'Softmax', texto: 'Convierte una lista de puntuaciones en un reparto que suma 1: la exponencial de cada una, entre el total.', ejemplo: 'Las puntuaciones 2 y 0 dan 0,88 y 0,12.' },
+  logit: { titulo: 'Logit', texto: 'El número que entra en una sigmoide o en una softmax, antes de aplastarlo. Puede ser cualquier número real.', ejemplo: 'Un logit de 0 corresponde a un grado de 0,5.' },
 };
