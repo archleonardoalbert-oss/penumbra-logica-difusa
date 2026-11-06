@@ -52,8 +52,8 @@ export const CATALOGO = [
     listo('5-8-pendulo', 'Tu péndulo: su primera regla', ['elige-signo', 'peso-regla']),
   ] },
   { id: 6, titulo: 'Sistemas', lema: 'De las reglas a una máquina que decide.', posicion: [0.16, 0.54], conceptos: [
-    pend('6-1-mamdani', 'Mamdani'), pend('6-2-defuzzificacion', 'Defuzzificación'), pend('6-3-sugeno', 'Sugeno'),
-    pend('6-4-tsukamoto', 'Tsukamoto'), pend('6-5-aproximacion', 'Aproximación universal'), pend('6-6-pendulo', 'El péndulo se sostiene'),
+    listo('6-1-mamdani', 'Mamdani: la máquina completa', ['ajusta-rapido', 'mamdani-fuerza', 'mamdani-orden', 'demuestra-sin-reglas']), listo('6-2-defuzzificacion', 'De una figura a un número', ['separa-metodos', 'centroide-calc', 'metodo-elegir', 'demuestra-simetrica']), listo('6-3-sugeno', 'Sugeno: cada regla da una fórmula', ['lleva-a-z', 'sugeno-calc', 'sugeno-elegir', 'demuestra-entre']),
+    listo('6-4-tsukamoto', 'Tsukamoto: conclusiones que no retroceden', ['lleva-salida', 'tsukamoto-calc', 'tsukamoto-elegir']), listo('6-5-aproximacion', 'Pueden imitar cualquier curva', ['bajar-error', 'cuantas-reglas', 'demuestra-lipschitz']), listo('6-6-pendulo', 'El péndulo se sostiene', ['sostenlo', 'tabla-calc', 'quien-falta', 'demuestra-pd']),
   ] },
   { id: 7, titulo: 'Aprender', lema: 'Reglas que se ajustan solas.', posicion: [0.3, 0.85], conceptos: [
     pend('7-1-c-medias', 'C-medias difusas'), pend('7-2-anfis', 'ANFIS'), pend('7-3-tipo-2', 'Conjuntos de tipo 2'), pend('7-4-celulas', 'Células de Concepto'),
