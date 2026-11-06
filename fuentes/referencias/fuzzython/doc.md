@@ -254,7 +254,7 @@ FuzzySet(function, interval, tnorm=None, snorm=None, cnorm=None)
 | `DSUM` | Dual de `DPROD` | `drastic_sum` | Sí |
 | `ESUM` | $\frac{x + y}{1 + x y}$ | `einstein_sum` | Sí |
 | `FOR` | $p \max(x, y) + (1 - p) \frac{x + y}{2}$ | `fuzzy_or` | **No**: tampoco tiene neutro $0$ |
-| `NSUM` | $\frac{x + y}{\max(1, x + y)}$ | `normalised_sum` | **No es asociativa** |
+| `NSUM` | $\frac{x + y}{\max(1, x + y)}$ | `normalised_sum` | Sí, pero con dos argumentos **es igual a `BSUM`**: si $x + y \ge 1$ da $1$, y si no, $x + y$. No normaliza sobre todas las reglas, como hace la `NSUM` de la literatura |
 | `ZADEH` | $1 - x$ | `zadeh_complement` | Complemento |
 | `SUGENO` | $\frac{1 - x}{1 + \lambda x}$; $\lambda = 0$ | `sugeno_complement` | Complemento |
 | `YAGER` | $(1 - x^w)^{\frac{1}{w}}$; $w = 1$ | `yager_complement` | Complemento |
@@ -459,7 +459,7 @@ Además, sin ser fallos: `README` escribe «Mandani», y `SUGENO`/`YAGER` por no
 | Peso de regla | Varía según el autor | Multiplica el antecedente |
 | Tsukamoto | Consecuente monótono | Lo supone y no lo comprueba |
 | Sugeno | $z = f(x)$, de cualquier entrada | Solo entradas nombradas en esa regla |
-| Normas | Conmutativas, asociativas, monótonas, con neutro | `FAND`, `FOR` y `NSUM` no lo son |
+| Normas | Conmutativas, asociativas, monótonas, con neutro | `FAND` y `FOR` no lo son |
 | Entrada difusa | Composición sup-T | Sí, y de forma exacta entre polígonos |
 | Salida varias a la vez | Normal en Mamdani | Sí en Mamdani; una por bloque en Sugeno y Tsukamoto |
 
