@@ -1,5 +1,5 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>El Horizonte</title>
-<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{display:block;width:100vw;height:100vh;cursor:grab}canvas:active{cursor:grabbing}</style></head><body><canvas id="c"></canvas>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{display:block;width:100vw;height:100vh;cursor:grab}canvas:active{cursor:grabbing}.volver{position:fixed;left:24px;bottom:20px;font:400 15px Georgia,serif;color:#e8dcc4;text-decoration:none;opacity:.72;text-shadow:0 0 8px #000}.volver:hover,.volver:focus-visible{opacity:1;text-decoration:underline}</style></head><body><canvas id="c"></canvas><a class="volver" href="index.html?lado=alba">Volver al amanecer</a>
 <script type="module">
 import { crearHorizonte } from './motor/horizonteGL.js';
 const c = document.getElementById('c'), q = new URLSearchParams(location.search), g = crearHorizonte(c);

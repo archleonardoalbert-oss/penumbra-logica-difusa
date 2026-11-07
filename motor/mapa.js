@@ -66,7 +66,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
       no.addEventListener('click', () => zona.replaceChildren(inicio, verNacer));
       zona.replaceChildren(h('span', { textContent: 'Se borrarán todas tus notas. ¿Seguro?' }), si, no);
     });
-    const verNacer = esAlba ? h('span', {}, h('a', { href: 'index.html?lado=alba&cruce=1', textContent: 'Ver otra vez el cruce' }), h('a', { href: 'index.html', textContent: 'Volver a la noche' })) : h('a', { href: 'index.html?nacer=1', textContent: 'Ver cómo nace el mapa' });
+    const verNacer = esAlba ? h('span', {}, h('a', { href: 'index.html?lado=alba&cruce=1', textContent: 'Ver otra vez el cruce' }), h('a', { href: 'index.html', textContent: 'Volver a la noche' }), h('a', { href: 'horizonte.html', textContent: 'El Horizonte' })) : h('a', { href: 'index.html?nacer=1', textContent: 'Ver cómo nace el mapa' });
     zona.append(inicio, verNacer);
     return zona;
   };

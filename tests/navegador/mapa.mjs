@@ -169,3 +169,11 @@ t('mapa: la Luna no se desplaza con el tiempo, y no lleva cartel', async ({ pg, 
   afirmar(a === b, `se mueve: ${a} y ${b}`);
   afirmar(await pg.locator('.luna-pista').count() === 0, 'sigue el cartel');
 });
+
+t('mapa: desde el amanecer se llega al Horizonte, y se puede volver', async ({ pg, ir }) => {
+  await ir('index.html?lado=alba');
+  await pg.waitForFunction(() => window.mapa);
+  afirmar(await pg.locator('a[href="horizonte.html"]').count() === 1, 'sin enlace al Horizonte');
+  await ir('horizonte.html');
+  afirmar(await pg.locator('a.volver[href="index.html?lado=alba"]').count() === 1, 'sin vuelta');
+});
