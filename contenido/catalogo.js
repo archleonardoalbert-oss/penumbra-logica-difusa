@@ -98,6 +98,17 @@ export const CATALOGO = [
     listo('16-3-tsukamoto', 'Tsukamoto: la curva al revés', ['tsk-salto', 'tsk-calc', 'tsk-elegir', 'demuestra-unico']),
     listo('16-4-extender', 'Archivos y piezas propias', ['hama-prod', 'hama-calc', 'fcl-elegir', 'demuestra-conm']),
   ] },
+  { id: 17, lado: 'horizonte', anillo: 4, titulo: 'El horizonte', lema: 'Aquí todos los grados caen en un solo número. No hay vuelta atrás.', posicion: [0.5, 0.5], conceptos: [
+    listo('17-1-colapso', 'El último número', ['colapso-iguales', 'cm-calc', 'metodo-elegir', 'demuestra-tramo']),
+    listo('17-2-fragmentos', 'Fragmentos del disco', ['frag-22', 'altos-calc', 'frag-elegir', 'demuestra-nan']),
+  ] },
+  { id: 18, lado: 'horizonte', anillo: 5, titulo: 'Tras el horizonte', lema: 'El universo cabe en una ventana. Aquí dentro, decidir: emular a Jev y calibrar.', posicion: [0.5, 0.5], conceptos: [
+    listo('18-1-emular', 'Un decisor con un modelo abierto', ['logit-08', 'logit-calc', 'emular-elegir', 'demuestra-simetria']),
+    listo('18-2-plantilla', 'La pregunta bien hecha', ['plant-estable', 'logit-calc2', 'preg-elegir', 'demuestra-inversa']),
+    listo('18-3-calibrar', 'Calibrar, con los datos que tienes', ['calib-mejor', 'ece-calc', 'calib-elegir', 'demuestra-id']),
+    listo('18-4-unir', 'El decisor dentro de fuzzython', ['unir-nivel', 'unir-calc', 'unir-elegir', 'demuestra-prop']),
+    listo('18-5-medir', 'Medir lo que has construido', ['umbral-01', 'umbral-calc', 'medir-elegir', 'demuestra-igual']),
+  ] },
 ];
 
 export const todosLosConceptos = (cat = CATALOGO) => cat.flatMap((r) => r.conceptos);

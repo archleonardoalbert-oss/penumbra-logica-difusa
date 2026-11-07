@@ -34,7 +34,7 @@ export function montarHorizonte(raiz, { catalogo = CATALOGO, almacen = localStor
     const ent = h('a', { className: 'boton-seguir', href: `concepto.html?c=${x.c.id}`, textContent: g0 > 0 ? 'Seguir en esta parada' : 'Entrar en esta parada' });
     const atras = h('button', { type: 'button', className: 'hz-paso', textContent: 'Órbita anterior', 'aria-label': 'Parada anterior' }), ade = h('button', { type: 'button', className: 'hz-paso', textContent: 'Caer más', 'aria-label': 'Parada siguiente' });
     atras.disabled = objetivo === 0; ade.disabled = objetivo === N - 1; atras.addEventListener('click', () => mover(-1)); ade.addEventListener('click', () => mover(1));
-    panel.replaceChildren(h('p', { className: 'rotulo-etapa', textContent: `Anillo ${r.anillo}: ${r.titulo}` }), h('h2', { textContent: x.c.titulo }), h('p', { className: 'lema', textContent: r.lema }), ent, h('div', { className: 'hz-pasos' }, atras, ade), lista, h('p', { className: 'tenue hz-dist', textContent: `A ${String(x.r.toFixed(x.r < 3 ? 2 : 1)).replace('.', ',')} radios del horizonte` }));
+    panel.replaceChildren(h('p', { className: 'rotulo-etapa', textContent: `Anillo ${r.anillo}: ${r.titulo}` }), h('h2', { textContent: x.c.titulo }), h('p', { className: 'lema', textContent: r.lema }), ent, h('div', { className: 'hz-pasos' }, atras, ade), lista, h('p', { className: 'tenue hz-dist', textContent: `A ${String(x.r.toFixed(x.r < 3 ? 2 : 1)).replace('.', ',')} veces el radio del horizonte, contando desde el centro` }));
     puntos.forEach((c, i) => { c.classList.toggle('hecho', grado(P[i]) >= 0.7); c.classList.toggle('activo', i === objetivo); });
   }
   const mover = (d) => { objetivo = Math.max(0, Math.min(N - 1, objetivo + d)); pintar(); };
@@ -48,15 +48,18 @@ export function montarHorizonte(raiz, { catalogo = CATALOGO, almacen = localStor
     const i = Math.min(N - 2, Math.floor(kk)), f = kk - i, A = P[Math.max(0, i)], B = P[Math.min(N - 1, i + 1)] ?? A, u = suave(f), r = A.r * (B.r / A.r) ** u, az = mezcla(A.az, B.az, u), inc = mezcla(0.28, 0.07, suave((30 - r) / 22));
     const C = [r * Math.cos(inc) * Math.sin(az), -r * Math.cos(inc) * Math.cos(az), r * Math.sin(inc)];
     // pegada al horizonte ya no se puede mirar otra cosa: el universo entero cabe en una ventana, y se mira hacia ella
-    const fuera = suave((1.65 - r) / 0.45), mir = norm(C.map((v, j) => mezcla(-v, v, fuera * 0.999))), de = norm(cruz(mir, [0, 0, 1])), ar = cruz(de, mir);
-    const lado = innerWidth > 760 ? 0.1 * (1 - fuera) : 0, f2 = norm(mir.map((v, j) => v + de[j] * (mirX + lado) + ar[j] * -mirY)), de2 = norm(cruz(f2, [0, 0, 1])), ar2 = cruz(de2, f2);
+    // La mirada gira en su plano: hacia el centro, de lado (con el agujero a la izquierda) y, al final, hacia fuera.
+    const n = norm(C), tan = norm(cruz([0, 0, 1], n)), gira = Math.PI * (0.5 * suave((5 - r) / 3.2) + 0.5 * suave((1.62 - r) / 0.42)), mir = norm(n.map((v, j) => -v * Math.cos(gira) + tan[j] * Math.sin(gira))), de = norm(cruz(mir, [0, 0, 1])), ar = cruz(de, mir), fuera = suave((1.62 - r) / 0.42);
+    const lado = innerWidth > 760 ? 0.1 + 0.06 * fuera : 0, f2 = norm(mir.map((v, j) => v + de[j] * (mirX + lado) + ar[j] * -mirY)), de2 = norm(cruz(f2, [0, 0, 1])), ar2 = cruz(de2, f2);
     return { C, base: [...de2, ...ar2, ...f2.map((v) => -v)], fov: mezcla(0.62, 1.3, suave((12 - r) / 9)), r };
   }
+  /** El ojo se adapta: pegado al horizonte, un observador quieto recibe la luz con un corrimiento al azul enorme (g⁴ crece como (1 − 1/r)⁻²). */
+  const exposicion = (r) => 0.62 * Math.min(1, (1 - 1 / r) ** 2 / 0.3);
   function cuadro(ms) {
     requestAnimationFrame(cuadro); if (document.hidden) { ult = ms; return; }
     const dt = Math.min(0.05, (ms - ult) / 1000); ult = ms; if (!fijo) { t += dt; k = reducido ? objetivo : k + (objetivo - k) * (1 - Math.exp(-dt * 0.85)); if (Math.abs(objetivo - k) < 1e-4) k = objetivo; if (!arr) { mirX *= 1 - dt * 0.5; mirY *= 1 - dt * 0.5; } }
     const W = Math.round(innerWidth * Math.min(devicePixelRatio || 1, 1.25)), H = Math.round(innerHeight * Math.min(devicePixelRatio || 1, 1.25)); if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
-    if (g && N) { const c = camara(N > 1 ? k : 0); g.dibujar({ ...c, t }); if (marca) { const a = posM({ r: c.r, az: mezcla(P[Math.floor(Math.min(k, N - 1))].az, P[Math.min(N - 1, Math.floor(k) + 1)].az, suave(k - Math.floor(k))) }); marca.setAttribute('cx', a[0]); marca.setAttribute('cy', a[1]); } }
+    if (g && N) { const c = camara(N > 1 ? k : 0); g.dibujar({ ...c, t, expo: exposicion(c.r) }); if (marca) { const a = posM({ r: c.r, az: mezcla(P[Math.floor(Math.min(k, N - 1))].az, P[Math.min(N - 1, Math.floor(k) + 1)].az, suave(k - Math.floor(k))) }); marca.setAttribute('cx', a[0]); marca.setAttribute('cy', a[1]); } }
   }
   requestAnimationFrame(cuadro);
   return { fijar: (o) => { if ('k' in o) { k = o.k; objetivo = Math.round(o.k); pintar(); } if ('t' in o) { t = o.t; } fijo = true; }, actual: () => P[objetivo]?.c.id, paradas: () => P.map((x) => ({ id: x.c.id, r: x.r })) };

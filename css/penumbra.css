@@ -372,7 +372,7 @@ body.hz { margin: 0; height: 100vh; overflow: hidden; background: #000; color: #
 .hz-cab { position: fixed; left: clamp(20px, 3vw, 44px); top: clamp(16px, 2.6vh, 34px); pointer-events: none; text-shadow: 0 0 22px #000, 0 0 6px #000; }
 .hz-cab h1 { margin: 0; font-weight: 400; font-size: clamp(36px, 4.2vw, 62px); letter-spacing: -.01em; line-height: 1.05; }
 .hz-cab p { margin: 6px 0 0; font-size: 17px; opacity: .85; }
-.hz-panel { position: fixed; right: 0; top: 0; bottom: 0; width: min(26rem, 42vw); box-sizing: border-box; padding: clamp(20px, 3.4vh, 40px) clamp(20px, 2.4vw, 36px); display: flex; flex-direction: column; justify-content: center; background: linear-gradient(90deg, #0000, #000000c4 28%, #000000ea); overflow-y: auto; }
+.hz-panel { position: fixed; right: 0; top: 0; bottom: 0; width: min(26rem, 42vw); box-sizing: border-box; padding: clamp(20px, 3.4vh, 40px) clamp(20px, 2.4vw, 36px); display: flex; flex-direction: column; justify-content: center; background: linear-gradient(90deg, #0000, #000000e0 18%, #000000f4); overflow-y: auto; }
 .hz-panel h2 { margin: 0 0 8px; font-weight: 400; font-size: clamp(25px, 2.2vw, 33px); line-height: 1.16; }
 .hz-panel .lema { margin: 0 0 18px; font-size: 17px; line-height: 1.42; color: #d9cfbb; }
 .hz-panel .boton-seguir { align-self: flex-start; text-decoration: none; }
@@ -385,9 +385,9 @@ body.hz { margin: 0; height: 100vh; overflow: hidden; background: #000; color: #
 .hz-lista button:hover { color: #fff; text-decoration: underline; }
 .hz-lista button.activa { color: #f4d345; }
 .hz-dist { margin: 4px 0 0; font-size: 14px; }
-.hz-volver { position: fixed; left: clamp(20px, 3vw, 44px); bottom: 18px; font-size: 15px; color: #e8dcc4; opacity: .78; text-shadow: 0 0 8px #000; }
-.hz-volver:hover, .hz-volver:focus-visible { opacity: 1; }
-.hz-mapa { position: fixed; left: clamp(14px, 2.4vw, 34px); bottom: 46px; width: clamp(150px, 15vw, 210px); height: clamp(150px, 15vw, 210px); overflow: visible; }
+.hz-volver { position: fixed; left: clamp(20px, 3vw, 44px); bottom: 14px; font-size: 15px; color: #f2ead9; background: #000000a8; padding: 3px 9px; border-radius: 6px; }
+.hz-volver:hover, .hz-volver:focus-visible { background: #000; }
+.hz-mapa { background: radial-gradient(closest-side, #000000d0 70%, #0000); border-radius: 50%; position: fixed; left: clamp(14px, 2.4vw, 34px); bottom: 46px; width: clamp(150px, 15vw, 210px); height: clamp(150px, 15vw, 210px); overflow: visible; }
 .hz-esp { fill: none; stroke: #f4d34566; stroke-width: 1.2; }
 .hz-sombra { fill: #000; stroke: #f8e0a0; stroke-width: 1; }
 .hz-pto { fill: #1b1b22; stroke: #f2ead9; stroke-width: 1; cursor: pointer; }

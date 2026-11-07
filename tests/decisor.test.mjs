@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { aDeLogits, promedioLogit, ajustarIsotonica, nivelJuguete, GRADOS_EJEMPLO, repartir, eceConValidacion } from '../nucleo/decisor.js';
+import { SALIDAS } from '../contenido/parte14/salidas.js';
+const igual = (a, b, t = 1e-9) => assert.ok(Math.abs(a - b) < t, `${a} frente a ${b}`);
+test('la ecuación (1) solo depende de la diferencia de logits', () => { igual(aDeLogits(2, 2), 0.5); igual(aDeLogits(3, 1), aDeLogits(10, 8)); igual(aDeLogits(Math.log(4), 0), 0.8); });
+test('promediar plantillas se hace en logits, y queda entre la menor y la mayor', () => { const m = promedioLogit([0.5, 0.9]); igual(m, 0.75); assert.ok(promedioLogit([0.2, 0.8]) === 0.5); });
+test('la isotónica es monótona y corrige una confianza exagerada', () => { const f = ajustarIsotonica([0.1, 0.2, 0.3, 0.4], [0, 1, 0, 1]); assert.deepEqual([0.1, 0.2, 0.3, 0.4].map(f), [0, 0.5, 0.5, 1]); igual(f(0.05), 0); igual(f(0.9), 1); });
+test('calibrar con más datos da menos error en lo que no se ha visto', () => { const [v, p] = repartir(); assert.ok(v.length >= 300 && p.length >= 100); assert.ok(eceConValidacion(400) < eceConValidacion(0)); assert.ok(eceConValidacion(400) < eceConValidacion(15)); });
+test('el nivel de juguete coincide con lo que da fuzzython', () => { const k = Object.keys(SALIDAS).find((x) => x.includes('nivel_toy')); assert.ok(k, 'falta el bloque'); const m = [...SALIDAS[k].matchAll(/nivel ([\d.]+)/g)].map((x) => +x[1]); assert.equal(m.length, GRADOS_EJEMPLO.length); GRADOS_EJEMPLO.forEach((g, i) => igual(nivelJuguete(g), m[i], 1e-9)); });

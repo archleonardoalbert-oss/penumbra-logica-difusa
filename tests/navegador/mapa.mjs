@@ -68,7 +68,8 @@ t('mapa: sin WebGL2 hay una lista normal', async ({ pg, ir }) => {
   await ir('index.html');
   await pg.waitForSelector('.mapa-lista');
   afirmar(await pg.locator('.mapa-lista a[href="concepto.html?c=1-8-cortes-alfa"]').count() === 1, 'sin enlaces');
-  afirmar(await pg.locator('.mapa-lista h2').count() === 13, 'faltan regiones');
+  afirmar(await pg.locator('.mapa-lista h2').count() === 18, 'faltan regiones');
+  afirmar(await pg.locator('.mapa-lista a[href="concepto.html?c=18-5-medir"]').count() === 1, 'sin WebGL2 no se llega al Horizonte');
 });
 
 t('mapa: de entrada dice cuál es tu siguiente parada, y lleva a ella', async ({ pg, ir }) => {

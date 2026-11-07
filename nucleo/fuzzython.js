@@ -40,7 +40,12 @@ export const EJEMPLO = {
 };
 /** Como en Adjective.set_strength: si dos reglas llegan al mismo adjetivo, gana el máximo, sea cual sea ACCU. */
 export function fuerzasEjemplo(t) { const f = { short: 0, usual: 0, large: 0 }; for (const r of EJEMPLO.reglas) f[r.sale] = Math.max(f[r.sale], r.fuerza(t, EJEMPLO)); return f; }
-export function conjuntoEjemplo(t, { activacion = 'MIN', acumulacion = 'MAX' } = {}) { const f = fuerzasEjemplo(t), sets = Object.entries(f).filter(([, v]) => v > 0).map(([k, v]) => (activacion === 'PROD' ? EJEMPLO.min[k].escalar(v) : EJEMPLO.min[k].minimizar(v))); return sets.length ? sets.reduce((a, b) => a.combinar(NORMAS_FZ[acumulacion], b)) : null; }
+const gradoCon = (A, E) => (E.punto ? Math.min(A.val(E.punto[0]), E.punto[1]) : Math.max(...A.combinar(NORMAS_FZ.MIN, E).puntos.map((p) => p[1])));
+/** Entrada difusa: el grado es el máximo de min(A, entrada). E es un polígono, o { punto: [x, grado] } si es un Singleton. */
+export function fuerzasDifusas(E) { const T0 = EJEMPLO.temp, c = gradoCon(T0.cold, E), n = gradoCon(T0.normal, E), h = gradoCon(T0.hot, E); return { short: Math.max(c, n) * 0.5, usual: n, large: h }; }
+export function mamdaniDifuso(E, op = {}) { const c = conjuntoDe(fuerzasDifusas(E), op); return c ? c[op.metodo ?? 'COG']() : 0; }
+export function conjuntoDe(f, { activacion = 'MIN', acumulacion = 'MAX' } = {}) { const sets = Object.entries(f).filter(([, v]) => v > 0).map(([k, v]) => (activacion === 'PROD' ? EJEMPLO.min[k].escalar(v) : EJEMPLO.min[k].minimizar(v))); return sets.length ? sets.reduce((a, b) => a.combinar(NORMAS_FZ[acumulacion], b)) : null; }
+export function conjuntoEjemplo(t, op = {}) { return conjuntoDe(fuerzasEjemplo(t), op); }
 export function mamdaniEjemplo(t, op = {}) { const c = conjuntoEjemplo(t, op); return c ? c[op.metodo ?? 'COG']() : 0; }
 const T = EJEMPLO.temp; const fs = (t) => [T.cold.val(t), T.normal.val(t), T.hot.val(t)];
 export function sugenoEjemplo(t) { const w = fs(t), z = [t * 0.1, t * 0.3 + 1, t * 0.6 + 2], d = w.reduce((a, b) => a + b, 0); return d ? w.reduce((s, v, i) => s + v * z[i], 0) / d : 0; }

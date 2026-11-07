@@ -6,7 +6,7 @@ Documentación que el proyecto no tiene, sacada de leer todo su código. Es mate
 - **Autores:** Carloluis Evelio Rodríguez Pérez, Yudivián Almeida Cruz y Nayla López Gil (MATCOM, Universidad de La Habana).
 - **Licencia:** tipo BSD: permite redistribuir conservando el aviso de copyright. Antes de copiar código, leer `LICENSE`.
 
-> **Estado de la verificación (2026-11-06).** Ejecutado con Python 3.14 y `verifica.py`. **Se confirman los ejemplos de la sección 2 y los fallos F1–F5, F7–F11 y F13–F19, además de F12 en `ACT` y F21; F6 se confirma por sus efectos.** Sigue sin ejecutarse la lectura de FCL (`store/reader.py`), porque requiere el runtime `antlr3` con el parche que indica su código: lo que dice la sección 9 sobre leer FCL, y F23, son de lectura. `dump_()` sí se ejecutó. F20 se ve en el `MM` de la sección 2.2. F22 y el fallo de `AND` en F12 son también de lectura.
+> **Estado de la verificación (2026-11-06).** Ejecutado con Python 3.14 y `verifica.py`. **Se confirman los ejemplos de la sección 2 y los fallos F1–F5, F7–F11 y F13–F19, además de F12 en `ACT` y F21; F6 se confirma por sus efectos.** Sigue sin ejecutarse la lectura de FCL (`store/reader.py`), porque requiere el runtime `antlr3` con el parche que indica su código: lo que dice la sección 9 sobre leer FCL, y F23, son de lectura. `dump_()` sí se ejecutó. F20 se ve en el `MM` de la sección 2.2. El fallo de `AND` en F12 es también de lectura. F22 se ejecutó el 2026-11-07 (ver tabla).
 
 ---
 
