@@ -5,6 +5,8 @@ import { ev } from '../../motor/tiempo.js';
 import { barra, tramo } from '../parte9/comun.js';
 import { coma } from './comun.js';
 
+import { SALIDAS } from './salidas.js';
+
 const R = String.raw;
 const U = [0, 1.2], f = () => 1, g = (x) => x;
 export default {
@@ -35,7 +37,7 @@ export default {
   manipulacion: '<ul><li>Mueve la resolución y mira los tramos rojos.</li><li>En la gráfica pequeña, cada punto es una resolución: los rojos son los que se pasan.</li></ul>',
   entender: [
     { tipo: 'idea', etiqueta: 'La idea', texto: 'Para fuzzython un conjunto son dos cosas: una función y un <b>intervalo</b>, que dice dónde mirar. Para saber un grado basta la función. Pero para integrar o para buscar el máximo hay que recorrer algo, y una función no dice dónde empieza ni dónde acaba. Eso es lo que da el intervalo.' },
-    { tipo: 'codigo', etiqueta: 'Crear un conjunto', texto: 'Cualquier función de un número sirve:', codigo: "from fsets.fuzzy_set import FuzzySet\nfrom interval import Interval\n\nalto = FuzzySet(lambda x: min(1, max(0, (x - 160) / 20)), Interval(150, 190))\nprint(alto(170))\nprint(alto.area())\n\nprint(Interval(0, 1).union(Interval(2, 3)))\nprint(Interval(0, 1).intersect(Interval(0.5, 3)))", salida: "0.5\n20.000000000000274\nCompound: Interval(0, 1) U Interval(2, 3)\n(0.5 .. 1)", cierre: 'La unión de dos intervalos separados da un <code>Compound</code>. Recuérdalo: da problemas más adelante.' },
+    { tipo: 'codigo', etiqueta: 'Crear un conjunto', texto: 'Cualquier función de un número sirve:', codigo: "from fsets.fuzzy_set import FuzzySet\nfrom interval import Interval\n\nalto = FuzzySet(lambda x: min(1, max(0, (x - 160) / 20)), Interval(150, 190))\nprint(alto(170))\nprint(alto.area())\n\nprint(Interval(0, 1).union(Interval(2, 3)))\nprint(Interval(0, 1).intersect(Interval(0.5, 3)))", salida: SALIDAS["from fsets.fuzzy_set import FuzzySet\nfrom interval import Interval\n\nalto = FuzzySet(lambda x: min(1, max(0, (x - 160) / 20)), Interval(150, 190))\nprint(alto(170))\nprint(alto.area())\n\nprint(Interval(0, 1).union(Interval(2, 3)))\nprint(Interval(0, 1).intersect(Interval(0.5, 3)))"], cierre: 'La unión de dos intervalos separados da un <code>Compound</code>. Recuérdalo: da problemas más adelante.' },
     { tipo: 'ejemplo', texto: 'El área de la función 1 en $[0, 1]$, que debería ser 1, ejecutando fuzzython:', tabla: [['Tramos pedidos', 'Tramos dados', 'Área'], ['3', '3', '1'], ['7', '8', '1,1429'], ['10', '11', '1,1'], ['100', '100', '1,0000000000000007']], cierre: 'Con 100 pasan los 100 que tocan: el error es solo el redondeo de la suma.' },
     { tipo: 'simbolos', piezas: [
       { tex: R`\text{Interval}(a, b)`, dice: 'El intervalo. Tiene <code>size</code>, <code>empty()</code>, <code>union</code>, <code>intersect</code>.' },

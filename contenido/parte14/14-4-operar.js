@@ -4,6 +4,8 @@ import { marco, punto, rotulo } from '../../motor/primitivas.js';
 import { ev } from '../../motor/tiempo.js';
 import { coma, relleno, trazar } from './comun.js';
 
+import { SALIDAS } from './salidas.js';
+
 const R = String.raw;
 const D = [0, 10], A = poligono([[0, 0], [4, 1], [8, 0]]), B = poligono([[2, 0], [6, 1], [10, 0]]);
 const T = ['MIN', 'PROD', 'BDIF', 'DPROD', 'EPROD', 'FAND'], S = ['MAX', 'ASUM', 'BSUM', 'DSUM', 'ESUM', 'FOR'];
@@ -35,7 +37,7 @@ export default {
   manipulacion: '<ul><li>Recorre las seis normas, y compara lo que pasa en el cruce.</li><li>Fíjate en la forma que toma la intersección con <code>DPROD</code>.</li></ul>',
   entender: [
     { tipo: 'idea', etiqueta: 'La idea', texto: 'Las operaciones son los operadores de Python: <code>&amp;</code>, <code>|</code> y <code>~</code>. Cada conjunto guarda sus normas: por defecto, <code>MIN</code>, <code>MAX</code> y <code>ZADEH</code>. Si necesitas otra, se la pasas: <code>a.intersect(b, tnorm)</code>. Y por nombre, con <code>get_norm(\'PROD\')</code>.' },
-    { tipo: 'codigo', etiqueta: 'En Python', codigo: "from fsets.polygon import Polygon\nfrom norms.norms import get_norm\n\na = Polygon((0, 0), (4, 1), (8, 0))\nb = Polygon((2, 0), (6, 1), (10, 0))\nu = a | b\nprint(u)\nprint(u.COG())\nprint(a.intersect(b, get_norm('PROD'))(5))", salida: "(0, 0) (2, 0.5) (4, 1.0) (5.0, 0.75) (6, 1.0) (8, 0.5) (10, 0)\n4.999999999999999\n0.5625", cierre: 'Fíjate en <code>(5.0, 0.75)</code>: es el cruce, añadido por <code>merge_points</code>. Sin él, la unión saldría falsa.' },
+    { tipo: 'codigo', etiqueta: 'En Python', codigo: "from fsets.polygon import Polygon\nfrom norms.norms import get_norm\n\na = Polygon((0, 0), (4, 1), (8, 0))\nb = Polygon((2, 0), (6, 1), (10, 0))\nu = a | b\nprint(u)\nprint(u.COG())\nprint(a.intersect(b, get_norm('PROD'))(5))", salida: SALIDAS["from fsets.polygon import Polygon\nfrom norms.norms import get_norm\n\na = Polygon((0, 0), (4, 1), (8, 0))\nb = Polygon((2, 0), (6, 1), (10, 0))\nu = a | b\nprint(u)\nprint(u.COG())\nprint(a.intersect(b, get_norm('PROD'))(5))"], cierre: 'Fíjate en <code>(5.0, 0.75)</code>: es el cruce, añadido por <code>merge_points</code>. Sin él, la unión saldría falsa.' },
     { tipo: 'ejemplo', texto: 'Las normas, en $(0{,}5;\\ 0{,}7)$, con los valores que da fuzzython:', tabla: [['Norma T', 'Valor', 'Norma S', 'Valor'], ['MIN', '0,5', 'MAX', '0,7'], ['PROD', '0,35', 'ASUM', '0,85'], ['BDIF', '0,2', 'BSUM', '1'], ['DPROD', '0', 'DSUM', '1'], ['EPROD', '0,304', 'ESUM', '0,889'], ['FAND', '0,55', 'FOR', '0,65']], cierre: 'Mira <code>FAND</code>: da 0,55, por encima del mínimo. Una [[norma T]] nunca puede hacer eso. No lo es.' },
     { tipo: 'simbolos', piezas: [
       { tex: R`\text{FAND}(x, y) = (1 - p) \min(x, y) + p \frac{x + y}{2}`, dice: 'Un «y compensado», con $p = 0{,}5$: mezcla el mínimo con la media.' },

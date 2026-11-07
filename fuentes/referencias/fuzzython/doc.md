@@ -434,7 +434,7 @@ Severidad: **alta** si impide o falsea un cálculo normal, **media** si afecta a
 | F19 | `fsets/fuzzy_set.py` | `a += step` acumula error de redondeo | `area` puede dar un paso de más: el área de $1$ en $[0, 1]$ da $1{,}143$ con resolución 7 y $1{,}1$ con 10. Con la de por defecto, 100, el error es despreciable. `Polygon` no acumula | **Media** con resolución baja |
 | F20 | `Polygon.MM` | Promedia vértices | Mesetas con vértices desiguales dan un valor sesgado (2.2) | **Media** |
 | F21 | Borde vertical | `Rect.build_from` divide por $x_2 - x_1$ | `Trapezoid((0, 0), (0, 1), ...)` lanza `ZeroDivisionError`. Para una pared, usar `Polygon((0, 1), ...)`, que se prolonga constante | **Media** |
-| F22 | `TRule.get_strength_x` | Bisección que supone monotonía | Con consecuente no monótono, el resultado es arbitrario, sin error | **Media** |
+| F22 | `TRule.get_strength_x` | Bisección que supone monotonía | Con consecuente no monótono, el resultado es arbitrario, sin error. Ejecutado: con `Polygon((0, 0), (20, 1), (40, 0))` da `0` a 17, 18 y 19 grados | **Media** |
 | F23 | `store/FCL.g:87,158,287,303,305` | `_MAMDAMI_`; `ACT` opcional sin valor por defecto; `WITH nombre` usa un `scope` inexistente; `RANGE` se descarta | Sección 9 | **Media** |
 
 | F24 | `fsets/*.py` | Los dibujos ASCII de los comentarios contienen `\\_` | Python 3.14 avisa con `SyntaxWarning`; en una versión futura será un error de sintaxis | **Baja** |

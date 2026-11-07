@@ -4,6 +4,8 @@ import { curva, marco, rotulo } from '../../motor/primitivas.js';
 import { ev } from '../../motor/tiempo.js';
 import { coma } from './comun.js';
 
+import { SALIDAS } from './salidas.js';
+
 const R = String.raw;
 const D = [0, 10];
 const FORMAS = [
@@ -45,7 +47,7 @@ export default {
   entender: [
     { tipo: 'idea', etiqueta: 'La idea', texto: 'Todas las formas son <code>FuzzySet</code>, con su propia función. Pero las que heredan de <code>Polygon</code> saben hacer las cuentas de forma exacta, y las demás aproximan con 100 muestras. La regla práctica es sencilla: <b>si dudas, usa Polygon</b>. Puedes muestrear cualquier otra con <code>Polygon.create_from(f, a, b, 100)</code>.' },
     { tipo: 'ejemplo', texto: 'Lo que comprobamos ejecutando cada una:', tabla: [['Forma', '¿Se puede usar?', 'Lo que falla'], ['Polygon', 'Sí, casi siempre', 'Un borde vertical divide por cero'], ['Trapezoid', 'Sí, como antecedente', 'COG, COA, CM y MM, si la meseta es plana'], ['Gaussian', 'Con cuidado', 'Dos separadas rompen COG'], ['SFunction, ZFunction', 'Solo en antecedentes', 'Recortarlas da una forma falsa'], ['PiFunction', 'No', 'Falla al evaluarla']], cierre: 'En la parada «Fragmentos del disco» están todos los fallos, con su arreglo.' },
-    { tipo: 'codigo', etiqueta: 'Lo que hace la Z', codigo: "from fsets.zfunction import ZFunction\nz = ZFunction((0, 0), 5, (10, 1))\nprint(z(8))\nprint(z.membership(8))", salida: "0.08000000000000007\n0.9199999999999999", cierre: 'Dos respuestas distintas para el mismo punto: <code>membership</code> se quedó con la función de su clase madre. Las entradas difusas lo usan: te lo encontrarás.' },
+    { tipo: 'codigo', etiqueta: 'Lo que hace la Z', codigo: "from fsets.zfunction import ZFunction\nz = ZFunction((0, 0), 5, (10, 1))\nprint(z(8))\nprint(z.membership(8))", salida: SALIDAS["from fsets.zfunction import ZFunction\nz = ZFunction((0, 0), 5, (10, 1))\nprint(z(8))\nprint(z.membership(8))"], cierre: 'Dos respuestas distintas para el mismo punto: <code>membership</code> se quedó con la función de su clase madre. Las entradas difusas lo usan: te lo encontrarás.' },
     { tipo: 'simbolos', piezas: [
       { tex: R`e^{-\frac{(x - c)^2}{2 w^2}}`, dice: '<code>Gaussian(c, w)</code>: el mismo que en la región 2.' },
       { tex: R`1 - e^{-k (x - v)^2}`, dice: '<code>Gamma(v, k, intervalo)</code>: vale 0 hasta $v$, y luego sube.' },

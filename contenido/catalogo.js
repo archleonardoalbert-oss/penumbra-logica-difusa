@@ -86,6 +86,18 @@ export const CATALOGO = [
     listo('14-3-formas', 'Las diez formas', ['forma-z', 'gauss-calc', 'forma-elegir', 'demuestra-tri']),
     listo('14-4-operar', 'Operar conjuntos', ['norma-baja', 'cruce-calc', 'operar-elegir', 'demuestra-comp']),
   ] },
+  { id: 15, lado: 'horizonte', anillo: 2, titulo: 'Las órbitas medias', lema: 'Los números ganan nombre: palabras, frases y normas.', posicion: [0.5, 0.5], conceptos: [
+    listo('15-1-palabras', 'Adjetivos y variables', ['palabras-iguales', 'grado-calc', 'default-elegir', 'demuestra-part']),
+    listo('15-2-reglas', 'Reglas que se leen', ['regla-048', 'fuerza-calc', 'analiza-elegir', 'demuestra-morgan']),
+    listo('15-3-bloque', 'Bloques y normas', ['larsen-30', 'altura-calc', 'estado-elegir', 'demuestra-coinciden']),
+    listo('15-4-entrada', 'Entradas difusas', ['duda-23', 'hot-calc', 'readme-elegir', 'demuestra-singleton']),
+  ] },
+  { id: 16, lado: 'horizonte', anillo: 3, titulo: 'Las órbitas interiores', lema: 'Tres motores de inferencia, cada vez más cerca del centro.', posicion: [0.5, 0.5], conceptos: [
+    listo('16-1-mamdani', 'Mamdani, regla a regla', ['relevo', 'fuerza-r1', 'nada-elegir', 'demuestra-centro']),
+    listo('16-2-sugeno', 'Sugeno: una recta por regla', ['sug-10', 'sug-calc', 'sug-elegir', 'demuestra-meseta']),
+    listo('16-3-tsukamoto', 'Tsukamoto: la curva al revés', ['tsk-salto', 'tsk-calc', 'tsk-elegir', 'demuestra-unico']),
+    listo('16-4-extender', 'Archivos y piezas propias', ['hama-prod', 'hama-calc', 'fcl-elegir', 'demuestra-conm']),
+  ] },
 ];
 
 export const todosLosConceptos = (cat = CATALOGO) => cat.flatMap((r) => r.conceptos);

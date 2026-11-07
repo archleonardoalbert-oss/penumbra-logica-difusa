@@ -40,6 +40,7 @@ REG = ['if temp is cold or temp is normal then minutes is short with 0.5', 'if t
 TEMPS = (5, 15, 17.5, 20, 25, 30, 33, 35, 39)
 def mam(t, **k):
     s = base(); bl = RuleBlock('b', **k); bl.add_rules(*REG, scope=s); return callado(lambda: MamdaniSystem('m', bl).compute({'temp': t}))['b']['minutes']
+R['accu'] = {f'{ac}_{op}_{t}': mam(t, activation=ac, accumulation=op) for ac in ('MIN', 'PROD') for op in ('BSUM', 'ASUM') for t in TEMPS}
 R['mamdani'] = {str(t): mam(t) for t in TEMPS}; R['larsen'] = {str(t): mam(t, activation='PROD') for t in TEMPS}
 def sug(t):
     s = base(); bl = RuleBlock('b'); bl.add_rules('if temp is cold then z = temp*0.1', 'if temp is normal then z = temp*0.3 + 1', 'if temp is hot then z = temp*0.6 + 2', scope=s); return callado(lambda: SugenoSystem('s', bl).compute({'temp': t}))['b']

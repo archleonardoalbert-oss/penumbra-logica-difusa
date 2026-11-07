@@ -400,4 +400,6 @@ body.hz { margin: 0; height: 100vh; overflow: hidden; background: #000; color: #
 .codigo { margin: 10px 0 6px; padding: 14px 16px; background: #0d0d13; border: 1px solid #ffffff1c; border-radius: 8px; overflow-x: auto; font: 14.5px/1.5 var(--mono); color: #e6e2d8; white-space: pre; }
 .codigo .pc { color: #c9a0f0; } .codigo .cad { color: #a8d8a0; } .codigo .com { color: #8b8798; } .codigo .num { color: #f4d345; }
 .salida { margin: 0 0 8px; padding: 10px 16px; background: #111a14; border-left: 3px solid #6fc38a; border-radius: 0 8px 8px 0; font: 14px/1.5 var(--mono); color: #cfe7d4; white-space: pre-wrap; }
+.prefacio summary { cursor: pointer; font-size: 15px; color: var(--texto-2); margin: 8px 0 0; }
+.prefacio[open] .codigo { max-height: 40vh; overflow: auto; }
 .salida-rot { margin: 8px 0 3px; font-size: 14px; color: var(--texto-2); }
