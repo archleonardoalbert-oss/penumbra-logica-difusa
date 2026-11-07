@@ -1,66 +1,112 @@
-// El Horizonte: el mapa de la ruta de fuzzython. Cada parada es un punto de una sola órbita que cae hacia el agujero negro.
+// El Horizonte: aquí no hay mapa ni panel. La rueda es la caída. Cada parada es un faro real, con su luz doblada por la gravedad.
 import { crearHorizonte } from './horizonteGL.js';
+import { crearSonido } from './sonidoCaida.js';
 import { CATALOGO } from '../contenido/catalogo.js';
 import { crearProgreso } from '../nucleo/progreso.js';
 import { crearLugar } from '../nucleo/lugar.js';
-const hN = 'http://www.w3.org/2000/svg';
+import { DURA_ENTRADA, dilatacion, faroDe, guionEntrada, iman, pose, trayecto, vista } from '../nucleo/caida.js';
 const h = (t, a = {}, ...c) => { const e = document.createElement(t); for (const [k, v] of Object.entries(a)) { if (k === 'className') e.className = v; else if (k === 'textContent') e.textContent = v; else e.setAttribute(k, v); } c.flat().forEach((x) => e.append(x)); return e; };
-const sv = (t, a = {}) => { const e = document.createElementNS(hN, t); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); return e; };
-const mezcla = (a, b, k) => a + (b - a) * k, suave = (x) => { const u = Math.min(1, Math.max(0, x)); return u * u * (3 - 2 * u); };
-/** Radio de cada anillo: de lejos a pegado al horizonte. r = 1 es el horizonte; r = 1,5, la esfera de fotones. */
-const TRAMOS = [[32, 21], [19, 11.5], [10.5, 5.6], [4.8, 2.05], [1.6, 1.07]];
-export function trayecto(regiones) {
-  const pts = []; let az = 0.3;
-  regiones.forEach((r, ir) => { const [a, b] = TRAMOS[Math.min(ir, TRAMOS.length - 1)], n = r.conceptos.length; r.conceptos.forEach((c, i) => { const f = n > 1 ? i / (n - 1) : 0; pts.push({ c, region: r, r: a * (b / a) ** f, az, ir }); az += 0.62 + 0.42 / (a * (b / a) ** f) ** 0.4; }); });
-  return pts;
-}
+const lim = (x, a, b) => Math.max(a, Math.min(b, x)), suave = (x) => { const u = lim(x, 0, 1); return u * u * (3 - 2 * u); }, coma = (x, d) => x.toFixed(d).replace('.', ',');
+const ruidoLento = (t, a) => Math.sin(t * 1.7 + a) * 0.6 + Math.sin(t * 3.9 + a * 2.1) * 0.3 + Math.sin(t * 7.3 + a * 3.7) * 0.1;
 export function montarHorizonte(raiz, { catalogo = CATALOGO, almacen = localStorage } = {}) {
-  const regiones = catalogo.filter((r) => r.lado === 'horizonte'), P = trayecto(regiones), progreso = crearProgreso(almacen), N = P.length, q = new URLSearchParams(location.search);
-  const canvas = h('canvas', { id: 'c' }), panel = h('aside', { className: 'hz-panel' }), mapa = sv('svg', { class: 'hz-mapa', viewBox: '-110 -110 220 220', role: 'img', 'aria-label': 'La órbita en espiral y sus paradas' });
-  raiz.append(canvas, h('header', { className: 'hz-cab' }, h('h1', { textContent: 'El Horizonte' }), h('p', { textContent: 'fuzzython, en una órbita que cae.' })), panel, mapa, h('a', { className: 'hz-volver', href: 'index.html?lado=alba', textContent: 'Volver al amanecer' }));
-  let g; try { g = crearHorizonte(canvas); } catch (e) { canvas.remove(); }
+  const regiones = catalogo.filter((r) => r.lado === 'horizonte'), P = trayecto(regiones), progreso = crearProgreso(almacen), N = P.length, MAX = N - 1, q = new URLSearchParams(location.search);
+  const FAROS = P.map((_, k) => faroDe(P, k)), reducido = matchMedia('(prefers-reduced-motion: reduce)').matches, sonido = crearSonido();
   const grado = (x) => progreso.gradoConcepto(x.c.id, x.c.retos);
-  const inicial = () => { const pid = q.get('ir'); if (pid) { const i = P.findIndex((x) => x.c.id === pid); if (i >= 0) return i; } const l = crearLugar(almacen).ultimoEntre(P.map((x) => x.c.id)); if (l) { const i = P.findIndex((x) => x.c.id === l.c); if (i >= 0) return i; } const i = P.findIndex((x) => grado(x) < 0.7); return i < 0 ? 0 : i; };
-  const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let objetivo = inicial(), k = q.has('ir') && objetivo > 0 && !reducido ? objetivo - 1 : objetivo, t = 0, ult = performance.now(), fijo = false, mirX = 0, mirY = 0, arr = null;
-  // minimapa: la espiral, con el radio en escala logarítmica para que quepa todo
-  const posM = (x) => { const v = 104 * (Math.log(x.r) / Math.log(34)) ** 0.8; return [v * Math.cos(x.az), v * Math.sin(x.az)]; };
-  let dS = ''; for (let i = 0; i < N - 1; i++) { for (let u = 0; u < 1; u += 0.1) { const r = P[i].r * (P[i + 1].r / P[i].r) ** u, az = mezcla(P[i].az, P[i + 1].az, u), v = 104 * (Math.log(r) / Math.log(34)) ** 0.8; dS += `${i || u ? 'L' : 'M'}${(v * Math.cos(az)).toFixed(2)} ${(v * Math.sin(az)).toFixed(2)}`; } }
-  const [xz, yz] = N ? posM(P[N - 1]) : [0, 0]; mapa.append(sv('path', { class: 'hz-esp', d: dS + `L${xz} ${yz}` }), sv('circle', { class: 'hz-sombra', r: 7 }));
-  const puntos = P.map((x, i) => { const [a, b] = posM(x), c = sv('circle', { class: 'hz-pto', cx: a, cy: b, r: 3.1, tabindex: 0 }); const tit = sv('title'); tit.textContent = x.c.titulo; c.append(tit); c.addEventListener('click', () => { objetivo = i; pintar(); }); mapa.append(c); return c; });
-  const marca = sv('circle', { class: 'hz-yo', r: 5.4 }); mapa.append(marca);
-  function pintar() {
-    const x = P[objetivo]; if (!x) return; const r = x.region, g0 = grado(x), lista = h('ol', { className: 'hz-lista' }, r.conceptos.map((c) => { const i = P.findIndex((y) => y.c.id === c.id), b = h('button', { type: 'button', className: i === objetivo ? 'activa' : '', textContent: c.titulo }); b.addEventListener('click', () => { objetivo = i; pintar(); }); return h('li', {}, b); }));
-    const ent = h('a', { className: 'boton-seguir', href: `concepto.html?c=${x.c.id}`, textContent: g0 > 0 ? 'Seguir en esta parada' : 'Entrar en esta parada' });
-    const atras = h('button', { type: 'button', className: 'hz-paso', textContent: 'Órbita anterior', 'aria-label': 'Parada anterior' }), ade = h('button', { type: 'button', className: 'hz-paso', textContent: 'Caer más', 'aria-label': 'Parada siguiente' });
-    atras.disabled = objetivo === 0; ade.disabled = objetivo === N - 1; atras.addEventListener('click', () => mover(-1)); ade.addEventListener('click', () => mover(1));
-    panel.replaceChildren(h('p', { className: 'rotulo-etapa', textContent: `Anillo ${r.anillo}: ${r.titulo}` }), h('h2', { textContent: x.c.titulo }), h('p', { className: 'lema', textContent: r.lema }), ent, h('div', { className: 'hz-pasos' }, atras, ade), lista, h('p', { className: 'tenue hz-dist', textContent: `A ${String(x.r.toFixed(x.r < 3 ? 2 : 1)).replace('.', ',')} veces el radio del horizonte, contando desde el centro` }));
-    puntos.forEach((c, i) => { c.classList.toggle('hecho', grado(P[i]) >= 0.7); c.classList.toggle('activo', i === objetivo); });
+  const canvas = h('canvas', { id: 'c', 'aria-hidden': 'true' });
+  const tarjeta = h('div', { className: 'hz-capitulo', 'aria-live': 'polite' }), titulo = h('h1', { className: 'hz-titulo', textContent: 'El Horizonte' });
+  const faroEl = h('a', { className: 'hz-faro', href: '#' }), faroAnillo = h('span', { className: 'hz-faro-aro' }), faroTit = h('span', { className: 'hz-faro-tit' }), faroEntra = h('span', { className: 'hz-faro-entra', textContent: 'Entrar' }); faroEl.append(faroAnillo, faroTit, faroEntra);
+  const reloj = h('p', { className: 'hz-reloj' }), pista = h('p', { className: 'hz-pista', textContent: 'Desplázate para caer' }), destello = h('div', { className: 'hz-destello' });
+  const volver = h('a', { className: 'hz-volver', href: 'index.html?lado=alba', textContent: 'Volver al amanecer' });
+  const bSonido = h('button', { type: 'button', className: 'hz-boton' }), bRuta = h('button', { type: 'button', className: 'hz-boton', textContent: 'Ruta' }), acciones = h('div', { className: 'hz-acciones' }, bRuta, bSonido);
+  const ruta = h('dialog', { className: 'hz-ruta', 'aria-label': 'Todas las paradas de la caída' });
+  raiz.append(canvas, titulo, tarjeta, faroEl, reloj, pista, volver, acciones, ruta, destello);
+  const pintaSonido = () => { bSonido.textContent = sonido.activo ? 'Sonido: sí' : 'Sonido: no'; bSonido.setAttribute('aria-pressed', String(sonido.activo)); }; pintaSonido();
+  bSonido.addEventListener('click', () => { sonido.alternar(); pintaSonido(); });
+  let g = null; try { g = crearHorizonte(canvas); } catch { canvas.remove(); document.body.classList.add('hz-sin-gl'); }
+  const inicial = () => { const pid = q.get('ir'); if (pid) { const i = P.findIndex((x) => x.c.id === pid); if (i >= 0) return i; } const l = crearLugar(almacen).ultimoEntre?.(P.map((x) => x.c.id)); if (l) { const i = P.findIndex((x) => x.c.id === l.c); if (i >= 0) return i; } const i = P.findIndex((x) => grado(x) < 0.7); return i < 0 ? 0 : i; };
+  // obj: adónde quieres ir. s: dónde estás, siempre un poco por detrás: eso es la inercia.
+  let obj = inicial(), s = q.has('ir') && obj > 0 && !reducido ? obj - 0.8 : obj, vel = 0, t = 0, ult = performance.now(), fijo = false, quieto = 9, mirX = 0, mirY = 0, mirXo = 0, mirYo = 0, sacude = 0, anilloVisto = -1, tarjetaHasta = 0, ultReloj = -1, ha = false;
+  const entrando = q.get('entrada') === 'eclipse' && !reducido && !!g; let tEnt = entrando ? 0 : DURA_ENTRADA, picado = null;
+  if (entrando) { obj = 0; s = 0; document.body.classList.add('hz-entrada'); }
+  const actual = () => Math.round(lim(obj, 0, MAX));
+  const salto = (d) => { obj = lim(actual() + d, 0, MAX); quieto = 0; ocultarPista(); };
+  function ocultarPista() { if (!ha) { ha = true; pista.classList.add('oculta'); } }
+  function saltarEntrada() { tEnt = DURA_ENTRADA; document.body.classList.remove('hz-entrada'); document.getElementById('puente')?.remove(); }
+  function entrar() {
+    if (picado || !P[actual()]) return; const k = actual(), url = `concepto.html?c=${P[k].c.id}`;
+    if (reducido || !g) { location.href = url; return; }
+    picado = { desde: performance.now(), k, url }; destello.classList.add('sube');
   }
-  const mover = (d) => { objetivo = Math.max(0, Math.min(N - 1, objetivo + d)); pintar(); };
-  pintar();
-  addEventListener('keydown', (e) => { if (e.target.closest?.('a,button')) { if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return; } if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { mover(1); e.preventDefault(); } if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { mover(-1); e.preventDefault(); } });
-  let ac = 0; canvas.addEventListener('wheel', (e) => { ac += e.deltaY; if (Math.abs(ac) > 120) { mover(Math.sign(ac)); ac = 0; } }, { passive: true });
-  canvas.addEventListener('pointerdown', (e) => { arr = [e.clientX, e.clientY]; canvas.setPointerCapture(e.pointerId); }); canvas.addEventListener('pointermove', (e) => { if (!arr) return; mirX = Math.max(-0.8, Math.min(0.8, mirX + (e.clientX - arr[0]) * 0.003)); mirY = Math.max(-0.5, Math.min(0.5, mirY + (e.clientY - arr[1]) * 0.003)); arr = [e.clientX, e.clientY]; }); canvas.addEventListener('pointerup', () => { arr = null; });
-  const norm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); }, cruz = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-  /** Dónde está la cámara para un avance continuo por la órbita. Función pura: la misma k da el mismo plano. */
-  function camara(kk) {
-    const i = Math.min(N - 2, Math.floor(kk)), f = kk - i, A = P[Math.max(0, i)], B = P[Math.min(N - 1, i + 1)] ?? A, u = suave(f), r = A.r * (B.r / A.r) ** u, az = mezcla(A.az, B.az, u), inc = mezcla(0.28, 0.07, suave((30 - r) / 22));
-    const C = [r * Math.cos(inc) * Math.sin(az), -r * Math.cos(inc) * Math.cos(az), r * Math.sin(inc)];
-    // pegada al horizonte ya no se puede mirar otra cosa: el universo entero cabe en una ventana, y se mira hacia ella
-    // La mirada gira en su plano: hacia el centro, de lado (con el agujero a la izquierda) y, al final, hacia fuera.
-    const n = norm(C), tan = norm(cruz([0, 0, 1], n)), gira = Math.PI * (0.5 * suave((5 - r) / 3.2) + 0.5 * suave((1.62 - r) / 0.42)), mir = norm(n.map((v, j) => -v * Math.cos(gira) + tan[j] * Math.sin(gira))), de = norm(cruz(mir, [0, 0, 1])), ar = cruz(de, mir), fuera = suave((1.62 - r) / 0.42);
-    const lado = innerWidth > 760 ? 0.1 + 0.06 * fuera : 0, f2 = norm(mir.map((v, j) => v + de[j] * (mirX + lado) + ar[j] * -mirY)), de2 = norm(cruz(f2, [0, 0, 1])), ar2 = cruz(de2, f2);
-    return { C, base: [...de2, ...ar2, ...f2.map((v) => -v)], fov: mezcla(0.62, 1.3, suave((12 - r) / 9)), r };
+  faroEl.addEventListener('click', (e) => { e.preventDefault(); entrar(); });
+  // --- el mando: la rueda, el dedo o el teclado son la caída; el ratón, adónde miras
+  addEventListener('wheel', (e) => { if (ruta.open) return; e.preventDefault(); if (tEnt < DURA_ENTRADA) return; const d = e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY; obj = lim(obj + d * 0.0014, 0, MAX); quieto = 0; ocultarPista(); }, { passive: false });
+  addEventListener('keydown', (e) => {
+    if (ruta.open) return; if (tEnt < DURA_ENTRADA) { saltarEntrada(); return; } const ab = ['ArrowDown', 'ArrowRight', 'PageDown', ' '], ar = ['ArrowUp', 'ArrowLeft', 'PageUp'];
+    if (e.target.closest?.('button') && e.key === ' ') return;
+    if (ab.includes(e.key)) { salto(1); e.preventDefault(); } else if (ar.includes(e.key)) { salto(-1); e.preventDefault(); } else if (e.key === 'Enter' && !e.target.closest?.('a,button')) entrar();
+  });
+  let dedo = null;
+  canvas.addEventListener('pointerdown', (e) => { if (tEnt < DURA_ENTRADA) { saltarEntrada(); return; } if (e.pointerType !== 'mouse') { dedo = e.clientY; canvas.setPointerCapture(e.pointerId); } });
+  canvas.addEventListener('pointermove', (e) => { if (dedo !== null) { obj = lim(obj + (dedo - e.clientY) * 0.006, 0, MAX); dedo = e.clientY; quieto = 0; ocultarPista(); } });
+  canvas.addEventListener('pointerup', () => { dedo = null; });
+  addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') { mirXo = (e.clientX / innerWidth - 0.5) * 0.16; mirYo = -(e.clientY / innerHeight - 0.5) * 0.1; } });
+  // --- la ruta: para quien prefiere saltar; se abre aparte y no estorba
+  function pintarRuta() {
+    const cerrar = h('button', { type: 'button', className: 'hz-boton', textContent: 'Cerrar' }); cerrar.addEventListener('click', () => ruta.close());
+    ruta.replaceChildren(h('div', { className: 'hz-ruta-cab' }, h('h2', { textContent: 'La caída entera' }), cerrar), ...regiones.map((r) => h('section', {}, h('h3', { textContent: r.titulo }), h('p', { textContent: r.lema }), h('ol', {}, r.conceptos.map((c) => { const i = P.findIndex((y) => y.c.id === c.id), hecha = grado(P[i]) >= 0.7, b = h('button', { type: 'button', className: `${i === actual() ? 'activa ' : ''}${hecha ? 'hecha' : ''}`, textContent: c.titulo }); b.addEventListener('click', () => { obj = i; quieto = 0; ocultarPista(); if (g) ruta.close(); else location.href = `concepto.html?c=${c.id}`; }); return h('li', {}, b); })))));
   }
+  bRuta.addEventListener('click', () => { pintarRuta(); ruta.showModal(); });
+  if (!g) { pintarRuta(); ruta.show(); }
   /** El ojo se adapta: pegado al horizonte, un observador quieto recibe la luz con un corrimiento al azul enorme (g⁴ crece como (1 − 1/r)⁻²). */
   const exposicion = (r) => 0.62 * Math.min(1, (1 - 1 / r) ** 2 / 0.3);
+  let calidad = 1, mediaDt = 0.016, revisar = performance.now() + 3000;
+  const faros = new Float32Array(16), farosC = new Float32Array(16);
+  function ponerFaros(sA, expo) {
+    const pr = Math.ceil(sA - 0.2); faros.fill(0); farosC.fill(0);
+    for (let n = 0; n < 3; n++) { const k = pr + n; if (k < 0 || k > MAX) continue; const d = k - sA, al = suave((3.2 - d) / 1) * suave((d + 0.18) / 0.16), B = FAROS[k], dist = Math.max(0.45 * (P[k].r - 1), 0.18), hecha = grado(P[k]) >= 0.7, late = 1 + 0.18 * Math.sin(t * 2.4 + k); faros.set([...B, dist * 0.012], n * 4); farosC.set(hecha ? [0.55, 0.78, 1] : [1, 0.72, 0.32], n * 4); farosC[n * 4 + 3] = (al * late * 0.62) / Math.max(expo, 0.02); }
+  }
+  function pintarFaro(v, k, sA) {
+    const B = FAROS[k], d = B.map((x, i) => x - v.C[i]), z = d[0] * v.f[0] + d[1] * v.f[1] + d[2] * v.f[2], asp = innerWidth / innerHeight, tf = Math.tan(v.fov / 2);
+    const nx = (d[0] * v.de[0] + d[1] * v.de[1] + d[2] * v.de[2]) / (z * tf * asp), ny = (d[0] * v.ar[0] + d[1] * v.ar[1] + d[2] * v.ar[2]) / (z * tf), al = (1 - suave((Math.abs(sA - k) - 0.1) / 0.28)) * (picado ? 0 : 1) * (tEnt < DURA_ENTRADA ? 0 : 1);
+    faroEl.classList.toggle('sin-aro', v.r < 5); // tan cerca, la gravedad desplaza la imagen del faro: un aro recto ya no caería encima
+    faroEl.style.opacity = String(al); faroEl.style.pointerEvents = al > 0.4 ? 'auto' : 'none'; faroEl.tabIndex = al > 0.4 ? 0 : -1;
+    if (faroEl.dataset.k !== String(k)) { faroEl.dataset.k = String(k); faroTit.textContent = P[k].c.titulo; faroEl.href = `concepto.html?c=${P[k].c.id}`; faroEl.classList.toggle('hecha', grado(P[k]) >= 0.7); faroEntra.textContent = grado(P[k]) > 0 ? 'Seguir' : 'Entrar'; }
+    if (innerWidth <= 760) faroEl.style.transform = `translate(${innerWidth / 2}px, ${innerHeight * 0.74}px)`;
+    else faroEl.style.transform = `translate(${lim((nx * 0.5 + 0.5) * innerWidth, 60, innerWidth - 300).toFixed(1)}px, ${lim((0.5 - ny * 0.5) * innerHeight, 80, innerHeight - 110).toFixed(1)}px)`;
+  }
+  function pintarCapitulo(k, ms) {
+    const ir = P[k].ir; if (ir !== anilloVisto) { const prim = anilloVisto < 0; anilloVisto = ir; const r = P[k].region; tarjeta.replaceChildren(h('h2', { textContent: r.titulo }), h('p', { textContent: r.lema })); if (!prim || !entrando) { tarjeta.classList.add('visible'); tarjetaHasta = ms + 4200; if (!prim) sacude = Math.max(sacude, 1); } }
+    if (tarjetaHasta && ms > tarjetaHasta) { tarjeta.classList.remove('visible'); tarjetaHasta = 0; }
+  }
   function cuadro(ms) {
     requestAnimationFrame(cuadro); if (document.hidden) { ult = ms; return; }
-    const dt = Math.min(0.05, (ms - ult) / 1000); ult = ms; if (!fijo) { t += dt; k = reducido ? objetivo : k + (objetivo - k) * (1 - Math.exp(-dt * 0.85)); if (Math.abs(objetivo - k) < 1e-4) k = objetivo; if (!arr) { mirX *= 1 - dt * 0.5; mirY *= 1 - dt * 0.5; } }
-    const W = Math.round(innerWidth * Math.min(devicePixelRatio || 1, 1.25)), H = Math.round(innerHeight * Math.min(devicePixelRatio || 1, 1.25)); if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
-    if (g && N) { const c = camara(N > 1 ? k : 0); g.dibujar({ ...c, t, expo: exposicion(c.r) }); if (marca) { const a = posM({ r: c.r, az: mezcla(P[Math.floor(Math.min(k, N - 1))].az, P[Math.min(N - 1, Math.floor(k) + 1)].az, suave(k - Math.floor(k))) }); marca.setAttribute('cx', a[0]); marca.setAttribute('cy', a[1]); } }
+    const dt = Math.min(0.05, (ms - ult) / 1000); ult = ms;
+    // si la gráfica no llega, baja un poco la resolución interna antes que la fluidez
+    if (dt > 0) { mediaDt += (dt - mediaDt) * 0.03; if (ms > revisar) { revisar = ms + 1500; if (mediaDt > 0.026 && calidad > 0.65) calidad *= 0.9; else if (mediaDt < 0.0185 && calidad < 1) calidad = Math.min(1, calidad * 1.05); } }
+    const W = Math.round(innerWidth * Math.min(devicePixelRatio || 1, 1.25) * calidad), H = Math.round(innerHeight * Math.min(devicePixelRatio || 1, 1.25) * calidad); if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+    if (!fijo) {
+      if (tEnt < DURA_ENTRADA) { tEnt += dt; if (tEnt >= DURA_ENTRADA) saltarEntrada(); }
+      else { quieto += dt; obj = iman(obj, quieto, dt, MAX); const a = reducido ? 1 : 1 - Math.exp(-dt * 3.2), ant = s; s += (obj - s) * a; vel += ((dt > 0 ? (s - ant) / dt : 0) - vel) * (1 - Math.exp(-dt * 6)); }
+      mirX += (mirXo - mirX) * (1 - Math.exp(-dt * 2.4)); mirY += (mirYo - mirY) * (1 - Math.exp(-dt * 2.4)); sacude *= Math.exp(-dt * 1.6);
+    }
+    if (!g) return;
+    const base = pose(P, s), ent = tEnt < DURA_ENTRADA ? guionEntrada(tEnt, base) : null, p0 = ent ?? base, r = p0.r, rapido = lim(Math.abs(vel) / 1.6, 0, 1), cerca = suave((6 - r) / 5);
+    t += (dt || 0) * (fijo ? 0 : Math.min(dilatacion(r), 4));
+    const mov = reducido || fijo ? 0 : 1, tem = mov * (0.0009 + 0.0035 * cerca + 0.006 * rapido + 0.012 * sacude), banco = mov * (lim(vel, -1.6, 1.6) * 0.16), giro = (ent ? ent.roll : 0) + banco + mov * 0.015 * Math.sin(ms * 0.00031);
+    const lado0 = innerWidth > 760 ? 0.1 + 0.06 * suave((1.62 - r) / 0.42) : 0, lado = lado0 * (ent ? ent.lado : 1);
+    let po = { ...p0, roll: giro, fov: p0.fov * (1 + 0.14 * rapido * mov) };
+    let mx = (ent ? 0 : mirX) + tem * ruidoLento(ms * 0.003, 1), my = (ent ? 0 : mirY) + tem * ruidoLento(ms * 0.003, 5);
+    if (picado) { const u = suave((ms - picado.desde) / 900); po.fov *= 1 - 0.62 * u * u; mx += u * 0.34 * Math.tan(po.fov / 2); if (ms - picado.desde > 950) { const url = picado.url; picado = null; location.href = url; return; } }
+    const v = vista(po, { lado, mirX: mx, mirY: my }), expo = exposicion(r);
+    ponerFaros(ent ? -9 : s, expo);
+    g.dibujar({ C: v.C, base: v.base, fov: po.fov, t, expo, brillo: ent ? ent.brillo : 1, faros, farosC });
+    const puente = document.getElementById('puente'); if (puente && ent) { puente.style.opacity = String(1 - suave(tEnt / 2.4)); if (tEnt > 2.5) puente.remove(); } else if (puente && !entrando) puente.remove();
+    titulo.style.opacity = ent ? String(ent.titulo) : '0';
+    const k = lim(Math.round(s), 0, MAX); pintarFaro(v, k, s); if (!ent) pintarCapitulo(k, ms);
+    const rr = Math.round(r * 100); if (rr !== ultReloj) { ultReloj = rr; reloj.textContent = `A ${coma(r, r < 3 ? 2 : 1)} veces el radio del horizonte. Por cada segundo tuyo, allí fuera pasan ${coma(dilatacion(r), 2)}.`; }
+    reloj.style.opacity = ent ? '0' : ''; sonido.actualizar(ent ? suave(tEnt / DURA_ENTRADA) * 0.5 : cerca, ent ? Math.sin(Math.PI * tEnt / DURA_ENTRADA) : rapido);
   }
+  if (q.has('ir') && !entrando) { destello.classList.add('baja'); }
   requestAnimationFrame(cuadro);
-  return { fijar: (o) => { if ('k' in o) { k = o.k; objetivo = Math.round(o.k); pintar(); } if ('t' in o) { t = o.t; } fijo = true; }, actual: () => P[objetivo]?.c.id, paradas: () => P.map((x) => ({ id: x.c.id, r: x.r })) };
+  return { fijar: (o) => { saltarEntrada(); if ('k' in o) { s = o.k; obj = Math.round(o.k); vel = 0; } if ('t' in o) t = o.t; fijo = true; }, actual: () => P[actual()]?.c.id, paradas: () => P.map((x) => ({ id: x.c.id, r: x.r })), avance: () => s };
 }

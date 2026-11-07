@@ -10,6 +10,7 @@ import { barraGrado, h, tituloDifuso, tryLocal } from './concepto.js';
 import { soportaGL2 } from './lienzo.js';
 import { camaraLibre, camaraMapa, crearPaisaje, proyectar } from './mapaGL.js';
 import { LUNA_D, LUNA_R } from './lunaGL.js';
+import { DURA_ECLIPSE, guionEclipse } from '../nucleo/caida.js';
 import { DURA_CRUCE, crearRed, crearVuelo, guionCruce } from './mapaRed.js';
 import { DURA_NACER, DURA_VIAJE, formulaNacer, guionNacer, guionViaje } from './mapaGuion.js';
 import { ev, mix } from './tiempo.js';
@@ -189,7 +190,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     const W = canvas.clientWidth || 1, H = canvas.clientHeight || 1, dpr = devicePixelRatio || 1;
     pais.ajustar(Math.round(W * dpr), Math.round(H * dpr), Math.max(2, Math.round(W * dpr * escala)), Math.max(2, Math.round(H * dpr * escala)));
     if (rehacer) {
-      const { vp, ojo } = modo === 'cruce' ? camaraCruce(W / H, t) : modo === 'luna' ? camaraLuna(W / H) : camaraMapa({ ...camaraActual(), aspecto: W / H });
+      const { vp, ojo } = modo === 'cruce' ? camaraCruce(W / H, t) : modo === 'luna' ? camaraLuna(W / H) : modo === 'eclipse' ? camaraEclipse(W / H) : camaraMapa({ ...camaraActual(), aspecto: W / H });
       vpActual = vp; ojoActual = ojo;
     }
     const vp = vpActual, ojo = ojoActual;
@@ -204,6 +205,11 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
       const u = t - lunaDesde.t;
       pais.dibujar({ ...comun, rehacer: true, haloLuna: 1 - ev(u, 0.3, 2.6), expo: 1 - ev(u, DURA_LUNA - 0.55, DURA_LUNA - 0.05), foco: [0, 0, 0, 0], hecho: hecho(), aparece: 1 - ev(u, 0, 1) });
       if (u >= DURA_LUNA) { modo = 'saliendo'; location.href = 'index.html?lado=alba&cruce=1'; }
+    } else if (modo === 'eclipse') {
+      const u = t - eclipseDesde.t, g = guionEclipse(u);
+      pais.dibujar({ ...comun, rehacer: true, solCielo: solEclipse(g.sube), eclipse: g.cubre, eclipseK: 1 / g.expo, expo: g.expo, foco: [0, 0, 0, 0], hecho: hecho(), aparece: 1 - ev(u, 0, 1) });
+      puenteEclipse.style.opacity = String(g.puente);
+      if (u >= DURA_ECLIPSE) { modo = 'saliendo'; location.href = 'horizonte.html?entrada=eclipse'; }
     } else if (modo === 'saliendo') { /* ya está cargando la página siguiente */
     } else if (modo === 'cruce') {
       const gu = guionCruce(t);
@@ -222,6 +228,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     }
     colocarRotulos();
     colocarChispa();
+    colocarPuertaSol();
   }
 
   // --- el cruce: entras en la luz, vuelas de neurona en neurona, y al alejarte ves la red entera
@@ -286,6 +293,36 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     chispa.style.setProperty('--cx', `${((c - a) * W).toFixed(1)}px`);
     chispa.style.setProperty('--cy', `${((e - b) * H).toFixed(1)}px`);
     chispa.style.transform = `translate(${(a * W).toFixed(1)}px, ${(b * H).toFixed(1)}px)`;
+  }
+  // --- el sol es la puerta del amanecer: giras hacia él, la Luna lo tapa, y su sombra es la de un agujero negro
+  let eclipseDesde = null;
+  const puenteEclipse = h('div', { className: 'eclipse-puente' }), puertaSol = h('button', { type: 'button', className: 'mapa-chispa puerta-sol', ariaLabel: 'Toca el sol: lleva al Horizonte' }, h('span', { className: 'luna-aro' }));
+  puenteEclipse.style.opacity = '0';
+  const solEclipse = (k) => { const az = eclipseDesde.az, el = mix(0.115, 0.33, k), c = Math.cos(el); return [Math.cos(az) * c, Math.sin(az) * c, Math.sin(el)]; };
+  const dirSol = (s) => { const l = Math.hypot(s[0], s[1], s[2] * 0.36); return [s[0] / l, s[1] / l, (s[2] * 0.36) / l]; };
+  function camaraEclipse(aspecto) {
+    const g = guionEclipse(t - eclipseDesde.t), d = dirSol(solEclipse(g.sube)), mira = eclipseDesde.ojo.map((v, i) => v + d[i] * 12);
+    return camaraLibre({ ojo: eclipseDesde.ojo, mira: mixV(eclipseDesde.mira, mira, g.gira), aspecto, fov: g.fov, alabeo: g.alabeo, corrimiento: eclipseDesde.corr * (1 - g.gira), alzado: eclipseDesde.alz * (1 - g.gira) });
+  }
+  function irAlEclipse() {
+    if (reducido) { location.href = 'horizonte.html'; return; }
+    if (modo === 'eclipse') return;
+    const c = camaraActual(), { ojo } = camaraMapa({ ...c, aspecto: canvas.clientWidth / canvas.clientHeight });
+    eclipseDesde = { t, ojo, mira: c.objetivo, corr: c.corrimiento, alz: c.alzado, az: Math.atan2(solActual[1], solActual[0]) };
+    modo = 'eclipse';
+    pagina.classList.add('a-la-luna');
+    puertaSol.hidden = true;
+    pagina.append(puenteEclipse);
+  }
+  puertaSol.addEventListener('pointerdown', (ev2) => ev2.stopPropagation());
+  puertaSol.addEventListener('click', (ev2) => { ev2.stopPropagation(); irAlEclipse(); });
+  pagina.addEventListener('click', (ev2) => { const a = ev2.target.closest?.('a[href="horizonte.html"]'); if (a && soportaGL2()) { ev2.preventDefault(); irAlEclipse(); } });
+  function colocarPuertaSol() {
+    if (!esAlba || modo !== 'normal') { puertaSol.hidden = true; return; }
+    const d = dirSol(solActual), [a, b] = proyectar(vpActual, [0, 1, 2].map((i) => ojoActual[i] + d[i] * 12)), W = canvas.clientWidth, H = canvas.clientHeight;
+    puertaSol.hidden = !(a > 0.02 && a < 0.98 && b > 0.02 && b < 0.98);
+    puertaSol.style.setProperty('--r', '26px'); puertaSol.style.setProperty('--cx', '0px'); puertaSol.style.setProperty('--cy', '0px');
+    puertaSol.style.transform = `translate(${(a * W).toFixed(1)}px, ${(b * H).toFixed(1)}px)`;
   }
   let lunaDesde = null;
   const DURA_LUNA = 4.4;
@@ -531,7 +568,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
     pagina.append(capaNacer);
     addEventListener('keydown', (ev2) => { if (modo === 'nace' && ev2.key === 'Escape') terminarNacimiento(); });
   }
-  zonaMapa.append(chispa);
+  zonaMapa.append(chispa, puertaSol);
   if (esAlba) pagina.classList.add('lado-alba');
   if (modo === 'cruce') {
     pagina.classList.add('cruzando');

@@ -148,7 +148,7 @@ out vec2 u;void main(){vec2 p=vec2(gl_VertexID==1?3.:-1.,gl_VertexID==2?3.:-1.);
 
 const FS_CIELO = `#version 300 es
 precision highp float;
-in vec2 u;uniform mat4 uIVP;uniform vec3 uCam,uSol;uniform sampler2D uRuido,uLuna;uniform float uT,uCielo,uNebula;out vec4 o;
+in vec2 u;uniform mat4 uIVP;uniform vec3 uCam,uSol;uniform sampler2D uRuido,uLuna;uniform float uT,uCielo,uNebula,uEclipse,uEclipseK;out vec4 o;
 ${CIELO}
 float h21(vec2 p){p=fract(p*vec2(233.34,851.73));p+=dot(p,p+23.45);return fract(p.x*p.y);}
 void main(){
@@ -191,6 +191,15 @@ void main(){
    vec3 col=mix(vec3(.42,.2,.17),vec3(.135,.08,.135),pow((fk+1.)/4.,.8));
    m=mix(m,col,smoothstep(cima+.0012,cima-.0012,v.z));}
   c=mix(c,m,uAlba);
+ }
+ if(uEclipse>0.){
+  // el eclipse: la Luna nueva, un disco negro que se desliza sobre el sol, y al final su corona
+  vec3 so2=normalize(vec3(uSol.xy,uSol.z*.36)),ex=normalize(cross(so2,vec3(0.,0.,1.))),ey=cross(ex,so2);vec2 q=vec2(dot(v,ex),dot(v,ey));float dso=dot(v,so2),RL=.0262;
+  vec2 oc=vec2(-.13,.05)*(1.-uEclipse);float dl=length(q-oc),zw=fwidth(dl),tot=smoothstep(.93,1.,uEclipse),ds=length(q);
+  c*=mix(1.,.05,smoothstep(.55,1.,uEclipse));
+  if(dso>0.&&tot>0.){float an=atan(q.y,q.x),n=texture(uRuido,vec2(an*.55,.2)).r*.6+texture(uRuido,vec2(an*2.1,.6)).g*.4,x=max(ds/RL-1.,0.);c+=vec3(1.,.93,.78)*tot*(2.6*exp(-x*9.)+.8*(.35+n*1.2)*exp(-x*2.6))*uEclipseK;}
+  float di=smoothstep(.93,.985,uEclipse)*(1.-smoothstep(.985,1.,uEclipse));vec2 pd=RL*vec2(.75,.66);c+=vec3(1.,.95,.85)*di*(22.*exp(-pow(length(q-pd)/.005,2.))+1.3*exp(-length(q-pd)/.03))*uEclipseK;
+  c=mix(c,vec3(0.),(1.-smoothstep(RL-max(zw,.00025),RL,dl))*step(0.,dso)*smoothstep(.42,.6,uEclipse)); // la Luna nueva no se ve hasta que empieza a morder el sol
  }
  vec3 ne=vec3(0.);
  if(uNebula>0.){
@@ -610,7 +619,7 @@ export function crearPaisaje(canvas, { software = false, luna = true } = {}) {
       gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
       gl.depthMask(true); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.disable(gl.DEPTH_TEST); gl.useProgram(pC.p); gl.bindVertexArray(vacioVAO);
-      gl.uniformMatrix4fv(pC.u.uIVP, false, inversa(vp)); gl.uniform3fv(pC.u.uCam, ojo); gl.uniform3fv(pC.u.uSol, e.solCielo ?? sol); gl.uniform1f(pC.u.uT, e.t); gl.uniform1f(pC.u.uCielo, e.cielo ?? e.nace?.cielo ?? 1); gl.uniform1f(pC.u.uAlba, e.alba ?? 0); gl.uniform1f(pC.u.uNebula, e.nebula ?? 0); gl.uniform1f(pC.u.uConLuna, texLuna ? 1 : 0); gl.uniform1f(pC.u.uHaloLuna, e.haloLuna ?? 1); t2(pC.u.uRuido, 1, ruido); t2(pC.u.uLuna, 4, texLuna ?? ruido);
+      gl.uniformMatrix4fv(pC.u.uIVP, false, inversa(vp)); gl.uniform3fv(pC.u.uCam, ojo); gl.uniform3fv(pC.u.uSol, e.solCielo ?? sol); gl.uniform1f(pC.u.uT, e.t); gl.uniform1f(pC.u.uCielo, e.cielo ?? e.nace?.cielo ?? 1); gl.uniform1f(pC.u.uAlba, e.alba ?? 0); gl.uniform1f(pC.u.uNebula, e.nebula ?? 0); gl.uniform1f(pC.u.uEclipse, e.eclipse ?? 0); gl.uniform1f(pC.u.uEclipseK, e.eclipseK ?? 1); gl.uniform1f(pC.u.uConLuna, texLuna ? 1 : 0); gl.uniform1f(pC.u.uHaloLuna, e.haloLuna ?? 1); t2(pC.u.uRuido, 1, ruido); t2(pC.u.uLuna, 4, texLuna ?? ruido);
       if ((e.nace?.cielo ?? 1) > 0 || e.nebula > 0) gl.drawArrays(gl.TRIANGLES, 0, 3);
       if (e.sinTerreno) { gl.depthMask(true); }
       if (!e.sinTerreno) {

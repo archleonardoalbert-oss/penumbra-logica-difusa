@@ -7,7 +7,7 @@ const RAYOS = `#version 300 es
 precision highp float;
 in vec2 uv;out vec4 o;
 uniform vec3 uC;uniform mat3 uBase;uniform float uFov,uAsp,uT,uTmax,uVsal;uniform samplerCube uCielo;uniform sampler2D uRuido,uCuerpo;
-uniform float uROut;
+uniform float uROut;uniform vec4 uFaro[4],uFaroC[4];
 const float PI=3.14159265;
 float flujo(float r){float x=2.*r;if(x<=6.)return 0.;float s=sqrt(x),s3=1.7320508,s6=2.4494897;return (1./((x-3.)*x*x*s))*(s-s6+.5*s3*log((s+s3)*(s6-s3)/((s-s3)*(s6+s3))));}
 const float FMAX=1.145895e-4;
@@ -29,10 +29,13 @@ void main(){
  // el plano de la órbita corta al disco cada media vuelta
  float fc=atan(-e1.z,e2.z);if(fc<0.)fc+=PI;
  vec3 suma=vec3(0.);float trans=1.,fi=0.;bool sale=false;float gObs=1./fs;float vz=nor.z;
+ // los faros: cada rayo mira cuánto se acerca a ellos a lo largo de TODA su trayectoria curva, así que también se ven sus imágenes dobladas por la gravedad
+ float dM[4]=float[4](1e9,1e9,1e9,1e9),tM[4]=float[4](1.,1.,1.,1.);bool ac[4];bool hay=false;for(int i=0;i<4;i++){ac[i]=uFaroC[i].a>0.&&abs(dot(uFaro[i].xyz,nor))<uFaro[i].w*5.5;hay=hay||ac[i];}
  for(int i=0;i<340;i++){
   float h=mix(.075,.014,smoothstep(.12,.55,u));
   float ka=v,la=-u+1.5*u*u,u2=u+.5*h*ka,kb=v+.5*h*la,lb=-u2+1.5*u2*u2,u3=u+.5*h*kb,kc=v+.5*h*lb,lc=-u3+1.5*u3*u3,u4=u+h*kc,kd=v+h*lc,ld=-u4+1.5*u4*u4;
   float un=u+h/6.*(ka+2.*kb+2.*kc+kd),vn=v+h/6.*(la+2.*lb+2.*lc+ld);
+  if(hay){vec3 A=(cos(fi)*e1+sin(fi)*e2)/max(u,1e-4),B=(cos(fi+h)*e1+sin(fi+h)*e2)/max(un,1e-4),AB=B-A;float l2=max(dot(AB,AB),1e-8);for(int i=0;i<4;i++)if(ac[i]){vec3 q=uFaro[i].xyz-A;float k=clamp(dot(q,AB)/l2,0.,1.),dd=length(q-AB*k);if(dd<dM[i]){dM[i]=dd;tM[i]=trans;}}}
   if(fi+h>=fc&&trans>.002){
    float a=(fc-fi)/h,uc=mix(u,un,a),r=1./max(uc,1e-5);
    if(r>3.&&r<uOutRad()){
@@ -54,6 +57,7 @@ void main(){
   if(u>=.995)break;
   if(u<min(.5/r0,.012)&&v<0.){sale=true;break;}
  }
+ for(int i=0;i<4;i++)if(ac[i]){float q=dM[i]/uFaro[i].w,q2=q*q;suma+=tM[i]*uFaroC[i].rgb*uFaroC[i].a*(exp(-q2)*16.+exp(-q2*.3)*.55);}
  if(sale){vec3 pos=cos(fi)*e1+sin(fi)*e2,tan_=-sin(fi)*e1+cos(fi)*e2;vec3 dirS=normalize(-v*pos+u*tan_);suma+=trans*texture(uCielo,dirS).rgb;}
  o=vec4(suma,1.);}`.replaceAll('uOutRad()', 'uROut');
 const CIELO = `#version 300 es
@@ -89,6 +93,7 @@ function prog(gl, f) {
   gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
   const u = {}; for (let i = 0, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); i < n; i++) { const a = gl.getActiveUniform(p, i); u[a.name] = gl.getUniformLocation(p, a.name); } return { p, u };
 }
+const SIN_FAROS = new Float32Array(16);
 export function crearHorizonte(canvas) {
   const gl = canvas.getContext('webgl2', { antialias: false, powerPreference: 'high-performance' }); if (!gl || !gl.getExtension('EXT_color_buffer_float')) throw new Error('Hace falta WebGL2 con color flotante');
   gl.getExtension('OES_texture_float_linear');
@@ -114,9 +119,9 @@ export function crearHorizonte(canvas) {
   }
   return {
     gl,
-    dibujar({ C, base, fov, t, expo = 0.62, tMax = 4300, rOut = 15, brillo = 1 }) {
+    dibujar({ C, base, fov, t, expo = 0.62, tMax = 4300, rOut = 15, brillo = 1, faros = SIN_FAROS, farosC = SIN_FAROS }) {
       ajustar(); const W = canvas.width, H = canvas.height;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, esc.f); gl.viewport(0, 0, W, H); gl.useProgram(pR.p); gl.uniform3fv(pR.u.uC, C); gl.uniformMatrix3fv(pR.u.uBase, false, base); gl.uniform1f(pR.u.uFov, fov); gl.uniform1f(pR.u.uAsp, W / H); gl.uniform1f(pR.u.uT, t); gl.uniform1f(pR.u.uTmax, tMax); gl.uniform1f(pR.u.uVsal, brillo); gl.uniform1f(pR.u.uROut, rOut);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, esc.f); gl.viewport(0, 0, W, H); gl.useProgram(pR.p); gl.uniform3fv(pR.u.uC, C); gl.uniformMatrix3fv(pR.u.uBase, false, base); gl.uniform1f(pR.u.uFov, fov); gl.uniform1f(pR.u.uAsp, W / H); gl.uniform1f(pR.u.uT, t); gl.uniform1f(pR.u.uTmax, tMax); gl.uniform1f(pR.u.uVsal, brillo); gl.uniform1f(pR.u.uROut, rOut); gl.uniform4fv(pR.u['uFaro[0]'], faros); gl.uniform4fv(pR.u['uFaroC[0]'], farosC);
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_CUBE_MAP, tCielo); gl.uniform1i(pR.u.uCielo, 0); t2(pR, 'uRuido', 1, tRuido); t2(pR, 'uCuerpo', 2, tCuerpo); gl.drawArrays(gl.TRIANGLES, 0, 3);
       // resplandor de lente, en muchas escalas
       gl.useProgram(pB.p); let src = esc; cadena.forEach((c, i) => { gl.bindFramebuffer(gl.FRAMEBUFFER, c.a.f); gl.viewport(0, 0, c.a.w, c.a.h); t2(pB, 'uT', 0, src.t); gl.uniform2f(pB.u.uPx, 1 / src.w, 1 / src.h); gl.uniform1f(pB.u.uUmbral, i === 0 ? 0.9 : 0); gl.drawArrays(gl.TRIANGLES, 0, 3); src = c.a; });

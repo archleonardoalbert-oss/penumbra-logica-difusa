@@ -178,3 +178,12 @@ t('mapa: desde el amanecer se llega al Horizonte, y se puede volver', async ({ p
   await ir('horizonte.html');
   afirmar(await pg.locator('a.hz-volver[href="index.html?lado=alba"]').count() === 1, 'sin vuelta');
 });
+
+t('mapa: en el amanecer el sol es una puerta, y su eclipse lleva al Horizonte', async ({ pg, ir }) => {
+  await ir('index.html?lado=alba');
+  await pg.waitForFunction(() => window.mapa);
+  await pg.waitForSelector('.puerta-sol:not([hidden])', { state: 'attached', timeout: 30000 });
+  await pg.evaluate(() => document.querySelector('.puerta-sol').click());
+  await pg.waitForFunction(() => document.querySelector('.eclipse-puente'), null, { timeout: 15000 });
+  await pg.waitForURL(/horizonte\.html\?entrada=eclipse/, { timeout: 120000 });
+});
