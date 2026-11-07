@@ -79,6 +79,13 @@ export const CATALOGO = [
   { id: 13, lado: 'alba', titulo: 'Decidir y rendir cuentas', lema: 'Una decisión tiene consecuencias, y hay que probarla.', posicion: [0.88, 0.26], conceptos: [
     listo('13-1-coste', 'Errores que no pesan igual', ['baja-beta', 'umbral-calc', 'dec-elegir', 'demuestra-iguales']), listo('13-2-contrafactual', 'Qué habría cambiado la decisión', ['cruza', 'cf-calc', 'cf-elegir', 'demuestra-cf']), listo('13-3-evaluar', '¿Funciona de verdad?', ['potencia-80', 'tam-calc', 'eval-elegir', 'demuestra-circular']), listo('13-4-ccd', 'Células de Concepto Difusas, enteras', ['enciende-urgente', 'tsk-calc', 'ccd-elegir', 'demuestra-ccd']),
   ] },
+  // --- el Horizonte: fuzzython, en una órbita que cae al agujero negro
+  { id: 14, lado: 'horizonte', anillo: 1, titulo: 'El borde del disco', lema: 'Aquí todo es grado: las piezas de las que está hecho fuzzython.', posicion: [0.5, 0.5], conceptos: [
+    listo('14-1-encender', 'Encender fuzzython', ['treinta-minutos', 'parche-elegir', 'cuenta-333', 'demuestra-orden']),
+    listo('14-2-conjunto', 'FuzzySet e Interval', ['area-mala', 'res-calc', 'interval-elegir', 'demuestra-area']),
+    listo('14-3-formas', 'Las diez formas', ['forma-z', 'gauss-calc', 'forma-elegir', 'demuestra-tri']),
+    listo('14-4-operar', 'Operar conjuntos', ['norma-baja', 'cruce-calc', 'operar-elegir', 'demuestra-comp']),
+  ] },
 ];
 
 export const todosLosConceptos = (cat = CATALOGO) => cat.flatMap((r) => r.conceptos);

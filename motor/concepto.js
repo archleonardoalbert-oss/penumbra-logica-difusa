@@ -100,6 +100,9 @@ function secuencia(c) {
       nuevo(g, (k) => k.append(h('p', { className: 'rotulo-etapa', textContent: 'Con números' }), html('p', b.texto),
         b.tabla ? h('table', { className: 'tabla-ejemplo' }, h('tbody', {}, b.tabla.map((fila) => h('tr', {}, fila.map((v, i) => h(i ? 'td' : 'th', { innerHTML: prosa(v) })))))) : ''));
       if (b.cierre) nuevo(g, (k) => k.append(html('p', b.cierre, 'cierre')));
+    } else if (b.tipo === 'codigo') {
+      nuevo(g, (k) => k.append(...(b.texto ? [html('p', b.texto)] : []), h('pre', { className: 'codigo', tabIndex: 0, innerHTML: colorearPython(b.codigo) }), ...(b.salida ? [h('p', { className: 'salida-rot', textContent: b.ejecutado === false ? 'Esquema: no se ha ejecutado aquí' : 'Lo que imprime, ejecutado de verdad' }), h('pre', { className: 'salida', tabIndex: 0, textContent: b.salida })] : [])));
+      if (b.cierre) nuevo(g, (k) => k.append(html('p', b.cierre, 'cierre')));
     } else if (b.tipo === 'simbolos') {
       const lista = (k) => { let l = k.querySelector('.lectura'); if (!l) { k.append(h('p', { className: 'rotulo-etapa', textContent: 'Pieza a pieza' })); if (b.intro) k.append(html('p', b.intro)); l = h('dl', { className: 'lectura' }); k.append(l); } return l; };
       b.piezas.forEach((p) => nuevo(g, (k) => lista(k).append(h('div', { className: 'pieza' }, h('dt', { innerHTML: texto(p.tex) }), h('dd', { innerHTML: prosa(p.dice) })))));
@@ -225,7 +228,7 @@ function rutaRegion(region, ficha, progreso) {
     punto.style.setProperty('--color', rgb(g > 0 ? escalaGrado(g) : [58, 62, 84]));
     ol.append(h('li', {}, punto));
   });
-  return h('nav', { className: 'ruta-region', ariaLabel: `Paradas de ${region.titulo}` }, h('a', { href: region.lado === 'alba' ? 'index.html?lado=alba' : 'index.html', className: 'volver-mapa', textContent: '⌂ Mapa' }), h('span', { className: 'ruta-nombre', textContent: `${region.id}. ${region.titulo}` }), ol);
+  return h('nav', { className: 'ruta-region', ariaLabel: `Paradas de ${region.titulo}` }, h('a', { href: region.lado === 'horizonte' ? 'horizonte.html' : region.lado === 'alba' ? 'index.html?lado=alba' : 'index.html', className: 'volver-mapa', textContent: '⌂ Mapa' }), h('span', { className: 'ruta-nombre', textContent: `${region.id}. ${region.titulo}` }), ol);
 }
 
 // ---------------------------------------------------------------- página
@@ -237,6 +240,17 @@ const ETAPAS = [
   { id: 'demuestra', nombre: 'Demuéstralo', seguir: 'Terminar esta parada' },
   { id: 'llegada', nombre: 'Lo siguiente' },
 ];
+
+/** Colorea Python sin depender de nada: primero se escapa, y luego se marcan comentarios, cadenas, palabras clave y números. */
+export function colorearPython(src) {
+  const esc = (x) => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return src.split('\n').map((lin) => {
+    let out = '', i = 0, m;
+    const re = /(#.*$)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|\b(from|import|def|return|for|in|if|else|with|as|print|class|lambda|None|True|False)\b|\b(\d+(?:\.\d+)?)\b/g;
+    while ((m = re.exec(lin))) { out += esc(lin.slice(i, m.index)); const c = m[1] ? 'com' : m[2] ? 'cad' : m[3] ? 'pc' : 'num'; out += `<span class="${c}">${esc(m[0])}</span>`; i = m.index + m[0].length; }
+    return out + esc(lin.slice(i));
+  }).join('\n');
+}
 
 function mensajeAmable(raiz, titulo, t) {
   raiz.replaceChildren(h('main', { className: 'mensaje' }, tituloDifuso(titulo), h('p', { innerHTML: t }), h('a', { href: 'index.html', className: 'boton-mapa', textContent: 'Volver al mapa' })));
@@ -286,8 +300,8 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
   const notaLlegada = h('p', { className: 'tenue' });
   // dentro del capítulo, se sigue andando; al cambiar de capítulo, se viaja por el mapa
   const cambiaCapitulo = proxima && !region.conceptos.some((x) => x.id === proxima.id), regionSig = cambiaCapitulo ? buscarConcepto(proxima.id, catalogo).region : null;
-  const destinoFinal = !proxima ? (region.lado === 'alba' ? 'index.html?lado=alba' : 'index.html') : cambiaCapitulo ? `index.html?viaje=${proxima.id}` : `concepto.html?c=${proxima.id}`;
-  const textoFinal = !proxima ? 'Volver al mapa' : cambiaCapitulo ? `Viajar al capítulo ${regionSig.id}: ${regionSig.titulo}` : `Siguiente parada: ${proxima.titulo}`;
+  const enHorizonte = region.lado === 'horizonte', destinoFinal = !proxima ? (enHorizonte ? 'horizonte.html' : region.lado === 'alba' ? 'index.html?lado=alba' : 'index.html') : cambiaCapitulo ? (enHorizonte ? `horizonte.html?ir=${proxima.id}` : `index.html?viaje=${proxima.id}`) : `concepto.html?c=${proxima.id}`;
+  const textoFinal = !proxima ? 'Volver al mapa' : cambiaCapitulo ? (enHorizonte ? `Caer al anillo ${regionSig.anillo}: ${regionSig.titulo}` : `Viajar al capítulo ${regionSig.id}: ${regionSig.titulo}`) : `Siguiente parada: ${proxima.titulo}`;
   secciones.llegada = h('section', { id: 'llegada', className: 'llegada' },
     h('p', { className: 'rotulo-etapa', textContent: 'Parada terminada' }), html('p', c.puente, 'puente'), notaLlegada,
     h('a', { className: 'boton-seguir', href: destinoFinal, textContent: textoFinal }));

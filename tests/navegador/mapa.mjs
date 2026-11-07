@@ -175,5 +175,5 @@ t('mapa: desde el amanecer se llega al Horizonte, y se puede volver', async ({ p
   await pg.waitForFunction(() => window.mapa);
   afirmar(await pg.locator('a[href="horizonte.html"]').count() === 1, 'sin enlace al Horizonte');
   await ir('horizonte.html');
-  afirmar(await pg.locator('a.volver[href="index.html?lado=alba"]').count() === 1, 'sin vuelta');
+  afirmar(await pg.locator('a.hz-volver[href="index.html?lado=alba"]').count() === 1, 'sin vuelta');
 });

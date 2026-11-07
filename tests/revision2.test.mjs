@@ -32,9 +32,10 @@ test('8-5: cargar la parada no bloquea la página', async () => {
 });
 test('toda parada menos la última lleva a otra parada', async () => {
   const { siguienteEnCurso, todosLosConceptos } = await import('../contenido/catalogo.js');
-  const L = todosLosConceptos(), corte = L.findIndex((c) => c.id === '8-5-completitud');
-  L.slice(0, -1).forEach((c, i) => { if (i !== corte) assert.equal(siguienteEnCurso(c.id)?.id, L[i + 1].id); });
+  const L = todosLosConceptos(), corte = L.findIndex((c) => c.id === '8-5-completitud'), corte2 = L.findIndex((c) => c.id.startsWith('14-')) - 1;
+  L.slice(0, -1).forEach((c, i) => { if (i !== corte && i !== corte2) assert.equal(siguienteEnCurso(c.id)?.id, L[i + 1].id); });
   assert.equal(siguienteEnCurso('8-5-completitud'), null, 'la noche termina aquí; el amanecer se descubre aparte');
+  assert.equal(siguienteEnCurso(L[corte2].id), null, 'el amanecer no empuja al Horizonte: se llega por su puerta');
   assert.equal(siguienteEnCurso(L.at(-1).id), null);
 });
 test('una fórmula escrita por el alumno admite mín y máx, con su fórmula bonita', async () => {

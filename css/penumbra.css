@@ -364,3 +364,40 @@ a.estacion:hover { transform: scale(1.5); border-color: var(--texto); }
 
 .siguiente-aqui { margin-top: .9rem; }
 .siguiente-aqui a { color: var(--oro, #f4d345); }
+
+/* ============ El Horizonte ============ */
+body.hz { margin: 0; height: 100vh; overflow: hidden; background: #000; color: #f2ead9; }
+.hz #c { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; cursor: grab; }
+.hz #c:active { cursor: grabbing; }
+.hz-cab { position: fixed; left: clamp(20px, 3vw, 44px); top: clamp(16px, 2.6vh, 34px); pointer-events: none; text-shadow: 0 0 22px #000, 0 0 6px #000; }
+.hz-cab h1 { margin: 0; font-weight: 400; font-size: clamp(36px, 4.2vw, 62px); letter-spacing: -.01em; line-height: 1.05; }
+.hz-cab p { margin: 6px 0 0; font-size: 17px; opacity: .85; }
+.hz-panel { position: fixed; right: 0; top: 0; bottom: 0; width: min(26rem, 42vw); box-sizing: border-box; padding: clamp(20px, 3.4vh, 40px) clamp(20px, 2.4vw, 36px); display: flex; flex-direction: column; justify-content: center; background: linear-gradient(90deg, #0000, #000000c4 28%, #000000ea); overflow-y: auto; }
+.hz-panel h2 { margin: 0 0 8px; font-weight: 400; font-size: clamp(25px, 2.2vw, 33px); line-height: 1.16; }
+.hz-panel .lema { margin: 0 0 18px; font-size: 17px; line-height: 1.42; color: #d9cfbb; }
+.hz-panel .boton-seguir { align-self: flex-start; text-decoration: none; }
+.hz-pasos { display: flex; gap: 8px; margin: 14px 0 20px; }
+.hz-paso { font: inherit; font-size: 15px; color: #f2ead9; background: #ffffff12; border: 1px solid #ffffff2a; border-radius: 7px; padding: 7px 12px; cursor: pointer; }
+.hz-paso:hover:not(:disabled) { background: #ffffff24; }
+.hz-paso:disabled { opacity: .35; cursor: default; }
+.hz-lista { list-style: decimal; margin: 0 0 12px; padding: 0 0 0 22px; font-size: 16px; color: #bdb3a0; }
+.hz-lista button { font: inherit; color: inherit; background: none; border: 0; padding: 4px 0; text-align: left; cursor: pointer; }
+.hz-lista button:hover { color: #fff; text-decoration: underline; }
+.hz-lista button.activa { color: #f4d345; }
+.hz-dist { margin: 4px 0 0; font-size: 14px; }
+.hz-volver { position: fixed; left: clamp(20px, 3vw, 44px); bottom: 18px; font-size: 15px; color: #e8dcc4; opacity: .78; text-shadow: 0 0 8px #000; }
+.hz-volver:hover, .hz-volver:focus-visible { opacity: 1; }
+.hz-mapa { position: fixed; left: clamp(14px, 2.4vw, 34px); bottom: 46px; width: clamp(150px, 15vw, 210px); height: clamp(150px, 15vw, 210px); overflow: visible; }
+.hz-esp { fill: none; stroke: #f4d34566; stroke-width: 1.2; }
+.hz-sombra { fill: #000; stroke: #f8e0a0; stroke-width: 1; }
+.hz-pto { fill: #1b1b22; stroke: #f2ead9; stroke-width: 1; cursor: pointer; }
+.hz-pto:hover, .hz-pto:focus-visible { stroke: #fff; stroke-width: 2; outline: none; }
+.hz-pto.hecho { fill: #f4d345; stroke: #f4d345; }
+.hz-pto.activo { stroke: #f4d345; stroke-width: 2.2; }
+.hz-yo { fill: none; stroke: #fff; stroke-width: 1.1; pointer-events: none; }
+@media (max-width: 760px) { .hz-panel { width: 100%; top: auto; max-height: 56vh; justify-content: flex-start; background: linear-gradient(180deg, #0000, #000000e8 16%); } .hz-mapa { display: none; } }
+/* código de fuzzython */
+.codigo { margin: 10px 0 6px; padding: 14px 16px; background: #0d0d13; border: 1px solid #ffffff1c; border-radius: 8px; overflow-x: auto; font: 14.5px/1.5 var(--mono); color: #e6e2d8; white-space: pre; }
+.codigo .pc { color: #c9a0f0; } .codigo .cad { color: #a8d8a0; } .codigo .com { color: #8b8798; } .codigo .num { color: #f4d345; }
+.salida { margin: 0 0 8px; padding: 10px 16px; background: #111a14; border-left: 3px solid #6fc38a; border-radius: 0 8px 8px 0; font: 14px/1.5 var(--mono); color: #cfe7d4; white-space: pre-wrap; }
+.salida-rot { margin: 8px 0 3px; font-size: 14px; color: var(--texto-2); }

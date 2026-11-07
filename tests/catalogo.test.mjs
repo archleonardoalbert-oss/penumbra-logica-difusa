@@ -20,7 +20,7 @@ test('ningún tema del catálogo está mal escrito', () => {
 });
 
 test('las 8 regiones de la noche y las 5 del amanecer existen, en orden', () => {
-  assert.deepEqual(CATALOGO.map((r) => r.id), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+  assert.deepEqual(CATALOGO.filter((r) => r.lado !== 'horizonte').map((r) => r.id), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   assert.deepEqual(CATALOGO.filter((r) => !r.lado).map((r) => r.titulo), ['El borde', 'La forma', 'El álgebra', 'Relaciones y extensión', 'Razonar', 'Sistemas', 'Aprender', 'Solo para valientes']);
 });
 
