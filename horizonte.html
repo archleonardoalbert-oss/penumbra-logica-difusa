@@ -1,0 +1,17 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>El Horizonte</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{display:block;width:100vw;height:100vh;cursor:grab}canvas:active{cursor:grabbing}</style></head><body><canvas id="c"></canvas>
+<script type="module">
+import { crearHorizonte } from './motor/horizonteGL.js';
+const c = document.getElementById('c'), q = new URLSearchParams(location.search), g = crearHorizonte(c);
+let az = +(q.get('az') ?? 0.35), inc = +(q.get('inc') ?? 0.14), r = +(q.get('r') ?? 18), fov = +(q.get('fov') ?? 0.72); let t = +(q.get('t') ?? 0), fijo = q.has('t'), ult = performance.now(), arr = null;
+const norm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); }, cruz = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+function cuadro(ms) {
+  const k = Math.min(devicePixelRatio || 1, +(q.get('esc') ?? 1)); const W = Math.round(innerWidth * k), H = Math.round(innerHeight * k); if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+  if (!fijo) t += (ms - ult) / 1000; ult = ms;
+  const C = [r * Math.cos(inc) * Math.sin(az), -r * Math.cos(inc) * Math.cos(az), r * Math.sin(inc)], f = norm(C.map((v) => -v)), de = norm(cruz(f, [0, 0, 1])), ar = cruz(de, f);
+  g.dibujar({ C, base: [...de, ...ar, ...f.map((v) => -v)], fov, t }); requestAnimationFrame(cuadro);
+}
+c.addEventListener('pointerdown', (e) => { arr = [e.clientX, e.clientY]; c.setPointerCapture(e.pointerId); }); c.addEventListener('pointermove', (e) => { if (!arr) return; az -= (e.clientX - arr[0]) * 0.004; inc = Math.max(-1.4, Math.min(1.4, inc + (e.clientY - arr[1]) * 0.003)); arr = [e.clientX, e.clientY]; }); c.addEventListener('pointerup', () => { arr = null; }); c.addEventListener('wheel', (e) => { r = Math.max(2.4, Math.min(80, r * Math.exp(e.deltaY * 0.001))); }, { passive: true });
+window.horizonte = { fijar: (o) => { if ('t' in o) { t = o.t; fijo = true; } if ('r' in o) r = o.r; if ('inc' in o) inc = o.inc; if ('az' in o) az = o.az; if ('fov' in o) fov = o.fov; } };
+requestAnimationFrame(cuadro);
+</script></body></html>
