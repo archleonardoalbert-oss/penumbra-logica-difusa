@@ -14,7 +14,7 @@ export default {
   id: '14-1-encender',
   titulo: 'Encender fuzzython',
   puente: 'Ya lo has visto funcionar entero. Ahora, pieza a pieza: lo primero es qué es un conjunto para fuzzython.',
-  pregunta: 'Ya sabes lo que es un sistema difuso: lo montaste a mano en la región 6. fuzzython es una librería de Python que lo hace por ti, escrita en MATCOM. No tiene documentación, y además no arranca. ¿Empezamos arreglándola?',
+  pregunta: 'Ya sabes lo que es un sistema difuso: lo montaste a mano en la región 6. fuzzython es una librería de Python que lo hace por ti, escrita en MATCOM. No traía documentación, y además no arranca. La documentación ya la tienes: el botón <b>Documentación</b>, arriba, la abre en cualquier momento. ¿Empezamos arreglando lo otro?',
   escena: {
     id: 'encender', formato: 'plano', W: 1100, H: 560,
     ejes: { x: DT, y: [0, 1], caja: { x: 70, y: 60, w: 450, h: 180 } },

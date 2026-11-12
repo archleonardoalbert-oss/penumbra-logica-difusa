@@ -228,7 +228,14 @@ function rutaRegion(region, ficha, progreso) {
     punto.style.setProperty('--color', rgb(g > 0 ? escalaGrado(g) : [58, 62, 84]));
     ol.append(h('li', {}, punto));
   });
-  return h('nav', { className: 'ruta-region', ariaLabel: `Paradas de ${region.titulo}` }, h('a', { href: region.lado === 'horizonte' ? 'horizonte.html' : region.lado === 'alba' ? 'index.html?lado=alba' : 'index.html', className: 'volver-mapa', textContent: '⌂ Mapa' }), h('span', { className: 'ruta-nombre', textContent: `${region.id}. ${region.titulo}` }), ol);
+  return h('nav', { className: 'ruta-region', ariaLabel: `Paradas de ${region.titulo}` }, h('a', { href: region.lado === 'horizonte' ? 'horizonte.html' : region.lado === 'alba' ? 'index.html?lado=alba' : 'index.html', className: 'volver-mapa', textContent: '⌂ Mapa' }), h('span', { className: 'ruta-nombre', textContent: `${region.id}. ${region.titulo}` }), ol, region.lado === 'horizonte' ? botonDoc() : null);
+}
+
+/** En toda la ruta del Horizonte, la documentación de fuzzython está a un clic, en cualquier etapa. */
+function botonDoc() {
+  let doc = null; const b = h('button', { type: 'button', className: 'boton-doc', textContent: 'Documentación' });
+  b.addEventListener('click', async () => { if (!doc) { const { crearDoc } = await import('./docPanel.js'); doc = crearDoc({ h, prosa, pintarTex, colorear: colorearPython }); } doc.abrir(); });
+  return b;
 }
 
 // ---------------------------------------------------------------- página

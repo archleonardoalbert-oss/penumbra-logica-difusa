@@ -195,11 +195,13 @@ void main(){
  if(uEclipse>0.){
   // el eclipse: la Luna nueva, un disco negro que se desliza sobre el sol, y al final su corona
   vec3 so2=normalize(vec3(uSol.xy,uSol.z*.36)),ex=normalize(cross(so2,vec3(0.,0.,1.))),ey=cross(ex,so2);vec2 q=vec2(dot(v,ex),dot(v,ey));float dso=dot(v,so2),RL=.0262;
-  vec2 oc=vec2(-.13,.05)*(1.-uEclipse);float dl=length(q-oc),zw=fwidth(dl),tot=smoothstep(.93,1.,uEclipse),ds=length(q);
-  c*=mix(1.,.05,smoothstep(.55,1.,uEclipse));
+  vec2 oc=vec2(-.13,-.05)*(1.-uEclipse);float dl=length(q-oc),zw=fwidth(dl),tot=smoothstep(.93,1.,uEclipse),ds=length(q);
+  c*=mix(1.,.05,smoothstep(.76,1.,uEclipse));
   if(dso>0.&&tot>0.){float an=atan(q.y,q.x),n=texture(uRuido,vec2(an*.55,.2)).r*.6+texture(uRuido,vec2(an*2.1,.6)).g*.4,x=max(ds/RL-1.,0.);c+=vec3(1.,.93,.78)*tot*(2.6*exp(-x*9.)+.8*(.35+n*1.2)*exp(-x*2.6))*uEclipseK;}
   float di=smoothstep(.93,.985,uEclipse)*(1.-smoothstep(.985,1.,uEclipse));vec2 pd=RL*vec2(.75,.66);c+=vec3(1.,.95,.85)*di*(22.*exp(-pow(length(q-pd)/.005,2.))+1.3*exp(-length(q-pd)/.03))*uEclipseK;
   c=mix(c,vec3(0.),(1.-smoothstep(RL-max(zw,.00025),RL,dl))*step(0.,dso)*smoothstep(.42,.6,uEclipse)); // la Luna nueva no se ve hasta que empieza a morder el sol
+  // su borde se enciende: un anillo fino de luz doblada, la firma de lo que hay detrás
+  c+=vec3(1.,.8,.48)*exp(-pow((dl-RL)/.0011,2.))*smoothstep(.42,.6,uEclipse)*step(0.,dso)*1.5*uEclipseK;
  }
  vec3 ne=vec3(0.);
  if(uNebula>0.){
@@ -345,14 +347,15 @@ void main(){vec3 c=vec3(0.);float pesos[5]=float[](.227,.195,.122,.054,.016);
 
 const FS_FINAL = `#version 300 es
 precision highp float;
-in vec2 u;uniform sampler2D uTex,uBri;uniform float uExpo,uT,uCine;uniform vec2 uPx;out vec4 o;
+in vec2 u;uniform sampler2D uTex,uBri;uniform float uExpo,uT,uCine;uniform vec2 uPx;uniform vec4 uDisco;out vec4 o;
 vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
 float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
 void main(){
  // bajar de resolución con cuatro muestras, y afilar: todo el detalle que cabe en cada píxel de pantalla
  vec3 c0=texture(uTex,u).rgb,cr=texture(uTex,u+uPx*vec2(1.,0.)).rgb,cl=texture(uTex,u-uPx*vec2(1.,0.)).rgb,cu=texture(uTex,u+uPx*vec2(0.,1.)).rgb,cd=texture(uTex,u-uPx*vec2(0.,1.)).rgb;
  vec3 c=c0+(c0-(cr+cl+cu+cd)*.25)*.85;c=max(c,vec3(0.));
- c+=texture(uBri,u).rgb*.55;
+ float mb=1.;if(uDisco.w>0.){mb=smoothstep(uDisco.z*.9,uDisco.z*1.02,length((u-uDisco.xy)*vec2(uDisco.w,1.)));} // el resplandor del sol no puede cruzar la Luna, que está delante
+ c+=texture(uBri,u).rgb*.55*mb;
  vec2 q=u-vec2(mix(.46,.5,uCine),.5);c*=1.-.62*smoothstep(mix(.34,.42,uCine),.95,length(q*vec2(1.,1.15)));
  c=aces(c*1.05*uExpo);c=pow(c,vec3(1./2.2));
  c+=(h(u*vec2(1731.,977.)+fract(uT))-.5)/mix(120.,70.,uCine);
@@ -668,7 +671,7 @@ export function crearPaisaje(canvas, { software = false, luna = true } = {}) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, b2.fb); t2(pB.u.uTex, 0, b1.t); gl.uniform2f(pB.u.uDir, 0, 2 / b1.h); gl.uniform1f(pB.u.uCorte, 0); gl.drawArrays(gl.TRIANGLES, 0, 3);
     // final
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.useProgram(pS.p); t2(pS.u.uTex, 0, esc.t); t2(pS.u.uBri, 1, b2.t); gl.uniform1f(pS.u.uExpo, e.expo); gl.uniform1f(pS.u.uCine, e.red ? 1 - (e.alba ?? 0) : 0); gl.uniform1f(pS.u.uT, e.t); gl.uniform2f(pS.u.uPx, 1 / canvas.width, 1 / canvas.height);
+    gl.useProgram(pS.p); t2(pS.u.uTex, 0, esc.t); t2(pS.u.uBri, 1, b2.t); gl.uniform1f(pS.u.uExpo, e.expo); gl.uniform1f(pS.u.uCine, e.red ? 1 - (e.alba ?? 0) : 0); gl.uniform4fv(pS.u.uDisco, e.disco ?? [0, 0, 0, 0]); gl.uniform1f(pS.u.uT, e.t); gl.uniform2f(pS.u.uPx, 1 / canvas.width, 1 / canvas.height);
     gl.disable(gl.DEPTH_TEST); gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
   return { gl, ajustar, dibujar, fijarCampo, fijarCamino, leerCampo, hornearLuz, avanzarLuz, hornearNace, terminarNace, fijarRed };

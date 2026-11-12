@@ -4,6 +4,9 @@ const norm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); },
 export const FRAC_SOMBRA = 0.36;  // lo que ocupa el disco del eclipse: la fracción de media pantalla
 export const DISCO_LUNA = 0.0262; // su radio aparente, en radianes
 export const DURA_ECLIPSE = 7.6, DURA_ENTRADA = 15;
+/** Cuánto tapa la Luna al sol siempre, en el amanecer: lo justo para que se vea que ahí hay algo. */
+export const ECLIPSE_REPOSO = 0.74;
+export const OFFSET_LUNA = [-0.13, -0.05]; // de dónde viene, en radianes, respecto al sol
 const TRAMOS = [[32, 21], [19, 11.5], [10.5, 5.6], [4.8, 2.05], [1.6, 1.07]];
 /** Radio de cada anillo: de lejos a pegado al horizonte. r = 1 es el horizonte; r = 1,5, la esfera de fotones. */
 export function trayecto(regiones) {
@@ -33,7 +36,7 @@ export const angSombraDe = (r) => Math.asin((2.598076 * Math.sqrt(1 - 1 / r)) / 
 const FOV_FINAL_ECLIPSE = (2 * Math.atan(Math.tan(DISCO_LUNA) / FRAC_SOMBRA) * 180) / Math.PI;
 /** En el mapa: giras hacia el sol, sube, la Luna lo tapa y todo se oscurece. Acaba en un disco negro con su corona. */
 export function guionEclipse(t) {
-  const cubre = suave((t - 2.2) / 3.6);
+  const cubre = ECLIPSE_REPOSO + (1 - ECLIPSE_REPOSO) * suave((t - 2.2) / 3.6);
   return { gira: suave(t / 2.6), sube: suave((t - 0.4) / 2.6), cubre, alabeo: 0 - 2 * Math.PI * suave((t - 0.2) / 6.6), fov: 38 * Math.exp(Math.log(FOV_FINAL_ECLIPSE / 38) * suave((t - 1.2) / 5.8)), expo: 1 - 0.8 * suave((t - 3.2) / 2.6), puente: suave((t - 7.1) / 0.5) };
 }
 const claves = (t, K) => { for (let i = 0; i + 1 < K.length; i++) if (t <= K[i + 1][0]) return mezcla(K[i][1], K[i + 1][1], suave((t - K[i][0]) / (K[i + 1][0] - K[i][0]))); return K.at(-1)[1]; };

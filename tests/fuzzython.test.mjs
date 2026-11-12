@@ -23,3 +23,14 @@ import { mamdaniDifuso } from '../nucleo/fuzzython.js';
 test('la entrada difusa da lo mismo que el original', () => { igual(mamdaniDifuso(poligono([[30, 0], [33, 1], [36, 0]])), F.difusa_tri, 1e-6, 'tri'); igual(mamdaniDifuso({ punto: [33, 0.5] }), F.difusa_sing, 1e-6, 'sing'); });
 test('activar y acumular con cualquier norma da lo mismo que el original', () => { for (const [k, v] of Object.entries(F.accu)) { const [activacion, acumulacion, t] = k.split('_'); igual(mamdaniEjemplo(+t, { activacion, acumulacion }), v, 1e-6, k); } });
 test('toda salida de código del Horizonte viene del fuzzython real', async () => { const { CATALOGO } = await import('../contenido/catalogo.js'); for (const r of CATALOGO.filter((x) => x.lado === 'horizonte')) for (const c of r.conceptos) for (const b of (await c.carga()).default.entender.filter((x) => x.tipo === 'codigo')) { if (b.ejecutado === false) { assert.equal(b.salida, undefined, `${c.id}: un esquema no puede mostrar salida`); continue; } assert.equal(typeof b.salida, 'string', `${c.id}: hay que volver a ejecutar los bloques`); } });
+import { DOC } from '../contenido/docFuzzython.js';
+import { SALIDAS } from '../contenido/parte14/salidas.js';
+test('documentación: cada bloque ejecutable tiene su salida real, y nada falta por cubrir', () => {
+  assert.equal(new Set(DOC.map((d) => d.id)).size, DOC.length);
+  for (const d of DOC) for (const b of d.bloques) if (b.cod) assert.equal(typeof SALIDAS[b.cod], 'string', `${d.id}: hay que volver a ejecutar los bloques`);
+  const todo = JSON.stringify(DOC);
+  for (const k of ['Polygon', 'Trapezoid', 'Triangular', 'Gaussian', 'Gamma', 'Singleton', 'SFunction', 'ZFunction', 'PiFunction', 'Polynomial', 'Interval', 'FuzzySet', 'Adjective', 'Variable', 'RuleBlock', 'MamdaniSystem', 'SugenoSystem', 'TsukamotoSystem', 'get_norm', 'create_from', 'COGS', 'FCL', 'Predicate']) assert.ok(todo.includes(k), `no documenta ${k}`);
+  for (let i = 1; i <= 24; i++) assert.ok(todo.includes(`"F${i}"`), `falta el fallo F${i}`);
+  for (const n of ['MIN', 'PROD', 'BDIF', 'DPROD', 'EPROD', 'FAND', 'MAX', 'ASUM', 'BSUM', 'DSUM', 'ESUM', 'FOR', 'NSUM', 'ZADEH', 'SUGENO', 'YAGER']) assert.ok(todo.includes(n), `falta la norma ${n}`);
+});
+test('documentación: las fórmulas siguen las normas del curso', () => { for (const d of DOC) for (const m of JSON.stringify(d.bloques.map((b) => [b.p, b.aviso, b.lista, b.tabla])).matchAll(/\$([^$]+)\$/g)) assert.ok(!/[/*]/.test(m[1].replace(/\\\\frac/g, '')), `${d.id}: «${m[1]}»`); });

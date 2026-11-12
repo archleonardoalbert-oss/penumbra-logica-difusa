@@ -10,7 +10,7 @@ import { barraGrado, h, tituloDifuso, tryLocal } from './concepto.js';
 import { soportaGL2 } from './lienzo.js';
 import { camaraLibre, camaraMapa, crearPaisaje, proyectar } from './mapaGL.js';
 import { LUNA_D, LUNA_R } from './lunaGL.js';
-import { DURA_ECLIPSE, guionEclipse } from '../nucleo/caida.js';
+import { DURA_ECLIPSE, ECLIPSE_REPOSO, OFFSET_LUNA, guionEclipse } from '../nucleo/caida.js';
 import { DURA_CRUCE, crearRed, crearVuelo, guionCruce } from './mapaRed.js';
 import { DURA_NACER, DURA_VIAJE, formulaNacer, guionNacer, guionViaje } from './mapaGuion.js';
 import { ev, mix } from './tiempo.js';
@@ -67,7 +67,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
       no.addEventListener('click', () => zona.replaceChildren(inicio, verNacer));
       zona.replaceChildren(h('span', { textContent: 'Se borrarán todas tus notas. ¿Seguro?' }), si, no);
     });
-    const verNacer = esAlba ? h('span', {}, h('a', { href: 'index.html?lado=alba&cruce=1', textContent: 'Ver otra vez el cruce' }), h('a', { href: 'index.html', textContent: 'Volver a la noche' }), h('a', { href: 'horizonte.html', textContent: 'El Horizonte' })) : h('a', { href: 'index.html?nacer=1', textContent: 'Ver cómo nace el mapa' });
+    const verNacer = esAlba ? h('span', {}, h('a', { href: 'index.html?lado=alba&cruce=1', textContent: 'Ver otra vez el cruce' }), h('a', { href: 'index.html', textContent: 'Volver a la noche' }), soportaGL2() ? null : h('a', { href: 'horizonte.html', textContent: 'El Horizonte' })) : h('a', { href: 'index.html?nacer=1', textContent: 'Ver cómo nace el mapa' });
     zona.append(inicio, verNacer);
     return zona;
   };
@@ -194,7 +194,7 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
       vpActual = vp; ojoActual = ojo;
     }
     const vp = vpActual, ojo = ojoActual;
-    const foco = enfocada ?? fijada, rf = catalogo.find((r) => r.id === foco), g = grados(), comun = { vp, ojo, sol: solActual, t, rehacer, alba: esAlba ? 1 : 0, faros: datosFaros() };
+    const foco = enfocada ?? fijada, rf = catalogo.find((r) => r.id === foco), g = grados(), comun = { vp, ojo, sol: solActual, t, rehacer, alba: esAlba ? 1 : 0, faros: datosFaros(), eclipse: esAlba ? ECLIPSE_REPOSO : 0, disco: esAlba && modo === 'normal' ? discoPantalla(solActual, ECLIPSE_REPOSO) : undefined };
     if (modo === 'nace') {
       const gu = guionNacer(t);
       pais.hornearNace(gu, regsDe(g, (i) => gu.s[i]));
@@ -207,14 +207,14 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
       if (u >= DURA_LUNA) { modo = 'saliendo'; location.href = 'index.html?lado=alba&cruce=1'; }
     } else if (modo === 'eclipse') {
       const u = t - eclipseDesde.t, g = guionEclipse(u);
-      pais.dibujar({ ...comun, rehacer: true, solCielo: solEclipse(g.sube), eclipse: g.cubre, eclipseK: 1 / g.expo, expo: g.expo, foco: [0, 0, 0, 0], hecho: hecho(), aparece: 1 - ev(u, 0, 1) });
+      pais.dibujar({ ...comun, rehacer: true, disco: discoPantalla(solEclipse(g.sube), g.cubre), solCielo: solEclipse(g.sube), eclipse: g.cubre, eclipseK: 1 / g.expo, expo: g.expo, foco: [0, 0, 0, 0], hecho: hecho(), aparece: 1 - ev(u, 0, 1) });
       puenteEclipse.style.opacity = String(g.puente);
       if (u >= DURA_ECLIPSE) { modo = 'saliendo'; location.href = 'horizonte.html?entrada=eclipse'; }
     } else if (modo === 'saliendo') { /* ya está cargando la página siguiente */
     } else if (modo === 'cruce') {
       const gu = guionCruce(t);
       pais.dibujar({ ...comun, rehacer: true, alba: gu.alba, sinTerreno: gu.suelo <= 0, expo: gu.negro, foco: [0, 0, 0, 0], hecho: hecho(), aparece: gu.camino, faros: gu.camino > 0 ? comun.faros : new Float32Array(0),
-        cielo: gu.suelo, nebula: gu.nebula, solCielo: solAlba(gu.alba),
+        cielo: gu.suelo, nebula: gu.nebula, solCielo: solAlba(gu.alba), eclipse: ECLIPSE_REPOSO * ev(t, DURA_CRUCE - 6, DURA_CRUCE - 1),
         red: { orden: 1, baja: 0, ola: gu.ola, oro: gu.oroRuta, vuelo: recorrido.en(t).u, aristas: gu.aristas, fondo: gu.suelo, fuerza: gu.fuerza, hilos: gu.hilos, polvo: gu.polvo, lejos: gu.lejos, vpPrevio: camaraCruce(W / H, t - 1 / 60).vp, estela: 1 - gu.retro * 0.85 } });
       pintarCruce(gu);
       if (t >= DURA_CRUCE) terminarCruce();
@@ -316,12 +316,18 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
   }
   puertaSol.addEventListener('pointerdown', (ev2) => ev2.stopPropagation());
   puertaSol.addEventListener('click', (ev2) => { ev2.stopPropagation(); irAlEclipse(); });
-  pagina.addEventListener('click', (ev2) => { const a = ev2.target.closest?.('a[href="horizonte.html"]'); if (a && soportaGL2()) { ev2.preventDefault(); irAlEclipse(); } });
+  /** Dónde cae el disco en la pantalla: [u, v (hacia arriba), radio en alturas de pantalla, aspecto]. */
+  function discoPantalla(solD, cubre) {
+    const d = dirSol(solD), n = Math.hypot(d[0], d[1]), ex = [d[1] / n, -d[0] / n, 0], ey = [ex[1] * d[2], -ex[0] * d[2], ex[0] * d[1] - ex[1] * d[0]], k = 1 - cubre, en = (rx, ry) => { const w = [0, 1, 2].map((i) => d[i] + ex[i] * (OFFSET_LUNA[0] * k + rx) + ey[i] * (OFFSET_LUNA[1] * k + ry)); return proyectar(vpActual, w.map((x, i) => ojoActual[i] + x * 12)); };
+    const [a, b] = en(0, 0), [c2, e2] = en(0.0262, 0), W = canvas.clientWidth, H = canvas.clientHeight;
+    return [a, 1 - b, Math.hypot((c2 - a) * W, (e2 - b) * H) / H, W / H];
+  }
   function colocarPuertaSol() {
     if (!esAlba || modo !== 'normal') { puertaSol.hidden = true; return; }
-    const d = dirSol(solActual), [a, b] = proyectar(vpActual, [0, 1, 2].map((i) => ojoActual[i] + d[i] * 12)), W = canvas.clientWidth, H = canvas.clientHeight;
+    // la puerta es el disco negro: el mismo cálculo que el cielo, y late igual que la Luna
+    const [u, v, rv] = discoPantalla(solActual, ECLIPSE_REPOSO), a = u, b = 1 - v, W = canvas.clientWidth, H = canvas.clientHeight, rPx = rv * H;
     puertaSol.hidden = !(a > 0.02 && a < 0.98 && b > 0.02 && b < 0.98);
-    puertaSol.style.setProperty('--r', '26px'); puertaSol.style.setProperty('--cx', '0px'); puertaSol.style.setProperty('--cy', '0px');
+    puertaSol.style.setProperty('--r', `${Math.max(20, rPx * 1.25).toFixed(1)}px`); puertaSol.style.setProperty('--cx', '0px'); puertaSol.style.setProperty('--cy', '0px');
     puertaSol.style.transform = `translate(${(a * W).toFixed(1)}px, ${(b * H).toFixed(1)}px)`;
   }
   let lunaDesde = null;

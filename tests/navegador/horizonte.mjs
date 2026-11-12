@@ -69,3 +69,34 @@ t('horizonte: sin WebGL2, la ruta está abierta y lleva a las paradas', async ({
   await pg.locator('.hz-ruta li button', { hasText: 'Las diez formas' }).click();
   await pg.waitForURL(/concepto\.html\?c=14-3-formas/, { timeout: 15000 });
 });
+t('documentación: se abre en cualquier etapa, se busca en ella, y al cerrarla sigues donde estabas', async ({ pg, ir, errores }) => {
+  await pg.emulateMedia({ reducedMotion: 'reduce' });
+  for (const et of ['pregunta', 'mira', 'entiende']) {
+    await ir(`concepto.html?c=14-1-encender#${et}`);
+    await pg.waitForSelector('.boton-doc');
+    const antes = await pg.evaluate(() => location.hash);
+    await pg.locator('.boton-doc').click();
+    await pg.waitForSelector('dialog.doc[open]');
+    afirmar(await pg.locator('.doc-enlace').count() >= 20, 'pocos apartados');
+    await pg.keyboard.press('ArrowRight');
+    afirmar(await pg.evaluate(() => location.hash) === antes, 'el teclado mueve la parada de detrás');
+    afirmar(await pg.locator('.doc .katex-error').count() === 0, 'fórmulas rotas');
+    await pg.locator('.doc-cerrar').click();
+    afirmar(await pg.evaluate(() => location.hash) === antes, 'al cerrar, cambió de etapa');
+  }
+  await pg.locator('.boton-doc').click();
+  await pg.locator('.doc-busca').fill('tsukamoto monótona');
+  afirmar(await pg.locator('.doc-enlace:not([hidden])').count() >= 1, 'la búsqueda no encuentra');
+  afirmar(await pg.locator('.doc-enlace:not([hidden])').count() < 20, 'la búsqueda no filtra');
+  await pg.locator('.doc-busca').fill('zzzzzz');
+  afirmar(await pg.locator('.doc-vacio').isVisible(), 'sin mensaje de vacío');
+  const anch = await pg.evaluate(() => [document.querySelector('.doc').scrollWidth, innerWidth]);
+  afirmar(anch[0] <= anch[1], 'sobra anchura');
+  afirmar(errores.length === 0, errores.join(' | '));
+});
+t('documentación: está en todas las paradas del Horizonte, y no en las demás', async ({ pg, ir }) => {
+  await pg.emulateMedia({ reducedMotion: 'reduce' });
+  await ir('concepto.html?c=18-5-medir'); await pg.waitForSelector('.boton-doc');
+  await ir('concepto.html?c=1-3-conjunto-difuso'); await pg.waitForSelector('.ruta-region');
+  afirmar(await pg.locator('.boton-doc').count() === 0, 'se cuela en la noche');
+});
