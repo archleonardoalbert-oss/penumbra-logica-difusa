@@ -71,7 +71,7 @@ export function montarHorizonte(raiz, { catalogo = CATALOGO, almacen = localStor
     faroEl.classList.toggle('sin-aro', v.r < 5); // tan cerca, la gravedad desplaza la imagen del faro: un aro recto ya no caería encima
     faroEl.style.opacity = String(al); faroEl.style.pointerEvents = al > 0.4 ? 'auto' : 'none'; faroEl.tabIndex = al > 0.4 ? 0 : -1;
     if (faroEl.dataset.k !== String(k)) { faroEl.dataset.k = String(k); faroTit.textContent = P[k].c.titulo; faroEl.href = `concepto.html?c=${P[k].c.id}`; faroEl.classList.toggle('hecha', grado(P[k]) >= 0.7); faroEntra.textContent = grado(P[k]) > 0 ? 'Seguir' : 'Entrar'; }
-    if (innerWidth <= 760) faroEl.style.transform = `translate(${innerWidth / 2}px, ${innerHeight * 0.74}px)`;
+    if (innerWidth <= 760) faroEl.style.transform = `translate(${innerWidth / 2}px, ${innerHeight * 0.7}px) translateX(-50%)`;
     else faroEl.style.transform = `translate(${lim((nx * 0.5 + 0.5) * innerWidth, 60, innerWidth - 300).toFixed(1)}px, ${lim((0.5 - ny * 0.5) * innerHeight, 80, innerHeight - 110).toFixed(1)}px)`;
   }
   function pintarCapitulo(k, ms) {

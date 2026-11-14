@@ -434,6 +434,8 @@ export async function montarConcepto(raiz, id, { catalogo = CATALOGO, almacen } 
     [...raiel.children].forEach((li, k) => { li.className = k < etapa ? 'pasada' : k === etapa ? 'actual' : 'futura'; li.firstChild.setAttribute('aria-current', k === etapa ? 'step' : 'false'); });
     titulo.style.setProperty('--b', String(1 - etapa / (ETAPAS.length - 1)));
     app.dataset.etapa = e.id;
+    // en un móvil las pestañas no caben todas: la de ahora siempre a la vista
+    if (raiel.scrollWidth > raiel.clientWidth) { const li = raiel.children[etapa]; raiel.scrollTo({ left: li.offsetLeft - (raiel.clientWidth - li.offsetWidth) / 2, behavior: 'auto' }); }
     if (yaEnfocable) secciones[e.id].focus({ preventScroll: true });
     yaEnfocable = true;
     centro.replaceChildren();

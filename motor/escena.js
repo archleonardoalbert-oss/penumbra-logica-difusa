@@ -4,7 +4,7 @@ import { GLOSARIO } from '../contenido/glosario.js';
 import { enlazarTerminos } from '../nucleo/recorrido.js';
 import { compilar } from '../nucleo/expresion.js';
 import { clamp } from './tiempo.js';
-import { crearLienzo } from './lienzo.js';
+import { apilar, crearLienzo } from './lienzo.js';
 import { crearRender3D } from './render3d.js';
 import { crearRenderNiebla } from './renderNiebla.js';
 import { crearRenderPlano } from './renderPlano.js';
@@ -110,6 +110,14 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
   };
 
   const actual = () => primitivasDe(def, { paso, p, e: entradas.e });
+  // las partes de la escena, por si hay que apilarlas en un móvil: el plano principal y cada panel, en todos los pasos
+  lienzo.definirTrozos(() => {
+    const cajas = [];
+    for (let i = 0; i < n; i++) { try { normalizar(primitivasDe(def, { paso: i, p: 1, e: entradas.e })).paneles.forEach((x, j) => { cajas[j] ??= x.ejes?.caja; }); } catch { /* un paso que no se deja calcular así */ } }
+    const pan = cajas.filter(Boolean); if (!pan.length) return null;
+    const principal = def.formato === 'plano' ? def.ejes.caja : { x: 0, y: 0, w: Math.max(200, Math.min(...pan.map((c) => c.x)) - 70), h: def.H };
+    return apilar([principal, ...pan], def.W, def.H);
+  });
 
   function pintar() {
     if (sinGL) return;
@@ -119,6 +127,7 @@ export function montarEscena(contenedor, def, { textos = null, controles = null,
     if (rNiebla) { rNiebla.dibujar(niebla); rSobre.dibujar(principal); }
     if (rPlano) rPlano.dibujar(principal);
     paneles.forEach((x, i) => panel(i, x.ejes).dibujar(x.prims));
+    lienzo.componer();
     if (r3) camara = r3.camara();
   }
 

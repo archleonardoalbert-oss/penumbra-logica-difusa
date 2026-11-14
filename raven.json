@@ -1,0 +1,12 @@
+{
+  "nombre": "penumbra",
+  "titulo": "Penumbra",
+  "descripcion": "Un curso visual de lógica difusa: un camino por un terreno, de lo que tiene borde a lo que no.",
+  "ruta": "/penumbra/",
+  "demo": {
+    "carpeta": ".",
+    "construir": null,
+    "incluir": ["index.html", "concepto.html", "horizonte.html", "favicon.svg", "css", "motor", "nucleo", "contenido", "vendor"],
+    "entrada": "index.html"
+  }
+}

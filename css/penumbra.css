@@ -460,3 +460,90 @@ body.hz-sin-gl { overflow: auto; height: auto; }
 .doc-tabla th { text-align: left; font-weight: 400; color: #ffd98c; }
 .doc-tabla th, .doc-tabla td { padding: 6px 12px 6px 0; border-bottom: 1px solid #ffffff17; vertical-align: top; }
 @media (max-width: 760px) { .doc-marco { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .doc-indice { display: flex; gap: 4px; overflow-x: auto; overflow-y: hidden; padding: 6px 10px; border-right: 0; border-bottom: 1px solid #ffffff14; } .doc-enlace { width: auto; white-space: nowrap; } .doc-cab h1 { display: none; } }
+
+/* ============ todas las pantallas: del móvil a la tele ============ */
+.mapa-rotulo.pisado { opacity: 0 !important; pointer-events: none; }
+.etapas button, .ruta-nombre { white-space: nowrap; }
+@media (max-width: 900px), (max-height: 520px) {
+  .app { grid-template-rows: auto minmax(auto, 1fr) auto; } /* el sobrante, para el contenido; nunca más pequeño que él */
+  .barra-alta { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "ruta grado" "titulo titulo" "etapas etapas"; align-items: center; }
+  .barra-alta > .ruta-region { grid-area: ruta; }
+  .barra-alta > .grado { grid-area: grado; justify-self: end; }
+  .barra-alta > .titulo-parada { grid-area: titulo; margin: 0; }
+  .barra-alta > .etapas { grid-area: etapas; grid-column: auto; grid-row: auto; }
+  .grado .grado-carril { width: 70px; }
+  .escenario > section { height: auto; }
+  .ruta-nombre { display: none; }
+  .barra-alta { gap: 4px 12px; }
+  .ruta-region { min-width: 0; overflow: hidden; }
+  .ruta-nombre { overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }
+  .ruta { flex: none; }
+  .boton-doc { flex: none; }
+  .etapas { scrollbar-width: none; margin: 2px -16px -1px; padding: 0 8px; mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent); }
+  .etapas::-webkit-scrollbar { display: none; }
+  .etapas button { padding: 8px 12px 10px; }
+  .titulo-parada { font-size: 21px; }
+  .pregunta { font-size: clamp(23px, 6.4vw, 34px); }
+  .seccion-pregunta { min-height: 52vh; }
+  .latido { font-size: 19px; padding: 4px 0; }
+  .idea { font-size: clamp(20px, 5.4vw, 25px); }
+  .tabla-ejemplo { display: block; overflow-x: auto; font-size: 18px; max-width: 100%; }
+  .tabla-ejemplo td { padding: 6px 12px; }
+  .pieza { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .pieza dt { text-align: left; }
+  .formal { padding: 12px 14px; }
+  .razonamiento { padding-left: 20px; font-size: 18px; }
+  .reto { font-size: 18px; }
+  .reto-enunciado { font-size: 20px; }
+  .paso-texto.actual { font-size: 18px; min-height: 0; }
+  .pie-etapa { grid-template-columns: auto 1fr auto; gap: 8px; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--borde); z-index: 5; }
+  .pie-etapa .boton-seguir { font-size: 16.5px; padding: 10px 16px; text-align: center; max-width: 60vw; }
+  .codigo, .salida { font-size: 13px; }
+  .llegada { padding: 10px 0 20px; }
+  /* el mapa: el título va sobre el paisaje, y debajo, lo que hay que leer */
+  .portada { position: relative; }
+  .mapa-cabecera { position: absolute; left: 16px; right: 16px; top: 12px; padding: 0; }
+  .mapa-cabecera .difuso { font-size: clamp(38px, 11vw, 64px); }
+  .mapa-cabecera + * { margin-top: 0; }
+  .mapa-indice { gap: 4px 6px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  /* móvil en horizontal: casi toda la altura para la escena */
+  .barra-alta { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "ruta titulo grado" "etapas etapas etapas"; padding: 4px 16px 0; }
+  .barra-alta > .ruta-region .ruta { display: none; }
+  .titulo-parada { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .etapas { margin-top: 0; }
+  .etapas button { padding: 4px 10px 6px; font-size: 14.5px; }
+  .escenario { padding: 8px 16px; }
+  .bloque-lienzo { width: min(100%, calc((100dvh - 215px) * var(--ratio, 1.9))); margin: 0 auto; }
+  .seccion-pregunta { min-height: 60dvh; }
+  .pie-etapa { padding: 5px 16px; }
+  .pie-etapa .boton-seguir { padding: 7px 16px; font-size: 16px; max-width: none; }
+  .mapa-lienzo { height: 100dvh; }
+}
+@media (pointer: coarse) {
+  /* con el dedo, todo lo que se toca mide al menos 40 px, aunque se vea más pequeño */
+  .estacion { position: relative; }
+  .estacion::after { content: ''; position: absolute; inset: -12px; }
+  .volver-mapa, .hz-volver, .enlace-pendulo, .mapa-pie a, .mapa-pie button { display: inline-flex; align-items: center; min-height: 40px; }
+  .boton-doc, .hz-boton, .doc-copiar, .doc-cerrar { min-height: 38px; }
+  .etapas button { min-height: 40px; }
+  input[type=range] { min-height: 32px; }
+}
+@media (max-width: 760px) {
+  .hz-faro { text-align: center; padding: 0; justify-items: center; max-width: 86vw; }
+  .hz-faro-aro { display: none; }
+  .hz-faro-tit { margin-top: 0; }
+  .hz-capitulo { top: 9vh; }
+  .hz-reloj { font-size: 13.5px; bottom: calc(10px + env(safe-area-inset-bottom)); }
+  .hz-pista { bottom: calc(64px + env(safe-area-inset-bottom)); }
+  .hz-acciones { right: 10px; } .hz-volver { left: 12px; }
+  .doc-cab { flex-wrap: wrap; gap: 8px; }
+  .doc-busca { flex: 1 1 auto; max-width: none; margin: 0; }
+  .doc-cuerpo { font-size: 16.5px; padding: 6px 14px 50vh; }
+}
+
+/* el panel de Tócalo es estrecho: cada deslizador en su propia línea, con su nombre encima */
+.toca-panel .entrada { flex-wrap: wrap; gap: 2px 10px; }
+.toca-panel .entrada > span { flex: 1 1 100%; }
+.entrada input[type=range] { min-width: 140px; }

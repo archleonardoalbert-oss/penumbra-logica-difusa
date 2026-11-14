@@ -159,6 +159,14 @@ export function montarMapa(raiz, { catalogo: todas = CATALOGO, almacen = tryLoca
       b.classList.toggle('activa', activos[i]);
       b.classList.toggle('apagada', !!fijada && !activos[i]);
     });
+    // si dos nombres se pisan (en una pantalla estrecha pasa), se calla el de menos interés: el activo nunca
+    const W = zonaMapa.clientWidth, puestos = [], orden = rotulos.map((_, i) => i).sort((a, b) => (activos[b] - activos[a]) || (cs[a][1] - cs[b][1]));
+    for (const i of orden) {
+      const tt = rotulos[i].querySelector('.rotulo-titulo') ?? rotulos[i], w = tt.offsetWidth, hh = tt.offsetHeight, x = cs[i][0], y = cs[i][1] - 34;
+      const r = [x - w / 2 - 6, y - hh - 4, x + w / 2 + 6, y + 2], choca = puestos.some((q) => r[0] < q[2] && q[0] < r[2] && r[1] < q[3] && q[1] < r[3]) || (W && (r[0] < 0 || r[2] > W));
+      rotulos[i].classList.toggle('pisado', choca && !activos[i]);
+      if (!choca || activos[i]) puestos.push(r);
+    }
   }
 
   const sig = () => { if (sigC === undefined) sigC = siguienteConcepto(catalogo, progreso); return sigC; };
