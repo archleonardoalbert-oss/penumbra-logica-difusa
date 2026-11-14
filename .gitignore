@@ -9,3 +9,9 @@ node_modules/
 fuentes/referencias/libro/
 ejecutables/
 empaquetar/sitio/
+
+# material de terceros: solo en local, nunca en el repo público
+fuentes/referencias/*.pdf
+fuentes/referencias/*.html
+fuentes/referencias/dresden/
+modelo/
